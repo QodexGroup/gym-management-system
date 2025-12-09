@@ -14,12 +14,14 @@ import { mockNotifications } from '../../data/mockData';
 const Header = ({ title, subtitle }) => {
   const navigate = useNavigate();
   const { user, switchRole, isAdmin } = useAuth();
+  const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const unreadCount = mockNotifications.filter((n) => !n.read).length;
 
-  const handleNotificationClick = () => {
+  const handleViewAllNotifications = () => {
+    setShowNotifications(false);
     navigate('/notifications');
   };
 
@@ -71,18 +73,73 @@ const Header = ({ title, subtitle }) => {
             </button>
           </div>
 
-          {/* Notifications - Navigate to page on click */}
-          <button
-            onClick={handleNotificationClick}
-            className="relative p-2.5 text-dark-500 hover:text-dark-700 hover:bg-dark-100 rounded-xl transition-colors"
-          >
-            <Bell className="w-5 h-5" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-5 h-5 bg-danger-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                {unreadCount}
-              </span>
+          {/* Notifications */}
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative p-2.5 text-dark-500 hover:text-dark-700 hover:bg-dark-100 rounded-xl transition-colors"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-5 h-5 bg-danger-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notifications Dropdown */}
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-dark-100 overflow-hidden">
+                <div className="px-4 py-3 border-b border-dark-100 flex items-center justify-between">
+                  <h3 className="font-semibold text-dark-800">Notifications</h3>
+                  <span className="text-xs text-primary-500 hover:text-primary-600 cursor-pointer">
+                    Mark all read
+                  </span>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {mockNotifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={`px-4 py-3 border-b border-dark-50 hover:bg-dark-50 cursor-pointer ${
+                        !notification.read ? 'bg-primary-50/50' : ''
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div
+                          className={`w-2 h-2 rounded-full mt-2 ${
+                            notification.type === 'warning'
+                              ? 'bg-warning-500'
+                              : notification.type === 'success'
+                              ? 'bg-success-500'
+                              : 'bg-primary-500'
+                          }`}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-dark-800">
+                            {notification.title}
+                          </p>
+                          <p className="text-xs text-dark-500 mt-0.5 line-clamp-2">
+                            {notification.message}
+                          </p>
+                          <p className="text-xs text-dark-400 mt-1">
+                            {notification.time}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="px-4 py-3 bg-dark-50 text-center">
+                  <button
+                    onClick={handleViewAllNotifications}
+                    className="text-sm text-primary-500 hover:text-primary-600 cursor-pointer font-medium"
+                  >
+                    View All Notifications
+                  </button>
+                </div>
+              </div>
             )}
-          </button>
+          </div>
 
           {/* User Menu */}
           <div className="relative">

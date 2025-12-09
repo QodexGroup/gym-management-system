@@ -10,9 +10,7 @@ import TrainerDashboard from './pages/trainer/Dashboard';
 // Shared Pages
 import CheckIn from './pages/CheckIn';
 import CustomerList from './pages/customers/CustomerList';
-import BillsPayment from './pages/customers/BillsPayment';
-import ProgressTracking from './pages/customers/ProgressTracking';
-import CustomerAppointments from './pages/customers/Appointments';
+import CustomerProfile from './pages/customers/CustomerProfile';
 import MembershipPlans from './pages/MembershipPlans';
 import Expenses from './pages/Expenses';
 import Calendar from './pages/Calendar';
@@ -42,9 +40,7 @@ function App() {
 
           {/* Customer Management */}
           <Route path="/customers" element={<CustomerList />} />
-          <Route path="/customers/bills" element={<BillsPayment />} />
-          <Route path="/customers/progress" element={<ProgressTracking />} />
-          <Route path="/customers/appointments" element={<CustomerAppointments />} />
+          <Route path="/customers/:id" element={<CustomerProfile />} />
 
           {/* Membership Plans (Admin Only) */}
           <Route path="/membership-plans" element={<MembershipPlans />} />
