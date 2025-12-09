@@ -19,6 +19,7 @@ import ExpenseReport from './pages/reports/ExpenseReport';
 import MyCollection from './pages/reports/MyCollection';
 import UserManagement from './pages/UserManagement';
 import Notifications from './pages/Notifications';
+import MyAccount from './pages/MyAccount';
 
 // Dashboard component that renders based on user role
 const Dashboard = () => {
@@ -61,6 +62,9 @@ function App() {
 
           {/* Notifications */}
           <Route path="/notifications" element={<Notifications />} />
+
+          {/* My Account */}
+          <Route path="/my-account" element={<MyAccount />} />
 
           {/* Catch all - redirect to dashboard */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
