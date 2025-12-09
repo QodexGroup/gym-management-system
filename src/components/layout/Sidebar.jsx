@@ -12,6 +12,7 @@ import {
   Dumbbell,
   UserCog,
   Wallet,
+  Settings,
   ChevronDown,
   ChevronRight,
   ChevronLeft,
@@ -55,6 +56,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             { path: '/reports/expense', label: 'Expense Report' },
           ],
         },
+        { path: '/settings', icon: Settings, label: 'Settings' },
       ],
     },
   ];
@@ -75,6 +77,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       section: 'ACCOUNT',
       items: [
         { path: '/reports/my-collection', icon: Wallet, label: 'My Collection' },
+        { path: '/settings', icon: Settings, label: 'Settings' },
       ],
     },
   ];

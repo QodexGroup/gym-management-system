@@ -5,7 +5,6 @@ import {
   Search,
   Bell,
   ChevronDown,
-  Settings,
   User,
   LogOut,
 } from 'lucide-react';
@@ -174,10 +173,6 @@ const Header = ({ title, subtitle }) => {
                   >
                     <User className="w-4 h-4" />
                     My Profile
-                  </button>
-                  <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-dark-600 hover:bg-dark-50 transition-colors">
-                    <Settings className="w-4 h-4" />
-                    Settings
                   </button>
                 </div>
                 <div className="border-t border-dark-100 py-2">

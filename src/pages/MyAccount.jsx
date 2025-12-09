@@ -27,6 +27,7 @@ const MyAccount = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   // Mock account data
   const accountData = {
@@ -90,17 +91,15 @@ const MyAccount = () => {
     },
   ];
 
-  // Define tabs based on role - Admin sees all, Trainer only sees Profile and Security
+  // Define tabs based on role - Admin sees subscription/billing, Trainer only sees profile
   const adminTabs = [
-    { key: 'profile', label: 'Profile', icon: User },
+    { key: 'profile', label: 'Profile & Security', icon: User },
     { key: 'subscription', label: 'Subscription', icon: CreditCard },
     { key: 'billing', label: 'Billing History', icon: Calendar },
-    { key: 'security', label: 'Security', icon: Shield },
   ];
 
   const trainerTabs = [
-    { key: 'profile', label: 'Profile', icon: User },
-    { key: 'security', label: 'Security', icon: Shield },
+    { key: 'profile', label: 'Profile & Security', icon: User },
   ];
 
   const tabs = isAdmin ? adminTabs : trainerTabs;
@@ -125,7 +124,7 @@ const MyAccount = () => {
         ))}
       </div>
 
-      {/* Profile Tab */}
+      {/* Profile & Security Tab */}
       {activeTab === 'profile' && (
         <div className="space-y-6">
           {/* Account Owner Info */}
@@ -224,6 +223,79 @@ const MyAccount = () => {
               </div>
             </div>
           )}
+
+          {/* Security Section */}
+          <div className="card">
+            <h3 className="text-lg font-semibold text-dark-800 mb-6">Security</h3>
+            
+            <div className="space-y-4">
+              {/* Password */}
+              <div className="flex items-center justify-between p-4 bg-dark-50 rounded-xl">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-primary-100 rounded-xl">
+                    <Key className="w-6 h-6 text-primary-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-dark-800">Password</h4>
+                    <p className="text-sm text-dark-500">Last changed 30 days ago</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowPasswordModal(true)}
+                  className="btn-secondary"
+                >
+                  Change Password
+                </button>
+              </div>
+
+              {/* Two-Factor Authentication */}
+              <div className="flex items-center justify-between p-4 bg-dark-50 rounded-xl">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-success-100 rounded-xl">
+                    <Shield className="w-6 h-6 text-success-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-dark-800">Two-Factor Authentication</h4>
+                    <p className="text-sm text-dark-500">Add an extra layer of security</p>
+                  </div>
+                </div>
+                <button className="btn-primary">Enable 2FA</button>
+              </div>
+            </div>
+          </div>
+
+          {/* Active Sessions */}
+          <div className="card">
+            <h3 className="text-lg font-semibold text-dark-800 mb-4">Active Sessions</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-dark-50 rounded-xl">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 bg-success-100 rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-success-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-dark-800">Current Session</p>
+                    <p className="text-sm text-dark-500">Chrome on Windows • IP: 192.168.1.1</p>
+                  </div>
+                </div>
+                <Badge variant="success">Active</Badge>
+              </div>
+              <div className="flex items-center justify-between p-4 bg-dark-50 rounded-xl">
+                <div className="flex items-center gap-4">
+                  <div className="p-2 bg-dark-200 rounded-lg">
+                    <Clock className="w-5 h-5 text-dark-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-dark-800">Mobile App</p>
+                    <p className="text-sm text-dark-500">iOS • Last active 2 hours ago</p>
+                  </div>
+                </div>
+                <button className="text-danger-600 hover:text-danger-700 text-sm font-medium">
+                  Revoke
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -403,115 +475,6 @@ const MyAccount = () => {
         </div>
       )}
 
-      {/* Security Tab */}
-      {activeTab === 'security' && (
-        <div className="space-y-6">
-          {/* Password */}
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary-100 rounded-xl">
-                  <Key className="w-6 h-6 text-primary-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-dark-800">Password</h4>
-                  <p className="text-sm text-dark-500">Last changed 30 days ago</p>
-                </div>
-              </div>
-              <button className="btn-secondary">Change Password</button>
-            </div>
-          </div>
-
-          {/* Two-Factor Authentication */}
-          <div className="card">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-success-100 rounded-xl">
-                  <Shield className="w-6 h-6 text-success-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-dark-800">Two-Factor Authentication</h4>
-                  <p className="text-sm text-dark-500">Add an extra layer of security</p>
-                </div>
-              </div>
-              <button className="btn-primary">Enable 2FA</button>
-            </div>
-          </div>
-
-          {/* Login Sessions */}
-          <div className="card">
-            <h3 className="text-lg font-semibold text-dark-800 mb-4">Active Sessions</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-dark-50 rounded-xl">
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-success-100 rounded-lg">
-                    <CheckCircle className="w-5 h-5 text-success-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-dark-800">Current Session</p>
-                    <p className="text-sm text-dark-500">Chrome on Windows • IP: 192.168.1.1</p>
-                  </div>
-                </div>
-                <Badge variant="success">Active</Badge>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-dark-50 rounded-xl">
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-dark-200 rounded-lg">
-                    <Clock className="w-5 h-5 text-dark-500" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-dark-800">Mobile App</p>
-                    <p className="text-sm text-dark-500">iOS • Last active 2 hours ago</p>
-                  </div>
-                </div>
-                <button className="text-danger-600 hover:text-danger-700 text-sm font-medium">
-                  Revoke
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Email Notifications */}
-          <div className="card">
-            <h3 className="text-lg font-semibold text-dark-800 mb-4">Email Notifications</h3>
-            <div className="space-y-4">
-              {isAdmin && (
-                <div className="flex items-center justify-between p-4 bg-dark-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-dark-800">Billing Alerts</p>
-                    <p className="text-sm text-dark-500">Get notified about payments and invoices</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className="w-11 h-6 bg-dark-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
-                  </label>
-                </div>
-              )}
-              <div className="flex items-center justify-between p-4 bg-dark-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-dark-800">Security Alerts</p>
-                  <p className="text-sm text-dark-500">Get notified about security events</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div className="w-11 h-6 bg-dark-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
-                </label>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-dark-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-dark-800">Appointment Reminders</p>
-                  <p className="text-sm text-dark-500">Get notified about upcoming appointments</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div className="w-11 h-6 bg-dark-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Edit Profile Modal */}
       <Modal
         isOpen={showEditModal}
@@ -523,7 +486,7 @@ const MyAccount = () => {
           <div className="flex justify-center mb-4">
             <div className="relative">
               <Avatar src={user.avatar} name={user.name} size="xl" />
-              <button className="absolute bottom-0 right-0 p-2 bg-primary-500 text-white rounded-full hover:bg-primary-600 transition-colors">
+              <button type="button" className="absolute bottom-0 right-0 p-2 bg-primary-500 text-white rounded-full hover:bg-primary-600 transition-colors">
                 <Edit className="w-4 h-4" />
               </button>
             </div>
@@ -552,6 +515,37 @@ const MyAccount = () => {
             </button>
             <button type="submit" className="flex-1 btn-primary">
               Save Changes
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Change Password Modal */}
+      <Modal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        title="Change Password"
+        size="md"
+      >
+        <form className="space-y-4">
+          <div>
+            <label className="label">Current Password</label>
+            <input type="password" className="input" placeholder="Enter current password" />
+          </div>
+          <div>
+            <label className="label">New Password</label>
+            <input type="password" className="input" placeholder="Enter new password" />
+          </div>
+          <div>
+            <label className="label">Confirm New Password</label>
+            <input type="password" className="input" placeholder="Confirm new password" />
+          </div>
+          <div className="flex gap-3 pt-4">
+            <button type="button" onClick={() => setShowPasswordModal(false)} className="flex-1 btn-secondary">
+              Cancel
+            </button>
+            <button type="submit" className="flex-1 btn-primary">
+              Update Password
             </button>
           </div>
         </form>
