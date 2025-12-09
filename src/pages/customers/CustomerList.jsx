@@ -7,44 +7,63 @@ import {
   Plus,
   Filter,
   Download,
-  MoreVertical,
-  Eye,
-  Edit,
-  Trash,
   Mail,
   Phone,
   Calendar,
-  CreditCard,
-  Activity,
   UserPlus,
+  ChevronRight,
 } from 'lucide-react';
-import { mockMembers, mockTrainers } from '../../data/mockData';
+import { mockMembers, mockTrainers, mockMembershipPlans } from '../../data/mockData';
 
 const CustomerList = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedMember, setSelectedMember] = useState(null);
-  const [showActionMenu, setShowActionMenu] = useState(null);
 
   // Filter members
   const filteredMembers = mockMembers.filter((member) => {
     const matchesSearch =
       member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchQuery.toLowerCase());
+      member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.phone.includes(searchQuery);
     const matchesStatus =
       filterStatus === 'all' || member.membershipStatus === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
-  const handleViewMember = (member) => {
-    setSelectedMember(member);
-    setShowActionMenu(null);
+  const handleViewCustomer = (memberId) => {
+    navigate(`/customers/${memberId}`);
   };
 
   return (
     <Layout title="Customer Management" subtitle="Manage all gym members and their information">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div className="card bg-gradient-to-br from-primary-500 to-primary-600 text-white">
+          <p className="text-primary-100 text-sm">Total Members</p>
+          <p className="text-3xl font-bold mt-1">{mockMembers.length}</p>
+        </div>
+        <div className="card bg-gradient-to-br from-success-500 to-success-600 text-white">
+          <p className="text-success-100 text-sm">Active</p>
+          <p className="text-3xl font-bold mt-1">
+            {mockMembers.filter((m) => m.membershipStatus === 'active').length}
+          </p>
+        </div>
+        <div className="card bg-gradient-to-br from-warning-500 to-warning-600 text-white">
+          <p className="text-warning-100 text-sm">Expiring Soon</p>
+          <p className="text-3xl font-bold mt-1">
+            {mockMembers.filter((m) => m.membershipStatus === 'expiring').length}
+          </p>
+        </div>
+        <div className="card bg-gradient-to-br from-danger-500 to-danger-600 text-white">
+          <p className="text-danger-100 text-sm">Expired</p>
+          <p className="text-3xl font-bold mt-1">
+            {mockMembers.filter((m) => m.membershipStatus === 'expired').length}
+          </p>
+        </div>
+      </div>
+
       {/* Action Bar */}
       <div className="card mb-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -53,7 +72,7 @@ const CustomerList = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
               <input
                 type="text"
-                placeholder="Search members..."
+                placeholder="Search by name, email, or phone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-dark-50 border border-dark-200 rounded-lg focus:bg-white focus:border-primary-500 outline-none transition-colors"
@@ -86,229 +105,105 @@ const CustomerList = () => {
         </div>
       </div>
 
-      {/* Members Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredMembers.map((member) => (
-          <div
-            key={member.id}
-            className="card hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={() => handleViewMember(member)}
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-4">
-                <Avatar
-                  src={member.avatar}
-                  name={member.name}
-                  size="lg"
-                  status={member.membershipStatus === 'active' ? 'online' : 'offline'}
-                />
-                <div>
-                  <h3 className="font-semibold text-dark-800">{member.name}</h3>
-                  <p className="text-sm text-dark-500">{member.membership}</p>
-                </div>
-              </div>
-              <div className="relative">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowActionMenu(showActionMenu === member.id ? null : member.id);
-                  }}
-                  className="p-2 text-dark-400 hover:bg-dark-100 rounded-lg transition-colors"
+      {/* Members List */}
+      <div className="card">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-dark-50">
+                <th className="table-header">Member</th>
+                <th className="table-header">Contact</th>
+                <th className="table-header">Membership</th>
+                <th className="table-header">Trainer</th>
+                <th className="table-header">Status</th>
+                <th className="table-header">Balance</th>
+                <th className="table-header"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-dark-100">
+              {filteredMembers.map((member) => (
+                <tr
+                  key={member.id}
+                  onClick={() => handleViewCustomer(member.id)}
+                  className="hover:bg-dark-50 cursor-pointer transition-colors"
                 >
-                  <MoreVertical className="w-5 h-5" />
-                </button>
-                {showActionMenu === member.id && (
-                  <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-dark-100 py-1 z-10">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/customers/bills?id=${member.id}`);
-                      }}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-dark-600 hover:bg-dark-50"
+                  <td className="table-cell">
+                    <div className="flex items-center gap-3">
+                      <Avatar
+                        src={member.avatar}
+                        name={member.name}
+                        size="md"
+                        status={member.membershipStatus === 'active' ? 'online' : 'offline'}
+                      />
+                      <div>
+                        <p className="font-semibold text-dark-800">{member.name}</p>
+                        <p className="text-xs text-dark-400">
+                          Joined: {member.joinDate}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="table-cell">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm text-dark-600">
+                        <Mail className="w-3.5 h-3.5 text-dark-400" />
+                        {member.email}
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-dark-600">
+                        <Phone className="w-3.5 h-3.5 text-dark-400" />
+                        {member.phone}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="table-cell">
+                    <div>
+                      <p className="font-medium text-dark-800">{member.membership}</p>
+                      <p className="text-xs text-dark-400 flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        Expires: {member.membershipExpiry}
+                      </p>
+                    </div>
+                  </td>
+                  <td className="table-cell">
+                    <span className="text-dark-600">{member.trainer || '-'}</span>
+                  </td>
+                  <td className="table-cell">
+                    <Badge
+                      variant={
+                        member.membershipStatus === 'active'
+                          ? 'success'
+                          : member.membershipStatus === 'expiring'
+                          ? 'warning'
+                          : 'danger'
+                      }
                     >
-                      <CreditCard className="w-4 h-4" />
-                      Bills & Payment
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/customers/progress?id=${member.id}`);
-                      }}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-dark-600 hover:bg-dark-50"
-                    >
-                      <Activity className="w-4 h-4" />
-                      Progress Tracking
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/customers/appointments?id=${member.id}`);
-                      }}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-dark-600 hover:bg-dark-50"
-                    >
-                      <Calendar className="w-4 h-4" />
-                      Appointments
-                    </button>
-                    <hr className="my-1 border-dark-100" />
-                    <button
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-danger-600 hover:bg-danger-50"
-                    >
-                      <Trash className="w-4 h-4" />
-                      Delete
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+                      {member.membershipStatus}
+                    </Badge>
+                  </td>
+                  <td className="table-cell">
+                    {member.balance > 0 ? (
+                      <span className="font-semibold text-danger-600">
+                        ${member.balance}
+                      </span>
+                    ) : (
+                      <span className="text-success-600">Paid</span>
+                    )}
+                  </td>
+                  <td className="table-cell">
+                    <ChevronRight className="w-5 h-5 text-dark-400" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm text-dark-500">
-                <Mail className="w-4 h-4" />
-                {member.email}
-              </div>
-              <div className="flex items-center gap-2 text-sm text-dark-500">
-                <Phone className="w-4 h-4" />
-                {member.phone}
-              </div>
-              <div className="flex items-center gap-2 text-sm text-dark-500">
-                <Calendar className="w-4 h-4" />
-                Expires: {member.membershipExpiry}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-dark-100">
-              <Badge
-                variant={
-                  member.membershipStatus === 'active'
-                    ? 'success'
-                    : member.membershipStatus === 'expiring'
-                    ? 'warning'
-                    : 'danger'
-                }
-              >
-                {member.membershipStatus}
-              </Badge>
-              {member.balance > 0 && (
-                <span className="text-sm font-medium text-danger-600">
-                  Due: ${member.balance}
-                </span>
-              )}
-              {member.trainer && (
-                <span className="text-xs text-dark-400">
-                  Trainer: {member.trainer}
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Member Detail Modal */}
-      <Modal
-        isOpen={!!selectedMember}
-        onClose={() => setSelectedMember(null)}
-        title="Member Details"
-        size="lg"
-      >
-        {selectedMember && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-6 p-4 bg-dark-50 rounded-xl">
-              <Avatar src={selectedMember.avatar} name={selectedMember.name} size="xl" />
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-dark-800">{selectedMember.name}</h3>
-                <p className="text-dark-500">{selectedMember.membership}</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge
-                    variant={
-                      selectedMember.membershipStatus === 'active'
-                        ? 'success'
-                        : selectedMember.membershipStatus === 'expiring'
-                        ? 'warning'
-                        : 'danger'
-                    }
-                    size="lg"
-                  >
-                    {selectedMember.membershipStatus}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-dark-50 rounded-xl">
-                <p className="text-sm text-dark-500 mb-1">Email</p>
-                <p className="font-medium text-dark-800">{selectedMember.email}</p>
-              </div>
-              <div className="p-4 bg-dark-50 rounded-xl">
-                <p className="text-sm text-dark-500 mb-1">Phone</p>
-                <p className="font-medium text-dark-800">{selectedMember.phone}</p>
-              </div>
-              <div className="p-4 bg-dark-50 rounded-xl">
-                <p className="text-sm text-dark-500 mb-1">Join Date</p>
-                <p className="font-medium text-dark-800">{selectedMember.joinDate}</p>
-              </div>
-              <div className="p-4 bg-dark-50 rounded-xl">
-                <p className="text-sm text-dark-500 mb-1">Expiry Date</p>
-                <p className="font-medium text-dark-800">{selectedMember.membershipExpiry}</p>
-              </div>
-              <div className="p-4 bg-dark-50 rounded-xl">
-                <p className="text-sm text-dark-500 mb-1">Assigned Trainer</p>
-                <p className="font-medium text-dark-800">{selectedMember.trainer || 'None'}</p>
-              </div>
-              <div className="p-4 bg-dark-50 rounded-xl">
-                <p className="text-sm text-dark-500 mb-1">Total Visits</p>
-                <p className="font-medium text-dark-800">{selectedMember.totalVisits}</p>
-              </div>
-            </div>
-
-            {selectedMember.balance > 0 && (
-              <div className="p-4 bg-danger-50 rounded-xl border border-danger-100">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-danger-600">Outstanding Balance</p>
-                    <p className="text-2xl font-bold text-danger-700">${selectedMember.balance}</p>
-                  </div>
-                  <button className="btn-danger">Record Payment</button>
-                </div>
-              </div>
-            )}
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setSelectedMember(null);
-                  navigate(`/customers/bills?id=${selectedMember.id}`);
-                }}
-                className="flex-1 btn-secondary flex items-center justify-center gap-2"
-              >
-                <CreditCard className="w-4 h-4" />
-                Bills & Payment
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedMember(null);
-                  navigate(`/customers/progress?id=${selectedMember.id}`);
-                }}
-                className="flex-1 btn-secondary flex items-center justify-center gap-2"
-              >
-                <Activity className="w-4 h-4" />
-                Progress
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedMember(null);
-                  navigate(`/customers/appointments?id=${selectedMember.id}`);
-                }}
-                className="flex-1 btn-primary flex items-center justify-center gap-2"
-              >
-                <Calendar className="w-4 h-4" />
-                Appointments
-              </button>
-            </div>
+        {filteredMembers.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-dark-400">No customers found matching your criteria</p>
           </div>
         )}
-      </Modal>
+      </div>
 
       {/* Add Member Modal */}
       <Modal
@@ -339,18 +234,18 @@ const CustomerList = () => {
           <div>
             <label className="label">Membership Plan</label>
             <select className="input">
-              <option>Select a plan</option>
-              <option>Basic Monthly - $49.99</option>
-              <option>Premium Monthly - $89.99</option>
-              <option>Quarterly - $199.99</option>
-              <option>Premium Annual - $799.99</option>
-              <option>Personal Training Package - $299.99</option>
+              <option value="">Select a plan</option>
+              {mockMembershipPlans.map((plan) => (
+                <option key={plan.id} value={plan.id}>
+                  {plan.name} - ${plan.price}
+                </option>
+              ))}
             </select>
           </div>
           <div>
             <label className="label">Assign Trainer (Optional)</label>
             <select className="input">
-              <option>No trainer</option>
+              <option value="">No trainer</option>
               {mockTrainers.map((trainer) => (
                 <option key={trainer.id} value={trainer.id}>
                   {trainer.name} - {trainer.specialization}
