@@ -7,8 +7,9 @@ import {
   Download,
   Edit,
   Trash,
-  Receipt,
-  Upload,
+  XCircle,
+  // Receipt,
+  // Upload,
 } from 'lucide-react';
 import { expenseService } from '../services/expenseService';
 import { expenseCategoryService } from '../services/expenseCategoryService';
@@ -197,14 +198,6 @@ const Expenses = () => {
   };
 
   const handleDeleteExpense = async (expenseId) => {
-    // Find the expense to check its status
-    const expense = transformedExpenses.find(exp => exp.id === expenseId);
-    
-    if (expense && expense.status === EXPENSE_STATUS.POSTED) {
-      Alert.warning('Cannot Delete', 'Posted expenses cannot be deleted.');
-      return;
-    }
-
     const result = await Alert.confirmDelete();
 
     if (!result.isConfirmed) {
@@ -224,10 +217,39 @@ const Expenses = () => {
     }
   };
 
-  const handleUploadReceipt = (expenseId) => {
-    // Handle receipt upload logic here
-    console.log('Upload receipt for expense:', expenseId);
+  const handleVoidExpense = async (expenseId) => {
+    const result = await Alert.confirm({
+      title: 'Void Expense?',
+      text: 'Are you sure you want to void this posted expense? This action cannot be undone.',
+      icon: 'warning',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, void it!',
+      cancelButtonText: 'Cancel',
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      await expenseService.delete(expenseId);
+      Alert.success('Voided!', 'Expense has been voided.', {
+        timer: 2000,
+        showConfirmButton: false
+      });
+      fetchExpenses();
+    } catch (error) {
+      console.error('Error voiding expense:', error);
+      Alert.error('Error!', error.message || 'Failed to void expense');
+    }
   };
+
+  // TODO: Uncomment when receipt storage is implemented
+  // const handleUploadReceipt = (expenseId) => {
+  //   // Handle receipt upload logic here
+  //   console.log('Upload receipt for expense:', expenseId);
+  // };
 
   if (loading) {
     return (
@@ -288,7 +310,8 @@ const Expenses = () => {
                 <th className="table-header">Description</th>
                 <th className="table-header">Amount</th>
                 <th className="table-header">Status</th>
-                <th className="table-header">Receipt</th>
+                {/* TODO: Uncomment when receipt storage is implemented */}
+                {/* <th className="table-header">Receipt</th> */}
                 <th className="table-header">Actions</th>
               </tr>
             </thead>
@@ -314,7 +337,8 @@ const Expenses = () => {
                         {EXPENSE_STATUS_LABELS[expense.status] || expense.status}
                       </Badge>
                     </td>
-                    <td className="table-cell">
+                    {/* TODO: Uncomment when receipt storage is implemented */}
+                    {/* <td className="table-cell">
                       {expense.receipt ? (
                         <button className="flex items-center gap-1 text-primary-600 hover:text-primary-700 text-sm">
                           <Receipt className="w-4 h-4" />
@@ -329,7 +353,7 @@ const Expenses = () => {
                           Upload
                         </button>
                       )}
-                    </td>
+                    </td> */}
                     <td className="table-cell">
                       <div className="flex items-center gap-2">
                         <button
@@ -344,18 +368,23 @@ const Expenses = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={() => handleDeleteExpense(expense.id)}
-                          disabled={isPosted}
-                          className={`p-2 rounded-lg transition-colors ${
-                            isPosted
-                              ? 'text-dark-200 cursor-not-allowed opacity-50'
-                              : 'text-dark-400 hover:text-danger-600 hover:bg-danger-50'
-                          }`}
-                          title={isPosted ? 'Cannot delete posted expense' : 'Delete expense'}
-                        >
-                          <Trash className="w-4 h-4" />
-                        </button>
+                        {isPosted ? (
+                          <button
+                            onClick={() => handleVoidExpense(expense.id)}
+                            className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+                            title="Void expense"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleDeleteExpense(expense.id)}
+                            className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+                            title="Delete expense"
+                          >
+                            <Trash className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -457,14 +486,15 @@ const Expenses = () => {
             </div>
           </div>
 
-          <div>
+          {/* TODO: Uncomment when receipt storage is implemented */}
+          {/* <div>
             <label className="label">Upload Receipt (Optional)</label>
             <div className="border-2 border-dashed border-dark-200 rounded-xl p-6 text-center hover:border-primary-500 transition-colors cursor-pointer">
               <Upload className="w-8 h-8 text-dark-300 mx-auto mb-2" />
               <p className="text-sm text-dark-500">Click to upload receipt</p>
               <p className="text-xs text-dark-400 mt-1">PNG, JPG, PDF up to 10MB</p>
             </div>
-          </div>
+          </div> */}
 
           <div className="flex gap-3 pt-4">
             <button
