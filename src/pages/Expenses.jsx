@@ -1,4 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import Layout from '../components/layout/Layout';
 import { Badge, Modal } from '../components/common';
 import {
@@ -11,20 +13,22 @@ import {
   // Receipt,
   // Upload,
 } from 'lucide-react';
-import { expenseService } from '../services/expenseService';
-import { expenseCategoryService } from '../services/expenseCategoryService';
-import { Alert, Toast } from '../utils/alert';
+import { Alert } from '../utils/alert';
 import { EXPENSE_STATUS, EXPENSE_STATUS_LABELS, EXPENSE_STATUS_VARIANTS } from '../constants/expenseConstants';
+import { 
+  useExpenses, 
+  useExpenseCategories, 
+  useCreateExpense, 
+  useUpdateExpense, 
+  useDeleteExpense 
+} from '../hooks/useExpenses';
+import { formatDate, formatDateForInput, formatCurrency } from '../utils/formatters';
 
 const Expenses = () => {
-  const [expenses, setExpenses] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -35,55 +39,14 @@ const Expenses = () => {
     status: 'POSTED',
   });
 
-  // Fetch expenses and categories on component mount
-  useEffect(() => {
-    fetchExpenses();
-    fetchCategories();
-  }, []);
+  // React Query hooks
+  const { data: expenses = [], isLoading: loading } = useExpenses();
+  const { data: categories = [] } = useExpenseCategories();
+  const createMutation = useCreateExpense();
+  const updateMutation = useUpdateExpense();
+  const deleteMutation = useDeleteExpense();
 
-  const fetchCategories = async () => {
-    try {
-      const data = await expenseCategoryService.getAll();
-      setCategories(data || []);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      Toast.error(`Failed to load categories: ${error.message}`);
-    }
-  };
-
-  const fetchExpenses = async () => {
-    try {
-      setLoading(true);
-      const data = await expenseService.getAll();
-      setExpenses(data || []);
-    } catch (error) {
-      console.error('Error fetching expenses:', error);
-      Toast.error(`Failed to load expenses: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Format date to human readable format
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  // Format date to YYYY-MM-DD for date input field
-  const formatDateForInput = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+  const isSubmitting = createMutation.isLoading || updateMutation.isLoading;
 
   // Transform API data to component format
   const transformedExpenses = useMemo(() => {
@@ -166,34 +129,28 @@ const Expenses = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
+
+    const expenseData = {
+      categoryId: parseInt(formData.categoryId),
+      description: formData.description,
+      amount: parseFloat(formData.amount),
+      expenseDate: formData.expenseDate,
+      status: formData.status,
+    };
 
     try {
-      const expenseData = {
-        categoryId: parseInt(formData.categoryId),
-        description: formData.description,
-        amount: parseFloat(formData.amount),
-        expenseDate: formData.expenseDate,
-        status: formData.status,
-      };
-
       if (selectedExpense) {
         // Update existing expense
-        await expenseService.update(selectedExpense.id, expenseData);
-        Toast.success('Expense updated successfully');
+        await updateMutation.mutateAsync({ id: selectedExpense.id, data: expenseData });
       } else {
         // Create new expense
-        await expenseService.create(expenseData);
-        Toast.success('Expense created successfully');
+        await createMutation.mutateAsync(expenseData);
       }
 
       handleCloseModal();
-      fetchExpenses();
     } catch (error) {
+      // Error already handled in mutation hooks
       console.error('Error saving expense:', error);
-      Toast.error(error.message || 'Failed to save expense');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -205,15 +162,15 @@ const Expenses = () => {
     }
 
     try {
-      await expenseService.delete(expenseId);
+      await deleteMutation.mutateAsync(expenseId);
       Alert.success('Deleted!', 'Expense has been deleted.', {
         timer: 2000,
         showConfirmButton: false
       });
-      fetchExpenses();
+      // React Query automatically invalidates and refetches
     } catch (error) {
+      // Error already handled in mutation hook
       console.error('Error deleting expense:', error);
-      Alert.error('Error!', error.message || 'Failed to delete expense');
     }
   };
 
@@ -233,15 +190,15 @@ const Expenses = () => {
     }
 
     try {
-      await expenseService.delete(expenseId);
+      await deleteMutation.mutateAsync(expenseId);
       Alert.success('Voided!', 'Expense has been voided.', {
         timer: 2000,
         showConfirmButton: false
       });
-      fetchExpenses();
+      // React Query automatically invalidates and refetches
     } catch (error) {
+      // Error already handled in mutation hook
       console.error('Error voiding expense:', error);
-      Alert.error('Error!', error.message || 'Failed to void expense');
     }
   };
 
@@ -327,7 +284,7 @@ const Expenses = () => {
                     <td className="table-cell font-medium">{expense.description}</td>
                     <td className="table-cell">
                       <span className="font-semibold text-dark-800">
-                        ₱{expense.amount.toLocaleString()}
+                        {formatCurrency(expense.amount)}
                       </span>
                     </td>
                     <td className="table-cell">
@@ -448,12 +405,25 @@ const Expenses = () => {
             </div>
             <div>
               <label className="label">Date</label>
-              <input
-                type="date"
-                className="input"
-                value={formData.expenseDate}
-                onChange={(e) => setFormData({ ...formData, expenseDate: e.target.value })}
-                required
+              <DatePicker
+                selected={formData.expenseDate ? new Date(formData.expenseDate) : null}
+                onChange={(date) => {
+                  const dateString = date ? date.toISOString().split('T')[0] : '';
+                  setFormData({ ...formData, expenseDate: dateString });
+                }}
+                dateFormat="yyyy-MM-dd"
+                placeholderText="Click to select date"
+                className="input w-full"
+                showYearDropdown
+                showMonthDropdown
+                dropdownMode="select"
+                maxDate={new Date()}
+                isClearable
+                onKeyDown={(e) => {
+                  if (e && e.key && e.key !== 'Tab' && e.key !== 'Escape') {
+                    e.preventDefault();
+                  }
+                }}
               />
             </div>
           </div>

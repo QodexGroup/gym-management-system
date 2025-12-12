@@ -11,15 +11,18 @@ import {
   DollarSign,
   Award,
 } from 'lucide-react';
-import { membershipPlanService } from '../services/membershipPlanService';
-import { Alert, Toast } from '../utils/alert';
+import { Alert } from '../utils/alert';
+import { 
+  useMembershipPlans, 
+  useCreateMembershipPlan, 
+  useUpdateMembershipPlan, 
+  useDeleteMembershipPlan 
+} from '../hooks/useMembershipPlans';
+import { formatCurrency } from '../utils/formatters';
 
 const MembershipPlans = () => {
-  const [plans, setPlans] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -30,23 +33,13 @@ const MembershipPlans = () => {
     features: '',
   });
 
-  // Fetch plans on component mount
-  useEffect(() => {
-    fetchPlans();
-  }, []);
+  // React Query hooks
+  const { data: plans = [], isLoading: loading } = useMembershipPlans();
+  const createMutation = useCreateMembershipPlan();
+  const updateMutation = useUpdateMembershipPlan();
+  const deleteMutation = useDeleteMembershipPlan();
 
-  const fetchPlans = async () => {
-    try {
-      setLoading(true);
-      const data = await membershipPlanService.getAll();
-      setPlans(data || []);
-    } catch (error) {
-      console.error('Error fetching plans:', error);
-      Toast.error(`Failed to load membership plans: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const isSubmitting = createMutation.isLoading || updateMutation.isLoading;
 
   // Transform API data to component format
   const transformPlan = (apiPlan) => {
@@ -66,7 +59,7 @@ const MembershipPlans = () => {
       durationUnit: intervalMap[apiPlan.planInterval] || apiPlan.planInterval,
       features: Array.isArray(apiPlan.features) ? apiPlan.features : [],
       popular: false, // This field doesn't exist in API, can be added later
-      activeMembers: 0, // This field doesn't exist in API, can be added later
+      activeMembers: apiPlan.activeMembersCount || 0, // Real data from API
     };
   };
 
@@ -77,6 +70,13 @@ const MembershipPlans = () => {
     (sum, plan) => sum + plan.price * plan.activeMembers,
     0
   );
+  
+  // Find the most popular plan (plan with the most active members)
+  const mostPopularPlan = transformedPlans.length > 0
+    ? transformedPlans.reduce((prev, current) => 
+        (prev.activeMembers > current.activeMembers) ? prev : current
+      )
+    : null;
 
   const handleOpenModal = (plan = null) => {
     if (plan) {
@@ -119,40 +119,37 @@ const MembershipPlans = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
+
+    // Convert features string to array, ensure it's always an array (even if empty)
+    const featuresArray = formData.features
+      ? formData.features
+          .split('\n')
+          .map(f => f.trim())
+          .filter(f => f.length > 0)
+      : [];
+
+    const planData = {
+      planName: formData.planName,
+      price: parseFloat(formData.price),
+      planPeriod: parseInt(formData.planPeriod),
+      planInterval: formData.planInterval,
+      features: featuresArray.length > 0 ? featuresArray : [], // Always send as array, even if empty
+    };
 
     try {
-      // Convert features string to array
-      const featuresArray = formData.features
-        .split('\n')
-        .map(f => f.trim())
-        .filter(f => f.length > 0);
-
-      const planData = {
-        planName: formData.planName,
-        price: parseFloat(formData.price),
-        planPeriod: parseInt(formData.planPeriod),
-        planInterval: formData.planInterval,
-        features: featuresArray,
-      };
-
       if (selectedPlan) {
         // Update existing plan
-        await membershipPlanService.update(selectedPlan.id, planData);
-        Toast.success('Membership plan updated successfully');
+        await updateMutation.mutateAsync({ id: selectedPlan.id, data: planData });
       } else {
         // Create new plan
-        await membershipPlanService.create(planData);
-        Toast.success('Membership plan created successfully');
+        await createMutation.mutateAsync(planData);
       }
 
       handleCloseModal();
-      fetchPlans();
+      // React Query automatically invalidates and refetches
     } catch (error) {
+      // Error already handled in mutation hooks
       console.error('Error saving plan:', error);
-      Toast.error(error.message || 'Failed to save membership plan');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -164,15 +161,15 @@ const MembershipPlans = () => {
     }
 
     try {
-      await membershipPlanService.delete(planId);
+      await deleteMutation.mutateAsync(planId);
       Alert.success('Deleted!', 'Membership plan has been deleted.', {
         timer: 2000,
         showConfirmButton: false
       });
-      fetchPlans();
+      // React Query automatically invalidates and refetches
     } catch (error) {
+      // Error already handled in mutation hook
       console.error('Error deleting plan:', error);
-      Alert.error('Error!', error.message || 'Failed to delete membership plan');
     }
   };
 
@@ -216,7 +213,7 @@ const MembershipPlans = () => {
             <div>
               <p className="text-accent-100 text-sm">Est. Monthly Revenue</p>
               <p className="text-3xl font-bold mt-1">
-                ₱{monthlyRevenue.toLocaleString()}
+                {formatCurrency(monthlyRevenue)}
               </p>
             </div>
             <DollarSign className="w-10 h-10 text-accent-200" />
@@ -227,7 +224,9 @@ const MembershipPlans = () => {
             <div>
               <p className="text-warning-100 text-sm">Most Popular</p>
               <p className="text-xl font-bold mt-1">
-                {transformedPlans.find(p => p.popular)?.name || 'N/A'}
+                {mostPopularPlan && mostPopularPlan.activeMembers > 0
+                  ? `${mostPopularPlan.name}`
+                  : 'N/A'}
               </p>
             </div>
             <Star className="w-10 h-10 text-warning-200" />
@@ -265,7 +264,7 @@ const MembershipPlans = () => {
               <h3 className="text-xl font-bold text-dark-800">{plan.name}</h3>
               <div className="flex items-baseline gap-1 mt-2">
                 <span className="text-4xl font-bold text-primary-600">
-                  ₱{plan.price}
+                  {formatCurrency(plan.price)}
                 </span>
                 <span className="text-dark-500">
                   / {plan.duration} {plan.durationUnit}
@@ -384,7 +383,7 @@ const MembershipPlans = () => {
             />
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-4 pb-2">
             <button
               type="button"
               onClick={handleCloseModal}

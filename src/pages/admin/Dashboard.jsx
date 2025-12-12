@@ -14,6 +14,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from 'lucide-react';
+import { formatCurrency } from '../../utils/formatters';
 import {
   mockDashboardStats,
   mockRevenueData,
@@ -83,13 +84,13 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <StatCard
           title="Today's Revenue"
-          value={`$${stats.todayRevenue.toLocaleString()}`}
+          value={formatCurrency(stats.todayRevenue)}
           icon={DollarSign}
           color="success"
         />
         <StatCard
           title="Monthly Revenue"
-          value={`$${stats.monthlyRevenue.toLocaleString()}`}
+          value={formatCurrency(stats.monthlyRevenue)}
           icon={TrendingUp}
           trend="up"
           trendValue="+15%"
@@ -97,7 +98,7 @@ const AdminDashboard = () => {
         />
         <StatCard
           title="Monthly Expenses"
-          value={`$${stats.monthlyExpenses.toLocaleString()}`}
+          value={formatCurrency(stats.monthlyExpenses)}
           icon={CreditCard}
           color="danger"
         />

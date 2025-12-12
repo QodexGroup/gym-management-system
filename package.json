@@ -10,9 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.12",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.556.0",
     "react": "^19.2.0",
+    "react-datepicker": "^9.0.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.10.1",
     "react-toastify": "^11.0.5",

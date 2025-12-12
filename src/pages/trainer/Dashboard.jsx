@@ -11,6 +11,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { mockMembers, mockAppointments, mockCheckIns } from '../../data/mockData';
+import { formatCurrency } from '../../utils/formatters';
 import {
   LineChart,
   Line,
@@ -81,7 +82,7 @@ const TrainerDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <StatCard
           title="Monthly Commission"
-          value={`$${trainerStats.monthlyCommission.toLocaleString()}`}
+          value={formatCurrency(trainerStats.monthlyCommission)}
           icon={DollarSign}
           trend="up"
           trendValue="+12%"

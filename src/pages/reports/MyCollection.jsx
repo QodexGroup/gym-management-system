@@ -9,6 +9,7 @@ import {
   Award,
   ArrowUpRight,
 } from 'lucide-react';
+import { formatCurrency } from '../../utils/formatters';
 import {
   BarChart,
   Bar,
@@ -74,7 +75,7 @@ const MyCollection = () => {
             <div>
               <p className="text-success-100 text-sm">Total Earnings</p>
               <p className="text-3xl font-bold mt-1">
-                ${trainerStats.totalEarnings.toLocaleString()}
+                {formatCurrency(trainerStats.totalEarnings)}
               </p>
               <p className="text-success-100 text-xs mt-2 flex items-center gap-1">
                 <ArrowUpRight className="w-4 h-4" />
@@ -113,7 +114,7 @@ const MyCollection = () => {
               <p className="text-warning-100 text-sm">Target Progress</p>
               <p className="text-3xl font-bold mt-1">{trainerStats.targetProgress}%</p>
               <p className="text-warning-100 text-xs mt-2">
-                ${trainerStats.monthlyTarget - trainerStats.totalEarnings} to go
+                {formatCurrency(trainerStats.monthlyTarget - trainerStats.totalEarnings)} to go
               </p>
             </div>
             <Target className="w-12 h-12 text-warning-200" />
@@ -126,7 +127,7 @@ const MyCollection = () => {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-dark-800">Monthly Target Progress</h3>
           <span className="text-sm text-dark-500">
-            ${trainerStats.totalEarnings} / ${trainerStats.monthlyTarget}
+            {formatCurrency(trainerStats.totalEarnings)} / {formatCurrency(trainerStats.monthlyTarget)}
           </span>
         </div>
         <div className="h-4 bg-dark-200 rounded-full overflow-hidden">
@@ -140,7 +141,7 @@ const MyCollection = () => {
           <span className="text-success-600 font-medium">
             {trainerStats.targetProgress}% achieved
           </span>
-          <span>${trainerStats.monthlyTarget}</span>
+          <span>{formatCurrency(trainerStats.monthlyTarget)}</span>
         </div>
       </div>
 
@@ -201,7 +202,7 @@ const MyCollection = () => {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => `$${value}`} />
+                <Tooltip formatter={(value) => formatCurrency(value)} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -213,7 +214,7 @@ const MyCollection = () => {
                   style={{ backgroundColor: item.color }}
                 />
                 <span className="text-sm text-dark-600">{item.name}</span>
-                <span className="text-sm font-medium text-dark-800">${item.value}</span>
+                <span className="text-sm font-medium text-dark-800">{formatCurrency(item.value)}</span>
               </div>
             ))}
           </div>
@@ -232,7 +233,7 @@ const MyCollection = () => {
               <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
               <YAxis stroke="#64748b" fontSize={12} />
               <Tooltip
-                formatter={(value) => `$${value.toLocaleString()}`}
+                formatter={(value) => formatCurrency(value)}
                 contentStyle={{
                   background: '#fff',
                   border: '1px solid #e2e8f0',
@@ -282,7 +283,7 @@ const MyCollection = () => {
                     <Badge variant="primary">{session.type}</Badge>
                   </td>
                   <td className="table-cell font-semibold text-success-600">
-                    +${session.amount}
+                    +{formatCurrency(session.amount)}
                   </td>
                 </tr>
               ))}

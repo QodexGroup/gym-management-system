@@ -12,6 +12,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from 'lucide-react';
+import { formatCurrency } from '../../utils/formatters';
 import {
   BarChart,
   Bar,
@@ -134,7 +135,7 @@ const SummaryReport = () => {
             <div>
               <p className="text-success-100 text-sm">Total Revenue</p>
               <p className="text-3xl font-bold mt-1">
-                ${totalRevenue.toLocaleString()}
+                {formatCurrency(totalRevenue)}
               </p>
               <p className="text-success-100 text-xs mt-2">This month</p>
             </div>
@@ -147,7 +148,7 @@ const SummaryReport = () => {
             <div>
               <p className="text-danger-100 text-sm">Total Expenses</p>
               <p className="text-3xl font-bold mt-1">
-                ${totalExpenses.toLocaleString()}
+                {formatCurrency(totalExpenses)}
               </p>
               <p className="text-danger-100 text-xs mt-2 flex items-center gap-1">
                 <ArrowUpRight className="w-4 h-4" />
@@ -163,7 +164,7 @@ const SummaryReport = () => {
             <div>
               <p className="text-primary-100 text-sm">Net Profit</p>
               <p className="text-3xl font-bold mt-1">
-                ${netProfit.toLocaleString()}
+                {formatCurrency(netProfit)}
               </p>
               <p className="text-primary-100 text-xs mt-2 flex items-center gap-1">
                 {netProfit > 0 ? (
@@ -204,7 +205,7 @@ const SummaryReport = () => {
                 <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
                 <YAxis stroke="#64748b" fontSize={12} />
                 <Tooltip
-                  formatter={(value) => `$${value.toLocaleString()}`}
+                  formatter={(value) => formatCurrency(value)}
                   contentStyle={{
                     background: '#fff',
                     border: '1px solid #e2e8f0',
@@ -265,7 +266,7 @@ const SummaryReport = () => {
                     />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                <Tooltip formatter={(value) => formatCurrency(value)} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -286,7 +287,7 @@ const SummaryReport = () => {
                 <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
                 <YAxis stroke="#64748b" fontSize={12} />
                 <Tooltip
-                  formatter={(value) => `$${value.toLocaleString()}`}
+                  formatter={(value) => formatCurrency(value)}
                   contentStyle={{
                     background: '#fff',
                     border: '1px solid #e2e8f0',
@@ -333,7 +334,7 @@ const SummaryReport = () => {
                   width={80}
                 />
                 <Tooltip
-                  formatter={(value) => `$${value.toLocaleString()}`}
+                  formatter={(value) => formatCurrency(value)}
                   contentStyle={{
                     background: '#fff',
                     border: '1px solid #e2e8f0',
@@ -378,7 +379,7 @@ const SummaryReport = () => {
                   <span className="text-sm text-dark-500">{percentage}%</span>
                 </div>
                 <p className="text-2xl font-bold text-dark-800">
-                  ${cat.value.toLocaleString()}
+                  {formatCurrency(cat.value)}
                 </p>
                 <div className="mt-2 bg-dark-200 rounded-full h-2 overflow-hidden">
                   <div

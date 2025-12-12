@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AlertProvider from './components/AlertProvider';
+import { queryClient } from './lib/queryClient';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -32,9 +34,10 @@ const Dashboard = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <AlertProvider>
-        <Router>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AlertProvider>
+          <Router>
           <Routes>
             {/* Dashboard */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -77,9 +80,10 @@ function App() {
             {/* Catch all - redirect to dashboard */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
-        </Router>
-      </AlertProvider>
-    </AuthProvider>
+          </Router>
+        </AlertProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

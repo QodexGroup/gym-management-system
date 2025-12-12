@@ -12,6 +12,7 @@ import {
   Filter,
   Printer,
 } from 'lucide-react';
+import { formatCurrency } from '../../utils/formatters';
 import {
   BarChart,
   Bar,
@@ -138,7 +139,7 @@ const CollectionReport = () => {
             <div>
               <p className="text-success-100 text-sm">Total Collected</p>
               <p className="text-3xl font-bold mt-1">
-                ${totalCollected.toLocaleString()}
+                {formatCurrency(totalCollected)}
               </p>
               <p className="text-success-100 text-xs mt-2 flex items-center gap-1">
                 <TrendingUp className="w-4 h-4" />
@@ -165,7 +166,7 @@ const CollectionReport = () => {
             <div>
               <p className="text-accent-100 text-sm">Average Transaction</p>
               <p className="text-3xl font-bold mt-1">
-                ${averageTransaction.toFixed(2)}
+                {formatCurrency(averageTransaction)}
               </p>
               <p className="text-accent-100 text-xs mt-2">Per payment</p>
             </div>
@@ -178,7 +179,7 @@ const CollectionReport = () => {
             <div>
               <p className="text-warning-100 text-sm">Pending Amount</p>
               <p className="text-3xl font-bold mt-1">
-                ${pendingAmount.toLocaleString()}
+                {formatCurrency(pendingAmount)}
               </p>
               <p className="text-warning-100 text-xs mt-2">Awaiting confirmation</p>
             </div>
@@ -201,7 +202,7 @@ const CollectionReport = () => {
                 <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
                 <YAxis stroke="#64748b" fontSize={12} />
                 <Tooltip
-                  formatter={(value) => `$${value.toLocaleString()}`}
+                  formatter={(value) => formatCurrency(value)}
                   contentStyle={{
                     background: '#fff',
                     border: '1px solid #e2e8f0',
@@ -246,7 +247,7 @@ const CollectionReport = () => {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                <Tooltip formatter={(value) => formatCurrency(value)} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -278,7 +279,7 @@ const CollectionReport = () => {
                 <XAxis dataKey="day" stroke="#64748b" fontSize={12} />
                 <YAxis stroke="#64748b" fontSize={12} />
                 <Tooltip
-                  formatter={(value) => `$${value.toLocaleString()}`}
+                  formatter={(value) => formatCurrency(value)}
                   contentStyle={{
                     background: '#fff',
                     border: '1px solid #e2e8f0',
@@ -309,7 +310,7 @@ const CollectionReport = () => {
                   width={100}
                 />
                 <Tooltip
-                  formatter={(value) => `$${value.toLocaleString()}`}
+                  formatter={(value) => formatCurrency(value)}
                   contentStyle={{
                     background: '#fff',
                     border: '1px solid #e2e8f0',
@@ -363,7 +364,7 @@ const CollectionReport = () => {
                     </div>
                   </td>
                   <td className="table-cell font-semibold text-dark-800">
-                    ${payment.amount.toFixed(2)}
+                    {formatCurrency(payment.amount)}
                   </td>
                   <td className="table-cell">
                     <Badge
