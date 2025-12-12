@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import { Badge, Modal } from '../components/common';
 import {
