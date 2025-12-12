@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import AlertProvider from './components/AlertProvider';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -16,6 +17,7 @@ import Expenses from './pages/Expenses';
 import Calendar from './pages/Calendar';
 import CollectionReport from './pages/reports/CollectionReport';
 import ExpenseReport from './pages/reports/ExpenseReport';
+import SummaryReport from './pages/reports/SummaryReport';
 import MyCollection from './pages/reports/MyCollection';
 import UserManagement from './pages/UserManagement';
 import Notifications from './pages/Notifications';
@@ -31,49 +33,52 @@ const Dashboard = () => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Dashboard */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+      <AlertProvider>
+        <Router>
+          <Routes>
+            {/* Dashboard */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
 
-          {/* Check-In System */}
-          <Route path="/check-in" element={<CheckIn />} />
+            {/* Check-In System */}
+            <Route path="/check-in" element={<CheckIn />} />
 
-          {/* Customer Management */}
-          <Route path="/customers" element={<CustomerList />} />
-          <Route path="/customers/:id" element={<CustomerProfile />} />
+            {/* Customer Management */}
+            <Route path="/customers" element={<CustomerList />} />
+            <Route path="/customers/:id" element={<CustomerProfile />} />
 
-          {/* Membership Plans (Admin Only) */}
-          <Route path="/membership-plans" element={<MembershipPlans />} />
+            {/* Membership Plans (Admin Only) */}
+            <Route path="/membership-plans" element={<MembershipPlans />} />
 
-          {/* Expenses (Admin Only) */}
-          <Route path="/expenses" element={<Expenses />} />
+            {/* Expenses (Admin Only) */}
+            <Route path="/expenses" element={<Expenses />} />
 
-          {/* Calendar */}
-          <Route path="/calendar" element={<Calendar />} />
+            {/* Calendar */}
+            <Route path="/calendar" element={<Calendar />} />
 
-          {/* Reports */}
-          <Route path="/reports/collection" element={<CollectionReport />} />
-          <Route path="/reports/expense" element={<ExpenseReport />} />
-          <Route path="/reports/my-collection" element={<MyCollection />} />
+            {/* Reports */}
+            <Route path="/reports/summary" element={<SummaryReport />} />
+            <Route path="/reports/collection" element={<CollectionReport />} />
+            <Route path="/reports/expense" element={<ExpenseReport />} />
+            <Route path="/reports/my-collection" element={<MyCollection />} />
 
-          {/* User Management (Admin Only) */}
-          <Route path="/users" element={<UserManagement />} />
+            {/* User Management (Admin Only) */}
+            <Route path="/users" element={<UserManagement />} />
 
-          {/* Notifications */}
-          <Route path="/notifications" element={<Notifications />} />
+            {/* Notifications */}
+            <Route path="/notifications" element={<Notifications />} />
 
-          {/* My Account */}
-          <Route path="/my-account" element={<MyAccount />} />
+            {/* My Account */}
+            <Route path="/my-account" element={<MyAccount />} />
 
-          {/* Settings */}
-          <Route path="/settings" element={<Settings />} />
+            {/* Settings */}
+            <Route path="/settings" element={<Settings />} />
 
-          {/* Catch all - redirect to dashboard */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </Router>
+            {/* Catch all - redirect to dashboard */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </Router>
+      </AlertProvider>
     </AuthProvider>
   );
 }

@@ -98,3 +98,52 @@
     @apply bg-dark-300 rounded-full hover:bg-dark-400;
   }
 }
+
+/* SweetAlert2 Button Styling Fix - Must be outside Tailwind layers */
+/* Maximum specificity - using html body prefix */
+html body .swal2-popup .swal2-actions button.swal2-confirm,
+html body .swal2-popup .swal2-actions button.swal2-cancel,
+html body .swal2-popup .swal2-actions button.swal2-deny,
+html body button.swal2-confirm,
+html body button.swal2-cancel,
+html body button.swal2-deny {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: inline-block !important;
+}
+
+html body .swal2-popup .swal2-confirm {
+  background-color: #3085d6 !important;
+  color: #ffffff !important;
+}
+
+html body .swal2-popup .swal2-cancel {
+  background-color: #d33 !important;
+  color: #ffffff !important;
+}
+
+/* Force white on ALL child elements including text nodes */
+html body .swal2-popup .swal2-confirm *,
+html body .swal2-popup .swal2-cancel *,
+html body .swal2-popup .swal2-deny * {
+  color: #ffffff !important;
+}
+
+/* Ensure the actions container is visible */
+html body .swal2-popup .swal2-actions {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+html body .swal2-popup .swal2-actions button {
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: #ffffff !important;
+}
+
+/* Hide the deny button if it exists */
+html body .swal2-popup .swal2-deny {
+  display: none !important;
+}

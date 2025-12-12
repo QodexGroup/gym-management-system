@@ -1,65 +1,120 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Layout from '../components/layout/Layout';
 import { Badge, Modal } from '../components/common';
 import {
   Plus,
   Search,
-  Filter,
   Download,
   Edit,
   Trash,
-  Receipt,
-  Upload,
-  DollarSign,
-  TrendingUp,
-  PieChart,
-  Calendar,
+  XCircle,
+  // Receipt,
+  // Upload,
 } from 'lucide-react';
-import {
-  PieChart as RechartPie,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-} from 'recharts';
-import { mockExpenses, expenseCategories } from '../data/mockData';
+import { expenseService } from '../services/expenseService';
+import { expenseCategoryService } from '../services/expenseCategoryService';
+import { Alert, Toast } from '../utils/alert';
+import { EXPENSE_STATUS, EXPENSE_STATUS_LABELS, EXPENSE_STATUS_VARIANTS } from '../constants/expenseConstants';
 
 const Expenses = () => {
-  const [expenses, setExpenses] = useState(mockExpenses);
+  const [expenses, setExpenses] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Calculate totals
-  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-  const paidExpenses = expenses
-    .filter((exp) => exp.status === 'paid')
-    .reduce((sum, exp) => sum + exp.amount, 0);
-  const pendingExpenses = expenses
-    .filter((exp) => exp.status === 'pending')
-    .reduce((sum, exp) => sum + exp.amount, 0);
+  // Form state
+  const [formData, setFormData] = useState({
+    categoryId: '',
+    description: '',
+    amount: '',
+    expenseDate: '',
+    status: 'POSTED',
+  });
 
-  // Expense by category
-  const expenseByCategory = expenseCategories.map((cat) => ({
-    name: cat,
-    value: expenses
-      .filter((exp) => exp.category === cat)
-      .reduce((sum, exp) => sum + exp.amount, 0),
-  })).filter((cat) => cat.value > 0);
+  // Fetch expenses and categories on component mount
+  useEffect(() => {
+    fetchExpenses();
+    fetchCategories();
+  }, []);
 
-  const categoryColors = [
-    '#0ea5e9', '#8b5cf6', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16', '#6366f1'
-  ];
+  const fetchCategories = async () => {
+    try {
+      const data = await expenseCategoryService.getAll();
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      Toast.error(`Failed to load categories: ${error.message}`);
+    }
+  };
+
+  const fetchExpenses = async () => {
+    try {
+      setLoading(true);
+      const data = await expenseService.getAll();
+      setExpenses(data || []);
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
+      Toast.error(`Failed to load expenses: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Format date to human readable format
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  // Format date to YYYY-MM-DD for date input field
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Transform API data to component format
+  const transformedExpenses = useMemo(() => {
+    return expenses.map((apiExpense) => {
+      // Find category name from API response first, then from categories list
+      let categoryName = apiExpense.category?.name;
+      if (!categoryName && apiExpense.categoryId && categories.length > 0) {
+        const foundCategory = categories.find(cat => cat.id === apiExpense.categoryId);
+        categoryName = foundCategory?.name;
+      }
+      // If still no category name found, show Unknown
+      if (!categoryName) {
+        categoryName = 'Unknown';
+      }
+
+      return {
+        id: apiExpense.id,
+        category: categoryName,
+        categoryId: apiExpense.categoryId,
+        description: apiExpense.description,
+        amount: parseFloat(apiExpense.amount),
+        date: apiExpense.expenseDate,
+        formattedDate: formatDate(apiExpense.expenseDate),
+        status: apiExpense.status, // POSTED or UNPOSTED
+        receipt: false, // Receipt functionality not implemented yet
+      };
+    });
+  }, [expenses, categories]);
 
   // Filter expenses
-  const filteredExpenses = expenses.filter((exp) => {
+  const filteredExpenses = transformedExpenses.filter((exp) => {
     const matchesSearch = exp.description
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
@@ -68,143 +123,146 @@ const Expenses = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const handleEditExpense = (expense) => {
-    setSelectedExpense(expense);
-    setShowEditModal(true);
+  const handleOpenModal = (expense = null) => {
+    if (expense) {
+      // Edit mode - check if expense is POSTED
+      if (expense.status === EXPENSE_STATUS.POSTED) {
+        Alert.warning('Cannot Edit', 'Posted expenses cannot be edited.');
+        return;
+      }
+      setSelectedExpense(expense);
+      setFormData({
+        categoryId: expense.categoryId?.toString() || '',
+        description: expense.description,
+        amount: expense.amount.toString(),
+        expenseDate: formatDateForInput(expense.date),
+        status: expense.status, // Already POSTED or UNPOSTED
+      });
+    } else {
+      // Create mode
+      setSelectedExpense(null);
+      setFormData({
+        categoryId: '',
+        description: '',
+        amount: '',
+        expenseDate: '',
+        status: EXPENSE_STATUS.POSTED,
+      });
+    }
+    setShowModal(true);
   };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedExpense(null);
+    setFormData({
+      categoryId: '',
+      description: '',
+      amount: '',
+      expenseDate: '',
+      status: 'POSTED',
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const expenseData = {
+        categoryId: parseInt(formData.categoryId),
+        description: formData.description,
+        amount: parseFloat(formData.amount),
+        expenseDate: formData.expenseDate,
+        status: formData.status,
+      };
+
+      if (selectedExpense) {
+        // Update existing expense
+        await expenseService.update(selectedExpense.id, expenseData);
+        Toast.success('Expense updated successfully');
+      } else {
+        // Create new expense
+        await expenseService.create(expenseData);
+        Toast.success('Expense created successfully');
+      }
+
+      handleCloseModal();
+      fetchExpenses();
+    } catch (error) {
+      console.error('Error saving expense:', error);
+      Toast.error(error.message || 'Failed to save expense');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteExpense = async (expenseId) => {
+    const result = await Alert.confirmDelete();
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      await expenseService.delete(expenseId);
+      Alert.success('Deleted!', 'Expense has been deleted.', {
+        timer: 2000,
+        showConfirmButton: false
+      });
+      fetchExpenses();
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      Alert.error('Error!', error.message || 'Failed to delete expense');
+    }
+  };
+
+  const handleVoidExpense = async (expenseId) => {
+    const result = await Alert.confirm({
+      title: 'Void Expense?',
+      text: 'Are you sure you want to void this posted expense? This action cannot be undone.',
+      icon: 'warning',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, void it!',
+      cancelButtonText: 'Cancel',
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      await expenseService.delete(expenseId);
+      Alert.success('Voided!', 'Expense has been voided.', {
+        timer: 2000,
+        showConfirmButton: false
+      });
+      fetchExpenses();
+    } catch (error) {
+      console.error('Error voiding expense:', error);
+      Alert.error('Error!', error.message || 'Failed to void expense');
+    }
+  };
+
+  // TODO: Uncomment when receipt storage is implemented
+  // const handleUploadReceipt = (expenseId) => {
+  //   // Handle receipt upload logic here
+  //   console.log('Upload receipt for expense:', expenseId);
+  // };
+
+  if (loading) {
+    return (
+      <Layout title="Expense List" subtitle="Track and manage gym expenses">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-dark-500">Loading expenses...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout title="Expense List" subtitle="Track and manage gym expenses">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <div className="card bg-gradient-to-br from-primary-500 to-primary-600 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-primary-100 text-sm">Total Expenses</p>
-              <p className="text-3xl font-bold mt-1">
-                ${totalExpenses.toLocaleString()}
-              </p>
-              <p className="text-primary-100 text-xs mt-1">This month</p>
-            </div>
-            <DollarSign className="w-10 h-10 text-primary-200" />
-          </div>
-        </div>
-        <div className="card bg-gradient-to-br from-success-500 to-success-600 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-success-100 text-sm">Paid</p>
-              <p className="text-3xl font-bold mt-1">
-                ${paidExpenses.toLocaleString()}
-              </p>
-            </div>
-            <Receipt className="w-10 h-10 text-success-200" />
-          </div>
-        </div>
-        <div className="card bg-gradient-to-br from-warning-500 to-warning-600 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-warning-100 text-sm">Pending</p>
-              <p className="text-3xl font-bold mt-1">
-                ${pendingExpenses.toLocaleString()}
-              </p>
-            </div>
-            <Calendar className="w-10 h-10 text-warning-200" />
-          </div>
-        </div>
-        <div className="card bg-gradient-to-br from-accent-500 to-accent-600 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-accent-100 text-sm">Transactions</p>
-              <p className="text-3xl font-bold mt-1">{expenses.length}</p>
-            </div>
-            <PieChart className="w-10 h-10 text-accent-200" />
-          </div>
-        </div>
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Expense by Category Pie Chart */}
-        <div className="card">
-          <h3 className="text-lg font-semibold text-dark-800 mb-4">
-            Expenses by Category
-          </h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartPie>
-                <Pie
-                  data={expenseByCategory}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {expenseByCategory.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={categoryColors[index % categoryColors.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value) => `$${value.toLocaleString()}`}
-                />
-              </RechartPie>
-            </ResponsiveContainer>
-          </div>
-          <div className="grid grid-cols-2 gap-2 mt-4">
-            {expenseByCategory.map((item, index) => (
-              <div key={item.name} className="flex items-center gap-2 text-sm">
-                <span
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: categoryColors[index % categoryColors.length] }}
-                />
-                <span className="text-dark-600">{item.name}</span>
-                <span className="text-dark-400 ml-auto">
-                  ${item.value.toLocaleString()}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Monthly Trend */}
-        <div className="card">
-          <h3 className="text-lg font-semibold text-dark-800 mb-4">
-            Monthly Expense Trend
-          </h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={[
-                  { month: 'Jul', amount: 19500 },
-                  { month: 'Aug', amount: 21000 },
-                  { month: 'Sep', amount: 18500 },
-                  { month: 'Oct', amount: 22000 },
-                  { month: 'Nov', amount: 23000 },
-                  { month: 'Dec', amount: totalExpenses },
-                ]}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
-                <YAxis stroke="#64748b" fontSize={12} />
-                <Tooltip
-                  formatter={(value) => `$${value.toLocaleString()}`}
-                  contentStyle={{
-                    background: '#fff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Bar dataKey="amount" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
       {/* Expense Table */}
       <div className="card">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -225,20 +283,16 @@ const Expenses = () => {
               className="px-4 py-2.5 bg-dark-50 border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
             >
               <option value="all">All Categories</option>
-              {expenseCategories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.name}>
+                  {cat.name}
                 </option>
               ))}
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <button className="btn-secondary flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              Export
-            </button>
             <button
-              onClick={() => setShowAddModal(true)}
+              onClick={() => handleOpenModal()}
               className="btn-primary flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
@@ -256,78 +310,111 @@ const Expenses = () => {
                 <th className="table-header">Description</th>
                 <th className="table-header">Amount</th>
                 <th className="table-header">Status</th>
-                <th className="table-header">Receipt</th>
+                {/* TODO: Uncomment when receipt storage is implemented */}
+                {/* <th className="table-header">Receipt</th> */}
                 <th className="table-header">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-dark-100">
-              {filteredExpenses.map((expense) => (
-                <tr key={expense.id} className="hover:bg-dark-50">
-                  <td className="table-cell">{expense.date}</td>
-                  <td className="table-cell">
-                    <Badge variant="default">{expense.category}</Badge>
-                  </td>
-                  <td className="table-cell font-medium">{expense.description}</td>
-                  <td className="table-cell">
-                    <span className="font-semibold text-dark-800">
-                      ${expense.amount.toLocaleString()}
-                    </span>
-                  </td>
-                  <td className="table-cell">
-                    <Badge
-                      variant={expense.status === 'paid' ? 'success' : 'warning'}
-                    >
-                      {expense.status}
-                    </Badge>
-                  </td>
-                  <td className="table-cell">
-                    {expense.receipt ? (
-                      <button className="flex items-center gap-1 text-primary-600 hover:text-primary-700 text-sm">
-                        <Receipt className="w-4 h-4" />
-                        View
-                      </button>
-                    ) : (
-                      <button className="flex items-center gap-1 text-dark-400 hover:text-dark-600 text-sm">
-                        <Upload className="w-4 h-4" />
-                        Upload
-                      </button>
-                    )}
-                  </td>
-                  <td className="table-cell">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleEditExpense(expense)}
-                        className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+              {filteredExpenses.map((expense) => {
+                const isPosted = expense.status === EXPENSE_STATUS.POSTED;
+                return (
+                  <tr key={expense.id} className="hover:bg-dark-50">
+                    <td className="table-cell">{expense.formattedDate}</td>
+                    <td className="table-cell">
+                      <Badge variant="default">{expense.category}</Badge>
+                    </td>
+                    <td className="table-cell font-medium">{expense.description}</td>
+                    <td className="table-cell">
+                      <span className="font-semibold text-dark-800">
+                        ₱{expense.amount.toLocaleString()}
+                      </span>
+                    </td>
+                    <td className="table-cell">
+                      <Badge
+                        variant={EXPENSE_STATUS_VARIANTS[expense.status] || 'default'}
                       >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors">
-                        <Trash className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        {EXPENSE_STATUS_LABELS[expense.status] || expense.status}
+                      </Badge>
+                    </td>
+                    {/* TODO: Uncomment when receipt storage is implemented */}
+                    {/* <td className="table-cell">
+                      {expense.receipt ? (
+                        <button className="flex items-center gap-1 text-primary-600 hover:text-primary-700 text-sm">
+                          <Receipt className="w-4 h-4" />
+                          View
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleUploadReceipt(expense.id)}
+                          className="flex items-center gap-1 text-dark-400 hover:text-dark-600 text-sm"
+                        >
+                          <Upload className="w-4 h-4" />
+                          Upload
+                        </button>
+                      )}
+                    </td> */}
+                    <td className="table-cell">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleOpenModal(expense)}
+                          disabled={isPosted}
+                          className={`p-2 rounded-lg transition-colors ${
+                            isPosted
+                              ? 'text-dark-200 cursor-not-allowed opacity-50'
+                              : 'text-dark-400 hover:text-primary-600 hover:bg-primary-50'
+                          }`}
+                          title={isPosted ? 'Cannot edit posted expense' : 'Edit expense'}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        {isPosted ? (
+                          <button
+                            onClick={() => handleVoidExpense(expense.id)}
+                            className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+                            title="Void expense"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleDeleteExpense(expense.id)}
+                            className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+                            title="Delete expense"
+                          >
+                            <Trash className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Add Expense Modal */}
+      {/* Combined Create/Edit Modal */}
       <Modal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        title="Add New Expense"
+        isOpen={showModal}
+        onClose={handleCloseModal}
+        title={selectedExpense ? 'Edit Expense' : 'Add New Expense'}
         size="md"
       >
-        <form className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="label">Category</label>
-            <select className="input">
+            <select
+              className="input"
+              value={formData.categoryId}
+              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+              required
+            >
               <option value="">Select category</option>
-              {expenseCategories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
                 </option>
               ))}
             </select>
@@ -339,17 +426,35 @@ const Expenses = () => {
               type="text"
               className="input"
               placeholder="e.g., Monthly gym rent"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="label">Amount ($)</label>
-              <input type="number" className="input" placeholder="0.00" />
+              <label className="label">Amount (₱)</label>
+              <input
+                type="number"
+                className="input"
+                placeholder="0.00"
+                step="0.01"
+                min="0.01"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                required
+              />
             </div>
             <div>
               <label className="label">Date</label>
-              <input type="date" className="input" />
+              <input
+                type="date"
+                className="input"
+                value={formData.expenseDate}
+                onChange={(e) => setFormData({ ...formData, expenseDate: e.target.value })}
+                required
+              />
             </div>
           </div>
 
@@ -360,142 +465,59 @@ const Expenses = () => {
                 <input
                   type="radio"
                   name="status"
-                  value="paid"
-                  defaultChecked
+                  value={EXPENSE_STATUS.POSTED}
+                  checked={formData.status === EXPENSE_STATUS.POSTED}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                   className="w-4 h-4 text-primary-600"
                 />
-                <span>Paid</span>
+                <span>{EXPENSE_STATUS_LABELS[EXPENSE_STATUS.POSTED]}</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
                   name="status"
-                  value="pending"
+                  value={EXPENSE_STATUS.UNPOSTED}
+                  checked={formData.status === EXPENSE_STATUS.UNPOSTED}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                   className="w-4 h-4 text-primary-600"
                 />
-                <span>Pending</span>
+                <span>{EXPENSE_STATUS_LABELS[EXPENSE_STATUS.UNPOSTED]}</span>
               </label>
             </div>
           </div>
 
-          <div>
+          {/* TODO: Uncomment when receipt storage is implemented */}
+          {/* <div>
             <label className="label">Upload Receipt (Optional)</label>
             <div className="border-2 border-dashed border-dark-200 rounded-xl p-6 text-center hover:border-primary-500 transition-colors cursor-pointer">
               <Upload className="w-8 h-8 text-dark-300 mx-auto mb-2" />
               <p className="text-sm text-dark-500">Click to upload receipt</p>
               <p className="text-xs text-dark-400 mt-1">PNG, JPG, PDF up to 10MB</p>
             </div>
-          </div>
+          </div> */}
 
           <div className="flex gap-3 pt-4">
             <button
               type="button"
-              onClick={() => setShowAddModal(false)}
+              onClick={handleCloseModal}
               className="flex-1 btn-secondary"
+              disabled={isSubmitting}
             >
               Cancel
             </button>
-            <button type="submit" className="flex-1 btn-primary">
-              Add Expense
+            <button
+              type="submit"
+              className="flex-1 btn-primary"
+              disabled={isSubmitting}
+            >
+              {isSubmitting
+                ? 'Saving...'
+                : selectedExpense
+                ? 'Save Changes'
+                : 'Add Expense'}
             </button>
           </div>
         </form>
-      </Modal>
-
-      {/* Edit Expense Modal */}
-      <Modal
-        isOpen={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setSelectedExpense(null);
-        }}
-        title="Edit Expense"
-        size="md"
-      >
-        {selectedExpense && (
-          <form className="space-y-4">
-            <div>
-              <label className="label">Category</label>
-              <select className="input" defaultValue={selectedExpense.category}>
-                {expenseCategories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="label">Description</label>
-              <input
-                type="text"
-                className="input"
-                defaultValue={selectedExpense.description}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="label">Amount ($)</label>
-                <input
-                  type="number"
-                  className="input"
-                  defaultValue={selectedExpense.amount}
-                />
-              </div>
-              <div>
-                <label className="label">Date</label>
-                <input
-                  type="date"
-                  className="input"
-                  defaultValue={selectedExpense.date}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="label">Status</label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="editStatus"
-                    value="paid"
-                    defaultChecked={selectedExpense.status === 'paid'}
-                    className="w-4 h-4 text-primary-600"
-                  />
-                  <span>Paid</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="editStatus"
-                    value="pending"
-                    defaultChecked={selectedExpense.status === 'pending'}
-                    className="w-4 h-4 text-primary-600"
-                  />
-                  <span>Pending</span>
-                </label>
-              </div>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowEditModal(false);
-                  setSelectedExpense(null);
-                }}
-                className="flex-1 btn-secondary"
-              >
-                Cancel
-              </button>
-              <button type="submit" className="flex-1 btn-primary">
-                Save Changes
-              </button>
-            </div>
-          </form>
-        )}
       </Modal>
     </Layout>
   );

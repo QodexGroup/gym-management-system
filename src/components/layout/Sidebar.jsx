@@ -52,6 +52,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           icon: FileBarChart,
           key: 'reports',
           children: [
+            { path: '/reports/summary', label: 'Summary Report' },
             { path: '/reports/collection', label: 'Collection Report' },
             { path: '/reports/expense', label: 'Expense Report' },
           ],
