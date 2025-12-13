@@ -1,277 +1,418 @@
 import { useState } from 'react';
-import { Activity, Scale, Target, Calendar, TrendingUp, TrendingDown, FileText, Plus, Ruler, Camera } from 'lucide-react';
 import {
-  AreaChart,
-  Area,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
-import { Modal } from '../../../components/common';
+  Activity, Scale, Target, Calendar, TrendingUp, TrendingDown, 
+  FileText, Plus, Ruler, Zap, Droplets, ChevronLeft, ChevronRight,
+  Dumbbell, Heart, Eye, Edit, Trash2, Image
+} from 'lucide-react';
+import { formatDate } from '../../../utils/formatters';
+import { useCustomerProgress, useDeleteCustomerProgress } from '../../../hooks/useCustomerProgress';
+import ProgressForm from './ProgressForm';
+import { Alert } from '../../../utils/alert';
 
-const ProgressTab = ({ member, progressLogs }) => {
+
+
+const ProgressTab = ({ member }) => {
   const [showAddProgressModal, setShowAddProgressModal] = useState(false);
-  const weightData = progressLogs.map((log) => ({
-    date: log.date,
-    weight: log.weight,
-    bodyFat: log.bodyFat,
-  }));
+  const [selectedLog, setSelectedLog] = useState(null);
+  const [viewLog, setViewLog] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Use React Query hooks
+  const { data, isLoading, isError, error } = useCustomerProgress(member?.id, currentPage);
+  const deleteProgressMutation = useDeleteCustomerProgress();
+  
+  const progressLogs = data?.data || [];
+  const pagination = data?.pagination || null;
+
+  // Handle edit
+  const handleEdit = (log) => {
+    setSelectedLog(log);
+    setShowAddProgressModal(true);
+  };
+
+  // Handle delete
+  const handleDelete = async (id) => {
+    const result = await Alert.confirmDelete();
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      await deleteProgressMutation.mutateAsync(id);
+      Alert.success('Deleted!', 'Progress record has been deleted.', {
+        timer: 2000,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      // Error already handled in mutation
+      console.error('Error deleting progress record:', error);
+    }
+  };
+
+  // Handle form success (no-op, React Query will auto-refetch)
+  const handleFormSuccess = () => {
+    // React Query automatically invalidates and refetches on mutation success
+  };
 
   const latestLog = progressLogs[0];
+  const previousLog = progressLogs.length > 1 ? progressLogs[1] : null;
+
+  // Pagination - API handles pagination, so we use the fetched logs directly
+  const totalPages = pagination?.lastPage || 1;
+  const paginatedLogs = progressLogs; // API already returns paginated data
+
+  const calculateChange = (current, previous) => {
+    if (!previous) return null;
+    return (current - previous).toFixed(1);
+  };
+
+  const renderChangeIndicator = (current, previous, inverse = false) => {
+    const change = calculateChange(current, previous);
+    if (!change) return null;
+    
+    const isPositive = parseFloat(change) > 0;
+    const isGood = inverse ? !isPositive : isPositive;
+    
+    return (
+      <div className={`flex items-center gap-1 mt-1 ${isGood ? 'text-success-600' : 'text-warning-600'}`}>
+        {isPositive ? (
+          <TrendingUp className="w-4 h-4" />
+        ) : (
+          <TrendingDown className="w-4 h-4" />
+        )}
+        <span className="text-xs font-medium">
+          {isPositive ? '+' : ''}{change}
+        </span>
+      </div>
+    );
+  };
+
+  const getDataSourceBadge = (source) => {
+    const styles = {
+      manual: 'bg-dark-100 text-dark-700',
+      inbody: 'bg-primary-100 text-primary-700',
+      styku: 'bg-accent-100 text-accent-700',
+    };
+    return styles[source] || styles.manual;
+  };
+
 
   return (
     <div className="space-y-6">
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Quick Stats Cards - 2 rows of 4 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="card border-l-4 border-l-primary-500">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-primary-100 rounded-xl">
-              <Scale className="w-6 h-6 text-primary-600" />
+            <div className="p-2 bg-primary-100 rounded-lg">
+              <Scale className="w-5 h-5 text-primary-600" />
             </div>
             <div>
-              <p className="text-sm text-dark-500">Current Weight</p>
-              <p className="text-2xl font-bold text-dark-800">{latestLog?.weight || '--'} kg</p>
-              {progressLogs.length > 1 && latestLog && (
-                <div className="flex items-center gap-1 mt-1">
-                  {latestLog.weight < progressLogs[1].weight ? (
-                    <>
-                      <TrendingDown className="w-4 h-4 text-success-500" />
-                      <span className="text-xs text-success-600">
-                        -{(progressLogs[1].weight - latestLog.weight).toFixed(1)} kg
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <TrendingUp className="w-4 h-4 text-warning-500" />
-                      <span className="text-xs text-warning-600">
-                        +{(latestLog.weight - progressLogs[1].weight).toFixed(1)} kg
-                      </span>
-                    </>
-                  )}
-                </div>
-              )}
+              <p className="text-xs text-dark-500">Weight</p>
+              <p className="text-lg font-bold text-dark-800">{latestLog?.weight || '--'} kg</p>
+              {renderChangeIndicator(latestLog?.weight, previousLog?.weight, true)}
             </div>
           </div>
         </div>
 
         <div className="card border-l-4 border-l-accent-500">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-accent-100 rounded-xl">
-              <Activity className="w-6 h-6 text-accent-600" />
+            <div className="p-2 bg-accent-100 rounded-lg">
+              <Activity className="w-5 h-5 text-accent-600" />
             </div>
             <div>
-              <p className="text-sm text-dark-500">Body Fat</p>
-              <p className="text-2xl font-bold text-dark-800">{latestLog?.bodyFat || '--'}%</p>
+              <p className="text-xs text-dark-500">Body Fat</p>
+              <p className="text-lg font-bold text-dark-800">{latestLog?.bodyFatPercentage || '--'}%</p>
+              {renderChangeIndicator(latestLog?.bodyFatPercentage, previousLog?.bodyFatPercentage, true)}
             </div>
           </div>
         </div>
 
         <div className="card border-l-4 border-l-success-500">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-success-100 rounded-xl">
-              <Target className="w-6 h-6 text-success-600" />
+            <div className="p-2 bg-success-100 rounded-lg">
+              <Dumbbell className="w-5 h-5 text-success-600" />
             </div>
             <div>
-              <p className="text-sm text-dark-500">Total Visits</p>
-              <p className="text-2xl font-bold text-dark-800">{member.totalVisits}</p>
+              <p className="text-xs text-dark-500">Muscle</p>
+              <p className="text-lg font-bold text-dark-800">{latestLog?.skeletalMuscleMass || '--'} kg</p>
+              {renderChangeIndicator(latestLog?.skeletalMuscleMass, previousLog?.skeletalMuscleMass)}
             </div>
           </div>
         </div>
 
         <div className="card border-l-4 border-l-warning-500">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-warning-100 rounded-xl">
-              <Calendar className="w-6 h-6 text-warning-600" />
+            <div className="p-2 bg-warning-100 rounded-lg">
+              <Target className="w-5 h-5 text-warning-600" />
             </div>
             <div>
-              <p className="text-sm text-dark-500">Last Update</p>
-              <p className="text-lg font-bold text-dark-800">{latestLog?.date || 'N/A'}</p>
+              <p className="text-xs text-dark-500">BMI</p>
+              <p className="text-lg font-bold text-dark-800">{latestLog?.bmi || '--'}</p>
+              {renderChangeIndicator(latestLog?.bmi, previousLog?.bmi, true)}
+          </div>
+        </div>
+      </div>
+
+        <div className="card border-l-4 border-l-danger-500">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-danger-100 rounded-lg">
+              <Heart className="w-5 h-5 text-danger-600" />
+          </div>
+            <div>
+              <p className="text-xs text-dark-500">Visceral Fat</p>
+              <p className="text-lg font-bold text-dark-800">{latestLog?.visceralFatLevel || '--'}</p>
+              {renderChangeIndicator(latestLog?.visceralFatLevel, previousLog?.visceralFatLevel, true)}
+              </div>
+          </div>
+        </div>
+
+        <div className="card border-l-4 border-l-info-500">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Droplets className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-xs text-dark-500">Body Water</p>
+              <p className="text-lg font-bold text-dark-800">{latestLog?.totalBodyWater || '--'} L</p>
+              {renderChangeIndicator(latestLog?.totalBodyWater, previousLog?.totalBodyWater)}
+          </div>
+        </div>
+      </div>
+
+        <div className="card border-l-4 border-l-orange-500">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-orange-100 rounded-lg">
+              <Zap className="w-5 h-5 text-orange-600" />
+            </div>
+            <div>
+              <p className="text-xs text-dark-500">BMR</p>
+              <p className="text-lg font-bold text-dark-800">{latestLog?.basalMetabolicRate || '--'}</p>
+              {renderChangeIndicator(latestLog?.basalMetabolicRate, previousLog?.basalMetabolicRate)}
+            </div>
+          </div>
+        </div>
+
+        <div className="card border-l-4 border-l-purple-500">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <Ruler className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-xs text-dark-500">Waist</p>
+              <p className="text-lg font-bold text-dark-800">{latestLog?.waist || '--'} cm</p>
+              {renderChangeIndicator(latestLog?.waist, previousLog?.waist, true)}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-dark-800">Weight Progress</h3>
-            <button onClick={() => setShowAddProgressModal(true)} className="btn-primary flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Add Log
-            </button>
-          </div>
-          <div className="h-64">
-            {weightData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={weightData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
-                  <YAxis stroke="#64748b" fontSize={12} domain={['auto', 'auto']} />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="weight" stroke="#0ea5e9" fill="#0ea5e9" fillOpacity={0.2} strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-full text-dark-400">
-                No progress data yet
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="card">
-          <h3 className="text-lg font-semibold text-dark-800 mb-4">Body Fat Progress</h3>
-          <div className="h-64">
-            {weightData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={weightData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
-                  <YAxis stroke="#64748b" fontSize={12} domain={['auto', 'auto']} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="bodyFat" stroke="#d946ef" strokeWidth={2} dot={{ fill: '#d946ef' }} />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-full text-dark-400">
-                No progress data yet
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Measurements */}
-      {latestLog?.measurements && (
-        <div className="card">
-          <h3 className="text-lg font-semibold text-dark-800 mb-4">Body Measurements</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-4 bg-dark-50 rounded-xl text-center">
-              <Ruler className="w-6 h-6 text-primary-500 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-dark-800">{latestLog.measurements.chest} cm</p>
-              <p className="text-sm text-dark-500">Chest</p>
-            </div>
-            <div className="p-4 bg-dark-50 rounded-xl text-center">
-              <Ruler className="w-6 h-6 text-accent-500 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-dark-800">{latestLog.measurements.waist} cm</p>
-              <p className="text-sm text-dark-500">Waist</p>
-            </div>
-            <div className="p-4 bg-dark-50 rounded-xl text-center">
-              <Ruler className="w-6 h-6 text-success-500 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-dark-800">{latestLog.measurements.arms} cm</p>
-              <p className="text-sm text-dark-500">Arms</p>
-            </div>
-            <div className="p-4 bg-dark-50 rounded-xl text-center">
-              <Ruler className="w-6 h-6 text-warning-500 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-dark-800">{latestLog.measurements.thighs} cm</p>
-              <p className="text-sm text-dark-500">Thighs</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Progress History */}
+      {/* Progress Tracking List */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-dark-800 mb-4">Progress History</h3>
-        {progressLogs.length > 0 ? (
-          <div className="space-y-3">
-            {progressLogs.map((log) => (
-              <div key={log.id} className="p-4 bg-dark-50 rounded-xl border-l-4 border-primary-500">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Calendar className="w-4 h-4 text-dark-400" />
-                      <span className="font-medium text-dark-800">{log.date}</span>
-                      <span className="text-sm text-dark-400">by {log.trainer}</span>
-                    </div>
-                    <div className="flex gap-6 text-sm">
-                      <span><strong>Weight:</strong> {log.weight} kg</span>
-                      <span><strong>Body Fat:</strong> {log.bodyFat}%</span>
-                    </div>
-                    {log.notes && (
-                      <p className="text-sm text-dark-500 mt-2 flex items-start gap-2">
-                        <FileText className="w-4 h-4 mt-0.5" />
-                        {log.notes}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-dark-800">Progress Tracking</h3>
+            <p className="text-sm text-dark-500">{pagination?.total || 0} records</p>
           </div>
-        ) : (
-          <p className="text-dark-400 text-center py-8">No progress logs recorded yet</p>
+          <button 
+            onClick={() => setShowAddProgressModal(true)} 
+            className="btn-primary flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Create Progress Tracking
+          </button>
+        </div>
+
+        {/* List Header */}
+        <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-dark-50 rounded-lg text-sm font-medium text-dark-600 mb-2">
+          <div className="col-span-2">Date</div>
+          <div className="col-span-1">Photos</div>
+          <div className="col-span-1">Weight</div>
+          <div className="col-span-1">Body Fat</div>
+          <div className="col-span-1">Muscle</div>
+          <div className="col-span-1">BMI</div>
+          <div className="col-span-1">Source</div>
+          <div className="col-span-2">Notes</div>
+          <div className="col-span-2 text-right">Actions</div>
+        </div>
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-12">
+            <p className="text-dark-500">Loading progress records...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {isError && !isLoading && (
+          <div className="text-center py-12">
+            <p className="text-danger-500">Error: {error?.message || 'Failed to load progress records'}</p>
+          </div>
+        )}
+
+        {/* List Items */}
+        {!isLoading && !isError && (
+          paginatedLogs.length > 0 ? (
+            <div className="space-y-2">
+              {paginatedLogs.map((log) => {
+                const photoFiles = log.files?.filter(f => f.remarks === 'progress_tracking') || [];
+                return (
+                  <div 
+                    key={log.id} 
+                    className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 bg-dark-50 rounded-xl hover:bg-dark-100 transition-colors items-center"
+                  >
+                    {/* Date */}
+                    <div className="col-span-2">
+                      <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-dark-400" />
+                        <div>
+                          <p className="font-medium text-dark-800">{formatDate(log.recordedDate) || formatDate(log.date)}</p>
+                          {log.recordedBy && <p className="text-xs text-dark-500">by {log.recordedBy}</p>}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Photos */}
+                    <div className="col-span-1">
+                      {photoFiles.length > 0 ? (
+                        <div className="flex items-center gap-1">
+                          <Image className="w-4 h-4 text-primary-600" />
+                          <span className="text-sm font-medium text-primary-600">{photoFiles.length}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-dark-400">-</span>
+                      )}
+                    </div>
+
+                    {/* Weight */}
+                    <div className="col-span-1">
+                      <p className="font-semibold text-dark-800">{log.weight ? `${log.weight} kg` : '-'}</p>
+                    </div>
+
+                    {/* Body Fat */}
+                    <div className="col-span-1">
+                      <p className="font-semibold text-dark-800">{log.bodyFatPercentage ? `${log.bodyFatPercentage}%` : '-'}</p>
+                    </div>
+
+                    {/* Muscle */}
+                    <div className="col-span-1">
+                      <p className="font-semibold text-dark-800">{log.skeletalMuscleMass ? `${log.skeletalMuscleMass} kg` : '-'}</p>
+                    </div>
+
+                    {/* BMI */}
+                    <div className="col-span-1">
+                      <p className="font-semibold text-dark-800">{log.bmi || '-'}</p>
+                    </div>
+
+                    {/* Source */}
+                    <div className="col-span-1">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full uppercase ${getDataSourceBadge(log.dataSource)}`}>
+                        {log.dataSource || 'manual'}
+                      </span>
+                    </div>
+
+                    {/* Notes */}
+                    <div className="col-span-2">
+                      <p className="text-sm text-dark-600 truncate">{log.notes || '-'}</p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="col-span-2 flex items-center justify-end gap-1">
+                      <button 
+                        onClick={() => setViewLog(log)}
+                        className="p-2 text-dark-400 hover:text-primary-500 hover:bg-primary-50 rounded-lg transition-colors"
+                        title="View Details"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleEdit(log)}
+                        className="p-2 text-dark-400 hover:text-warning-500 hover:bg-warning-50 rounded-lg transition-colors"
+                        title="Edit"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(log.id)}
+                        className="p-2 text-dark-400 hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+                </div>
+          ) : (
+            <div className="text-center py-12">
+              <Activity className="w-12 h-12 text-dark-300 mx-auto mb-3" />
+              <p className="text-dark-500">No progress tracking records yet</p>
+              <button 
+                onClick={() => setShowAddProgressModal(true)}
+                className="btn-primary mt-4"
+              >
+                Create First Record
+              </button>
+              </div>
+          )
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-dark-100">
+            <p className="text-sm text-dark-500">
+              Showing {pagination?.from || 0} to {pagination?.to || 0} of {pagination?.total || 0} records
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-dark-200 hover:bg-dark-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              {[...Array(totalPages)].map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentPage(idx + 1)}
+                  className={`w-8 h-8 rounded-lg font-medium transition-colors ${
+                    currentPage === idx + 1
+                      ? 'bg-primary-500 text-white'
+                      : 'border border-dark-200 hover:bg-dark-50'
+                  }`}
+                >
+                  {idx + 1}
+                </button>
+              ))}
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-lg border border-dark-200 hover:bg-dark-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
-      {/* Add Progress Modal */}
-      <Modal
+      {/* Progress Form Component */}
+      <ProgressForm
+        member={member}
         isOpen={showAddProgressModal}
-        onClose={() => setShowAddProgressModal(false)}
-        title="Add Progress Log"
-        size="lg"
-      >
-        <form className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="label">Weight (kg)</label>
-              <input type="number" step="0.1" className="input" placeholder="82.5" />
-            </div>
-            <div>
-              <label className="label">Body Fat %</label>
-              <input type="number" step="0.1" className="input" placeholder="18.5" />
-            </div>
-          </div>
-          <div>
-            <label className="label">Body Measurements (cm)</label>
-            <div className="grid grid-cols-4 gap-4">
-              <div>
-                <input type="number" className="input" placeholder="Chest" />
-                <p className="text-xs text-dark-400 mt-1">Chest</p>
-              </div>
-              <div>
-                <input type="number" className="input" placeholder="Waist" />
-                <p className="text-xs text-dark-400 mt-1">Waist</p>
-              </div>
-              <div>
-                <input type="number" className="input" placeholder="Arms" />
-                <p className="text-xs text-dark-400 mt-1">Arms</p>
-              </div>
-              <div>
-                <input type="number" className="input" placeholder="Thighs" />
-                <p className="text-xs text-dark-400 mt-1">Thighs</p>
-              </div>
-            </div>
-          </div>
-          <div>
-            <label className="label">Notes</label>
-            <textarea className="input" rows={3} placeholder="Add notes about progress..." />
-          </div>
-          <div>
-            <label className="label">Upload Photos (Optional)</label>
-            <div className="border-2 border-dashed border-dark-200 rounded-xl p-8 text-center hover:border-primary-500 transition-colors cursor-pointer">
-              <Camera className="w-12 h-12 text-dark-300 mx-auto mb-3" />
-              <p className="text-dark-500">Click to upload progress photos</p>
-            </div>
-          </div>
-          <div className="flex gap-3 pt-4">
-            <button type="button" onClick={() => setShowAddProgressModal(false)} className="flex-1 btn-secondary">
-              Cancel
-            </button>
-            <button type="submit" className="flex-1 btn-primary">
-              Save Progress
-            </button>
-          </div>
-        </form>
-      </Modal>
+        onClose={() => {
+          setShowAddProgressModal(false);
+          setSelectedLog(null);
+        }}
+        selectedLog={selectedLog}
+        viewLog={viewLog}
+        onSuccess={handleFormSuccess}
+        onEdit={handleEdit}
+        onViewClose={() => setViewLog(null)}
+      />
     </div>
   );
 };
 
 export default ProgressTab;
-

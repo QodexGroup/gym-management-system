@@ -9,6 +9,8 @@ import {
   User,
   Edit,
   CreditCard,
+  FileText,
+  FolderOpen,
 } from 'lucide-react';
 import {
   mockPayments,
@@ -22,6 +24,8 @@ import { calculateAge, formatDate, formatCurrency } from '../../utils/formatters
 import ProgressTab from './customer-tabs/ProgressTab';
 import BillsTab from './customer-tabs/BillsTab';
 import AppointmentsTab from './customer-tabs/AppointmentsTab';
+import ScansTab from './customer-tabs/ScansTab';
+import FilesTab from './customer-tabs/FilesTab';
 
 const CustomerProfile = () => {
   const { id } = useParams();
@@ -110,8 +114,10 @@ const CustomerProfile = () => {
 
   const tabs = [
     { key: 'progress', label: 'Progress Tracking', icon: Activity },
+    { key: 'scans', label: 'Scans', icon: FileText },
     { key: 'bills', label: 'Bills & Payment', icon: CreditCard },
     { key: 'appointments', label: 'Appointments', icon: CalendarDays },
+    { key: 'files', label: 'Files', icon: FolderOpen },
   ];
 
   return (
@@ -256,10 +262,22 @@ const CustomerProfile = () => {
         />
       )}
 
+      {activeTab === 'scans' && (
+        <ScansTab
+          member={member}
+        />
+      )}
+
       {activeTab === 'appointments' && (
         <AppointmentsTab
           member={member}
           appointments={memberAppointments}
+        />
+      )}
+
+      {activeTab === 'files' && (
+        <FilesTab
+          member={member}
         />
       )}
 

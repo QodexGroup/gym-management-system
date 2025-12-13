@@ -160,3 +160,50 @@ export const formatNumber = (number, options = {}) => {
   return num.toLocaleString(PH_LOCALE, options);
 };
 
+/**
+ * Calculate BMI (Body Mass Index)
+ * @param {number|string} weight - Weight in kg
+ * @param {number|string} height - Height in cm
+ * @returns {number|null} - BMI value rounded to 1 decimal place, or null if invalid inputs
+ */
+export const calculateBMI = (weight, height) => {
+  const weightNum = parseFloat(weight);
+  const heightNum = parseFloat(height);
+  
+  // Validate inputs
+  if (!weightNum || !heightNum || weightNum <= 0 || heightNum <= 0) {
+    return null;
+  }
+  
+  // Convert height from cm to meters
+  const heightInMeters = heightNum / 100;
+  
+  // Calculate BMI: weight (kg) / height (m)^2
+  const bmi = weightNum / (heightInMeters * heightInMeters);
+  
+  // Round to 1 decimal place
+  return Math.round(bmi * 10) / 10;
+};
+
+/**
+ * Calculate Body Fat Mass
+ * @param {number|string} weight - Weight in kg
+ * @param {number|string} bodyFatPercentage - Body fat percentage
+ * @returns {number|null} - Body fat mass in kg rounded to 1 decimal place, or null if invalid inputs
+ */
+export const calculateBodyFatMass = (weight, bodyFatPercentage) => {
+  const weightNum = parseFloat(weight);
+  const bodyFatNum = parseFloat(bodyFatPercentage);
+  
+  // Validate inputs
+  if (!weightNum || bodyFatNum === null || bodyFatNum === undefined || weightNum <= 0 || bodyFatNum < 0 || bodyFatNum > 100) {
+    return null;
+  }
+  
+  // Calculate body fat mass: weight * (body fat % / 100)
+  const bodyFatMass = weightNum * (bodyFatNum / 100);
+  
+  // Round to 1 decimal place
+  return Math.round(bodyFatMass * 10) / 10;
+};
+
