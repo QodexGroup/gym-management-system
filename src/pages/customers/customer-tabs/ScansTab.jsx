@@ -1,28 +1,114 @@
-import { useState } from 'react';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+import { useState, useEffect } from 'react';
 import { 
-  FileText, Upload, Eye, Download, Calendar, 
-  Activity, Plus, Trash2, Edit, ChevronLeft, ChevronRight
+  FileText, Calendar, 
+  Activity, Plus, Trash2, Edit, ChevronLeft, ChevronRight, X
 } from 'lucide-react';
-import { Modal } from '../../../components/common';
-import { useCustomerScans, useDeleteCustomerScan, useCreateCustomerScan, useUpdateCustomerScan } from '../../../hooks/useCustomerScan';
-import { formatDate, formatDateForInput } from '../../../utils/formatters';
+import { useCustomerScans, useDeleteCustomerScan } from '../../../hooks/useCustomerScan';
+import { formatDate } from '../../../utils/formatters';
 import { Alert } from '../../../utils/alert';
+import { getFileUrl } from '../../../services/firebaseUrlService';
+import ScansForm from './ScansForm';
+
+// Image Thumbnail Component
+const ImageThumbnail = ({ file, onView }) => {
+  const [thumbnailUrl, setThumbnailUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadThumbnail = async () => {
+      try {
+        const url = await getFileUrl(file.fileUrl);
+        setThumbnailUrl(url);
+      } catch (error) {
+        console.error('Error loading thumbnail:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (file?.fileUrl) {
+      loadThumbnail();
+    }
+  }, [file]);
+
+  if (loading || !thumbnailUrl) {
+    return (
+      <div className="w-10 h-10 rounded-lg bg-dark-200 flex items-center justify-center">
+        <FileText className="w-4 h-4 text-dark-400" />
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => onView(thumbnailUrl)}
+      className="w-10 h-10 rounded-lg overflow-hidden border-2 border-dark-200 hover:border-primary-500 transition-colors"
+      title="View image"
+    >
+      <img
+        src={thumbnailUrl}
+        alt={file.fileName}
+        className="w-full h-full object-cover"
+        onError={(e) => {
+          e.target.style.display = 'none';
+        }}
+      />
+    </button>
+  );
+};
+
+// File Icon Component for non-image files
+const FileIcon = ({ file }) => {
+  const [fileUrl, setFileUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadFileUrl = async () => {
+      try {
+        const url = await getFileUrl(file.fileUrl);
+        setFileUrl(url);
+      } catch (error) {
+        console.error('Error loading file URL:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (file?.fileUrl) {
+      loadFileUrl();
+    }
+  }, [file]);
+
+  if (loading || !fileUrl) {
+    return (
+      <div className="w-10 h-10 rounded-lg bg-dark-200 flex items-center justify-center">
+        <FileText className="w-4 h-4 text-dark-400" />
+      </div>
+    );
+  }
+
+  return (
+    <a
+      href={fileUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="w-10 h-10 rounded-lg bg-dark-200 hover:bg-dark-300 flex items-center justify-center border-2 border-dark-200 hover:border-primary-500 transition-colors"
+      title={`View ${file.fileName}`}
+    >
+      <FileText className="w-4 h-4 text-dark-400" />
+    </a>
+  );
+};
 
 const ScansTab = ({ member }) => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedScan, setSelectedScan] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [scanDate, setScanDate] = useState(new Date());
-  const [scanType, setScanType] = useState('');
-  const [notes, setNotes] = useState('');
+  const [lightboxImage, setLightboxImage] = useState(null);
 
   // Use React Query hooks
   const { data, isLoading, isError, error } = useCustomerScans(member?.id, currentPage);
   const deleteScanMutation = useDeleteCustomerScan();
-  const createScanMutation = useCreateCustomerScan();
-  const updateScanMutation = useUpdateCustomerScan();
 
   const scans = data?.data || [];
   const pagination = data?.pagination || null;
@@ -52,56 +138,12 @@ const ScansTab = ({ member }) => {
   // Handle edit
   const handleEdit = (scan) => {
     setSelectedScan(scan);
-    setScanDate(scan.scanDate ? new Date(scan.scanDate) : new Date());
-    setScanType(scan.scanType || '');
-    setNotes(scan.notes || '');
     setShowUploadModal(true);
   };
 
-  // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!member?.id) return;
-
-    if (!scanType) {
-      Alert.error('Validation Error', 'Please select a scan type');
-      return;
-    }
-
-    const scanData = {
-      scanType: scanType,
-      scanDate: formatDateForInput(scanDate),
-      notes: notes || null,
-    };
-
-    if (selectedScan) {
-      // Update existing scan
-      updateScanMutation.mutate(
-        { id: selectedScan.id, scanData },
-        {
-          onSuccess: () => {
-            setShowUploadModal(false);
-            setSelectedScan(null);
-            setScanDate(new Date());
-            setScanType('');
-            setNotes('');
-          },
-        }
-      );
-    } else {
-      // Create new scan
-      createScanMutation.mutate(
-        { customerId: member.id, scanData },
-        {
-          onSuccess: () => {
-            setShowUploadModal(false);
-            setScanDate(new Date());
-            setScanType('');
-            setNotes('');
-          },
-        }
-      );
-    }
+  // Handle form success (no-op, React Query will auto-refetch)
+  const handleFormSuccess = () => {
+    // React Query automatically invalidates and refetches on mutation success
   };
 
   const getScanTypeBadge = (type) => {
@@ -161,9 +203,6 @@ const ScansTab = ({ member }) => {
           <button 
             onClick={() => {
               setSelectedScan(null);
-              setScanDate(new Date());
-              setScanType('');
-              setNotes('');
               setShowUploadModal(true);
             }}
             className="btn-primary flex items-center gap-2"
@@ -192,9 +231,10 @@ const ScansTab = ({ member }) => {
           <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-dark-50 rounded-lg text-sm font-medium text-dark-600 mb-2">
             <div className="col-span-2">Date</div>
             <div className="col-span-2">Scan Type</div>
-            <div className="col-span-3">Notes</div>
+            <div className="col-span-2">Notes</div>
             <div className="col-span-2">Uploaded By</div>
-            <div className="col-span-3 text-right">Actions</div>
+            <div className="col-span-2">Photos</div>
+            <div className="col-span-2 text-right">Actions</div>
           </div>
         )}
 
@@ -229,7 +269,7 @@ const ScansTab = ({ member }) => {
                 </div>
 
                 {/* Notes */}
-                <div className="col-span-3">
+                <div className="col-span-2">
                   <p className="text-sm text-dark-600 truncate">{scan.notes || '-'}</p>
                 </div>
 
@@ -237,26 +277,34 @@ const ScansTab = ({ member }) => {
                 <div className="col-span-2">
                   <p className="text-sm text-dark-600">{scan.uploadedBy || '-'}</p>
                 </div>
-
-                {/* Actions */}
-                <div className="col-span-3 flex items-center justify-end gap-1">
-                  <button 
-                    className="p-2 text-dark-400 hover:text-primary-500 hover:bg-primary-50 rounded-lg transition-colors"
-                    title="View"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  {scan.files && scan.files.length > 0 && scan.files[0]?.fileUrl && (
-                    <a
-                      href={scan.files[0].fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 text-dark-400 hover:text-success-500 hover:bg-success-50 rounded-lg transition-colors"
-                      title="Download"
-                    >
-                      <Download className="w-4 h-4" />
-                    </a>
+                {/* Photos */}
+                <div className="col-span-2">
+                  {scan.files && scan.files.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {scan.files.map((file, index) => (
+                        file?.fileUrl && (
+                          <div key={file.id || index}>
+                            {/* Image Thumbnail - Clickable for Lightbox */}
+                            {file.mimeType?.startsWith('image/') ? (
+                              <ImageThumbnail
+                                file={file}
+                                onView={(url) => setLightboxImage(url)}
+                              />
+                            ) : (
+                              /* Non-image file icon */
+                              <FileIcon file={file} />
+                            )}
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-sm text-dark-400">-</span>
                   )}
+                </div>
+
+                {/* File Preview / Actions */}
+                <div className="col-span-2 flex items-center justify-end gap-2">
                   <button 
                     onClick={() => handleEdit(scan)}
                     className="p-2 text-dark-400 hover:text-warning-500 hover:bg-warning-50 rounded-lg transition-colors"
@@ -327,102 +375,40 @@ const ScansTab = ({ member }) => {
         )}
       </div>
 
-      {/* Upload/Edit Scan Modal */}
-      <Modal
+      {/* Scan Form Component */}
+      <ScansForm
+        member={member}
         isOpen={showUploadModal}
         onClose={() => {
           setShowUploadModal(false);
           setSelectedScan(null);
-          setScanDate(new Date());
-          setScanType('');
-          setNotes('');
         }}
-        title={selectedScan ? "Edit Body Composition Scan" : "Upload Body Composition Scan"}
-        size="md"
-      >
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div>
-            <label className="label">Scan Date</label>
-            <DatePicker
-              selected={scanDate}
-              onChange={(date) => setScanDate(date || new Date())}
-              dateFormat="yyyy-MM-dd"
-              className="input w-full"
-              showYearDropdown
-              showMonthDropdown
-              dropdownMode="select"
-              maxDate={new Date()}
-              onKeyDown={(e) => {
-                if (e && e.key && e.key !== 'Tab' && e.key !== 'Escape') {
-                  e.preventDefault();
-                }
-              }}
+        selectedScan={selectedScan}
+        onSuccess={handleFormSuccess}
+        onEdit={handleEdit}
+      />
+
+      {/* Lightbox Modal */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            onClick={() => setLightboxImage(null)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10"
+          >
+            <X className="w-8 h-8" />
+          </button>
+          <div className="max-w-7xl max-h-[90vh] p-4" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={lightboxImage}
+              alt="Scan preview"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
             />
           </div>
-
-          <div>
-            <label className="label">Scan Type <span className="text-danger-500">*</span></label>
-            <select 
-              className="input"
-              value={scanType}
-              onChange={(e) => setScanType(e.target.value)}
-              required
-            >
-              <option value="">Select scan type</option>
-              <option value="inbody">InBody</option>
-              <option value="styku">Styku 3D</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="label">Upload File (Optional)</label>
-            <div className="border-2 border-dashed border-dark-200 rounded-xl p-8 text-center hover:border-primary-500 transition-colors cursor-pointer">
-              <Upload className="w-12 h-12 text-dark-300 mx-auto mb-3" />
-              <p className="text-dark-600 font-medium">Click to upload or drag and drop</p>
-              <p className="text-sm text-dark-400 mt-1">PDF, PNG, JPG up to 10MB</p>
-              <input type="file" className="hidden" accept=".pdf,.png,.jpg,.jpeg" />
-            </div>
-            <p className="text-xs text-dark-400 mt-1">File upload will be implemented with Firebase storage</p>
-          </div>
-
-          <div>
-            <label className="label">Notes (Optional)</label>
-            <textarea 
-              className="input" 
-              rows={2} 
-              placeholder="Add any notes..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </div>
-
-          <div className="flex gap-3 pt-4">
-            <button 
-              type="button" 
-              onClick={() => {
-                setShowUploadModal(false);
-                setSelectedScan(null);
-                setScanDate(new Date());
-                setScanType('');
-                setNotes('');
-              }} 
-              className="flex-1 btn-secondary"
-              disabled={createScanMutation.isPending || updateScanMutation.isPending}
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              className="flex-1 btn-primary"
-              disabled={createScanMutation.isPending || updateScanMutation.isPending}
-            >
-              {createScanMutation.isPending || updateScanMutation.isPending 
-                ? (selectedScan ? 'Updating...' : 'Uploading...') 
-                : (selectedScan ? 'Update Scan' : 'Upload Scan')}
-            </button>
-          </div>
-        </form>
-      </Modal>
+        </div>
+      )}
     </div>
   );
 };

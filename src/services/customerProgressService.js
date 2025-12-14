@@ -148,7 +148,7 @@ export const customerProgressService = {
   /**
    * Delete a progress record
    * @param {number} id - Progress record ID
-   * @returns {Promise<boolean>}
+   * @returns {Promise<Object>} - Returns { success: boolean, data: { fileUrls: string[] } }
    */
   async delete(id) {
     try {
@@ -166,7 +166,7 @@ export const customerProgressService = {
       }
 
       const data = await response.json();
-      return data.success;
+      return data; // Return full response object with fileUrls
     } catch (error) {
       throw error;
     }

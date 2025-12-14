@@ -1,21 +1,73 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Activity, Scale, Target, Calendar, TrendingUp, TrendingDown, 
   FileText, Plus, Ruler, Zap, Droplets, ChevronLeft, ChevronRight,
-  Dumbbell, Heart, Eye, Edit, Trash2, Image
+  Dumbbell, Heart, Eye, Edit, Trash2, Image as ImageIcon, X
 } from 'lucide-react';
 import { formatDate } from '../../../utils/formatters';
 import { useCustomerProgress, useDeleteCustomerProgress } from '../../../hooks/useCustomerProgress';
 import ProgressForm from './ProgressForm';
 import { Alert } from '../../../utils/alert';
+import { getFileUrl } from '../../../services/firebaseUrlService';
 
 
+
+// Image Thumbnail Component for Progress Photos
+const ProgressImageThumbnail = ({ file, onView }) => {
+  const [thumbnailUrl, setThumbnailUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadThumbnail = async () => {
+      try {
+        const url = await getFileUrl(file.fileUrl);
+        setThumbnailUrl(url);
+      } catch (error) {
+        console.error('Error loading thumbnail:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (file?.fileUrl) {
+      loadThumbnail();
+    }
+  }, [file]);
+
+  if (loading || !thumbnailUrl) {
+    return (
+      <div className="w-10 h-10 rounded-lg bg-dark-200 flex items-center justify-center">
+        <ImageIcon className="w-4 h-4 text-dark-400" />
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => onView(thumbnailUrl)}
+      className="w-10 h-10 rounded-lg overflow-hidden border-2 border-dark-200 hover:border-primary-500 transition-colors cursor-pointer"
+      title="Click to view image"
+    >
+      <img
+        src={thumbnailUrl}
+        alt={file.fileName}
+        className="w-full h-full object-cover"
+        onError={(e) => {
+          e.target.style.display = 'none';
+        }}
+      />
+    </button>
+  );
+};
 
 const ProgressTab = ({ member }) => {
   const [showAddProgressModal, setShowAddProgressModal] = useState(false);
   const [selectedLog, setSelectedLog] = useState(null);
   const [viewLog, setViewLog] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const [lightboxImages, setLightboxImages] = useState([]);
+  const [lightboxCurrentIndex, setLightboxCurrentIndex] = useState(0);
 
   // Use React Query hooks
   const { data, isLoading, isError, error } = useCustomerProgress(member?.id, currentPage);
@@ -275,9 +327,37 @@ const ProgressTab = ({ member }) => {
                     {/* Photos */}
                     <div className="col-span-1">
                       {photoFiles.length > 0 ? (
-                        <div className="flex items-center gap-1">
-                          <Image className="w-4 h-4 text-primary-600" />
-                          <span className="text-sm font-medium text-primary-600">{photoFiles.length}</span>
+                        <div className="flex flex-wrap gap-1">
+                          {photoFiles.slice(0, 3).map((file, idx) => (
+                            <ProgressImageThumbnail
+                              key={file.id || idx}
+                              file={file}
+                              onView={async () => {
+                                // Get all image URLs for this progress log
+                                const imageFiles = photoFiles.filter(f => f.mimeType?.startsWith('image/'));
+                                const imageUrls = await Promise.all(
+                                  imageFiles.map(async (imgFile) => {
+                                    try {
+                                      return await getFileUrl(imgFile.fileUrl);
+                                    } catch (error) {
+                                      console.error('Error loading image URL:', error);
+                                      return null;
+                                    }
+                                  })
+                                );
+                                const validUrls = imageUrls.filter(url => url !== null);
+                                const currentIndex = imageFiles.findIndex(f => f.id === file.id);
+                                setLightboxImages(validUrls);
+                                setLightboxCurrentIndex(currentIndex >= 0 ? currentIndex : 0);
+                                setLightboxImage(validUrls[currentIndex >= 0 ? currentIndex : 0]);
+                              }}
+                            />
+                          ))}
+                          {photoFiles.length > 3 && (
+                            <div className="w-10 h-10 rounded-lg bg-primary-100 border-2 border-primary-300 flex items-center justify-center">
+                              <span className="text-xs font-bold text-primary-700">+{photoFiles.length - 3}</span>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <span className="text-xs text-dark-400">-</span>
@@ -411,6 +491,74 @@ const ProgressTab = ({ member }) => {
         onEdit={handleEdit}
         onViewClose={() => setViewLog(null)}
       />
+
+      {/* Lightbox Modal */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90"
+          onClick={() => {
+            setLightboxImage(null);
+            setLightboxImages([]);
+            setLightboxCurrentIndex(0);
+          }}
+        >
+          <button
+            onClick={() => {
+              setLightboxImage(null);
+              setLightboxImages([]);
+              setLightboxCurrentIndex(0);
+            }}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10"
+          >
+            <X className="w-8 h-8" />
+          </button>
+          
+          {/* Previous Button */}
+          {lightboxImages.length > 1 && lightboxCurrentIndex > 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const prevIndex = lightboxCurrentIndex - 1;
+                setLightboxCurrentIndex(prevIndex);
+                setLightboxImage(lightboxImages[prevIndex]);
+              }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10 p-2 bg-black/50 rounded-full hover:bg-black/70"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+          )}
+
+          {/* Next Button */}
+          {lightboxImages.length > 1 && lightboxCurrentIndex < lightboxImages.length - 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const nextIndex = lightboxCurrentIndex + 1;
+                setLightboxCurrentIndex(nextIndex);
+                setLightboxImage(lightboxImages[nextIndex]);
+              }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10 p-2 bg-black/50 rounded-full hover:bg-black/70"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          )}
+
+          <div className="max-w-7xl max-h-[90vh] p-4 relative" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={lightboxImage}
+              alt="Progress photo"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            />
+          </div>
+          
+          {/* Image Counter - Footer */}
+          {lightboxImages.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-sm z-10">
+              {lightboxCurrentIndex + 1} / {lightboxImages.length}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { customerScanService } from '../services/customerScanService';
+import { deleteFiles } from '../services/fileUploadService';
 import { Toast } from '../utils/alert';
 
 /**
@@ -115,7 +116,7 @@ export const useDeleteCustomerScan = () => {
     mutationFn: async (id) => {
       return await customerScanService.delete(id);
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (response, variables) => {
       // Remove the deleted item from cache
       queryClient.removeQueries({
         queryKey: customerScanKeys.detail(variables),
@@ -126,6 +127,17 @@ export const useDeleteCustomerScan = () => {
       queryClient.invalidateQueries({ 
         queryKey: customerScanKeys.lists(),
       });
+      
+      // Delete files from Firebase Storage if database deletion was successful
+      if (response?.data?.fileUrls && response.data.fileUrls.length > 0) {
+        try {
+          await deleteFiles(response.data.fileUrls);
+          // Files deleted successfully (errors are logged in deleteFiles)
+        } catch (error) {
+          console.error('Failed to delete files from Firebase:', error);
+          // Don't show error to user since database deletion was successful
+        }
+      }
       
       Toast.success('Scan deleted successfully');
     },
