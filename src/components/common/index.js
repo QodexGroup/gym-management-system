@@ -3,3 +3,6 @@ export { default as DataTable } from './DataTable';
 export { default as Modal } from './Modal';
 export { default as Badge } from './Badge';
 export { default as Avatar } from './Avatar';
+export { default as ImageLightbox } from './ImageLightbox';
+export { default as PhotoThumbnail } from './PhotoThumbnail';
+export { default as FileIcon } from './FileIcon';

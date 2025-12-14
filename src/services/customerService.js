@@ -63,12 +63,12 @@ export const customerService = {
           return {
             data: data.data.data,
             pagination: {
-              currentPage: data.data.current_page,
-              lastPage: data.data.last_page,
-              perPage: data.data.per_page,
-              total: data.data.total,
-              from: data.data.from,
-              to: data.data.to,
+              currentPage: data.data.meta.current_page,
+              lastPage: data.data.meta.last_page,
+              perPage: data.data.meta.per_page,
+              total: data.data.meta.total,
+              from: data.data.meta.from,
+              to: data.data.meta.to,
             }
           };
         }
