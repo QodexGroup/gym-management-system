@@ -1,110 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   FileText, Calendar, 
-  Activity, Plus, Trash2, Edit, ChevronLeft, ChevronRight, X
+  Activity, Plus, Trash2, Edit, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useCustomerScans, useDeleteCustomerScan } from '../../../hooks/useCustomerScan';
 import { formatDate } from '../../../utils/formatters';
 import { Alert } from '../../../utils/alert';
 import { getFileUrl } from '../../../services/firebaseUrlService';
 import ScansForm from './ScansForm';
-
-// Image Thumbnail Component
-const ImageThumbnail = ({ file, onView }) => {
-  const [thumbnailUrl, setThumbnailUrl] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadThumbnail = async () => {
-      try {
-        const url = await getFileUrl(file.fileUrl);
-        setThumbnailUrl(url);
-      } catch (error) {
-        console.error('Error loading thumbnail:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (file?.fileUrl) {
-      loadThumbnail();
-    }
-  }, [file]);
-
-  if (loading || !thumbnailUrl) {
-    return (
-      <div className="w-10 h-10 rounded-lg bg-dark-200 flex items-center justify-center">
-        <FileText className="w-4 h-4 text-dark-400" />
-      </div>
-    );
-  }
-
-  return (
-    <button
-      onClick={() => onView(thumbnailUrl)}
-      className="w-10 h-10 rounded-lg overflow-hidden border-2 border-dark-200 hover:border-primary-500 transition-colors"
-      title="View image"
-    >
-      <img
-        src={thumbnailUrl}
-        alt={file.fileName}
-        className="w-full h-full object-cover"
-        onError={(e) => {
-          e.target.style.display = 'none';
-        }}
-      />
-    </button>
-  );
-};
-
-// File Icon Component for non-image files
-const FileIcon = ({ file }) => {
-  const [fileUrl, setFileUrl] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadFileUrl = async () => {
-      try {
-        const url = await getFileUrl(file.fileUrl);
-        setFileUrl(url);
-      } catch (error) {
-        console.error('Error loading file URL:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (file?.fileUrl) {
-      loadFileUrl();
-    }
-  }, [file]);
-
-  if (loading || !fileUrl) {
-    return (
-      <div className="w-10 h-10 rounded-lg bg-dark-200 flex items-center justify-center">
-        <FileText className="w-4 h-4 text-dark-400" />
-      </div>
-    );
-  }
-
-  return (
-    <a
-      href={fileUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="w-10 h-10 rounded-lg bg-dark-200 hover:bg-dark-300 flex items-center justify-center border-2 border-dark-200 hover:border-primary-500 transition-colors"
-      title={`View ${file.fileName}`}
-    >
-      <FileText className="w-4 h-4 text-dark-400" />
-    </a>
-  );
-};
+import { PhotoThumbnail, FileIcon, ImageLightbox } from '../../../components/common';
 
 const ScansTab = ({ member }) => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedScan, setSelectedScan] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [lightboxImage, setLightboxImage] = useState(null);
+  const [lightboxImages, setLightboxImages] = useState([]);
+  const [lightboxCurrentIndex, setLightboxCurrentIndex] = useState(0);
 
   // Use React Query hooks
   const { data, isLoading, isError, error } = useCustomerScans(member?.id, currentPage);
@@ -286,9 +198,30 @@ const ScansTab = ({ member }) => {
                           <div key={file.id || index}>
                             {/* Image Thumbnail - Clickable for Lightbox */}
                             {file.mimeType?.startsWith('image/') ? (
-                              <ImageThumbnail
-                                file={file}
-                                onView={(url) => setLightboxImage(url)}
+                              <PhotoThumbnail
+                                photo={file}
+                                index={index}
+                                onView={async (photo, idx) => {
+                                  const imageFiles = scan.files.filter(f => f.mimeType?.startsWith('image/'));
+                                  const imageUrls = await Promise.all(
+                                    imageFiles.map(async (imgFile) => {
+                                      try {
+                                        return await getFileUrl(imgFile.fileUrl);
+                                      } catch (error) {
+                                        console.error('Error loading image URL:', error);
+                                        return null;
+                                      }
+                                    })
+                                  );
+                                  const validUrls = imageUrls.filter(url => url !== null);
+                                  const currentIndex = imageFiles.findIndex(f => f.id === file.id);
+                                  setLightboxImages(validUrls);
+                                  setLightboxCurrentIndex(currentIndex >= 0 ? currentIndex : 0);
+                                  setLightboxImage(validUrls[currentIndex >= 0 ? currentIndex : 0]);
+                                }}
+                                showRemove={false}
+                                className="rounded-lg border-2 border-dark-200 hover:border-primary-500 transition-colors"
+                                wrapperClassName="relative group w-10 h-10 overflow-hidden"
                               />
                             ) : (
                               /* Non-image file icon */
@@ -389,26 +322,26 @@ const ScansTab = ({ member }) => {
       />
 
       {/* Lightbox Modal */}
-      {lightboxImage && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90"
-          onClick={() => setLightboxImage(null)}
-        >
-          <button
-            onClick={() => setLightboxImage(null)}
-            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10"
-          >
-            <X className="w-8 h-8" />
-          </button>
-          <div className="max-w-7xl max-h-[90vh] p-4" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={lightboxImage}
-              alt="Scan preview"
-              className="max-w-full max-h-[90vh] object-contain rounded-lg"
-            />
-          </div>
-        </div>
-      )}
+      <ImageLightbox
+        image={lightboxImage}
+        images={lightboxImages}
+        currentIndex={lightboxCurrentIndex}
+        onClose={() => {
+          setLightboxImage(null);
+          setLightboxImages([]);
+          setLightboxCurrentIndex(0);
+        }}
+        onPrevious={() => {
+          const prevIndex = lightboxCurrentIndex - 1;
+          setLightboxCurrentIndex(prevIndex);
+          setLightboxImage(lightboxImages[prevIndex]);
+        }}
+        onNext={() => {
+          const nextIndex = lightboxCurrentIndex + 1;
+          setLightboxCurrentIndex(nextIndex);
+          setLightboxImage(lightboxImages[nextIndex]);
+        }}
+      />
     </div>
   );
 };

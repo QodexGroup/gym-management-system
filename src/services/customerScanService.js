@@ -146,6 +146,37 @@ export const customerScanService = {
   },
 
   /**
+   * Get scans by customer ID and scan type
+   * @param {number} customerId - Customer ID
+   * @param {string} scanType - Scan type ('inbody' or 'styku')
+   * @returns {Promise<Array>} - Returns array of scans
+   */
+  async getByType(customerId, scanType) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/customers/scans/${customerId}/type/${scanType}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.success ? data.data : [];
+    } catch (error) {
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('Cannot connect to API. Please check if the server is running and CORS is configured.');
+      }
+      throw error;
+    }
+  },
+
+  /**
    * Delete a scan
    * @param {number} id - Scan ID
    * @returns {Promise<Object>} - Returns { success: boolean, data: { fileUrls: string[] } }

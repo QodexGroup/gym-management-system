@@ -12,6 +12,7 @@ import { formatDateForInput } from '../utils/formatters';
 export const getInitialProgressFormData = () => ({
   recordedDate: new Date(),
   dataSource: 'manual',
+  customerScanId: null,
   weight: '',
   height: '',
   bodyFatPercentage: '',
@@ -46,6 +47,7 @@ export const mapProgressToFormData = (progress) => {
   return {
     recordedDate: progress.recordedDate ? new Date(progress.recordedDate) : new Date(),
     dataSource: progress.dataSource || 'manual',
+    customerScanId: progress.customerScanId || null,
     weight: progress.weight || '',
     height: progress.height || '',
     bodyFatPercentage: progress.bodyFatPercentage || '',
