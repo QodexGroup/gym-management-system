@@ -40,7 +40,9 @@ export const useCustomer = (id) => {
       return await customerService.getById(id);
     },
     enabled: !!id, // Only run query if id exists
-    // Uses global default staleTime: 1 hour
+    staleTime: 0, // Always refetch when invalidated
+    refetchOnMount: 'always', // Always refetch when component mounts
+    refetchOnWindowFocus: false, // Don't refetch on window focus
   });
 };
 

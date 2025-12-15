@@ -26,6 +26,7 @@ import BillsTab from './customer-tabs/BillsTab';
 import AppointmentsTab from './customer-tabs/AppointmentsTab';
 import ScansTab from './customer-tabs/ScansTab';
 import FilesTab from './customer-tabs/FilesTab';
+import { CUSTOMER_MEMBERSHIP_STATUS } from '../../constants/customerMembership';
 
 const CustomerProfile = () => {
   const { id } = useParams();
@@ -115,7 +116,7 @@ const CustomerProfile = () => {
   const tabs = [
     { key: 'progress', label: 'Progress Tracking', icon: Activity },
     { key: 'scans', label: 'Scans', icon: FileText },
-    { key: 'bills', label: 'Bills & Payment', icon: CreditCard },
+    { key: 'bills', label: 'Membership Plan & Payments', icon: CreditCard },
     { key: 'appointments', label: 'Appointments', icon: CalendarDays },
     { key: 'files', label: 'Files', icon: FolderOpen },
   ];
@@ -145,9 +146,9 @@ const CustomerProfile = () => {
                 <h2 className="text-xl font-bold text-dark-800">{member.name}</h2>
                 <Badge
                   variant={
-                    member.membershipStatus === 'active'
+                    member.membershipStatus === CUSTOMER_MEMBERSHIP_STATUS.ACTIVE
                       ? 'success'
-                      : member.membershipStatus === 'expiring'
+                      : member.membershipStatus === CUSTOMER_MEMBERSHIP_STATUS.EXPIRED
                       ? 'warning'
                       : 'danger'
                   }
@@ -259,6 +260,18 @@ const CustomerProfile = () => {
         <BillsTab
           member={member}
           payments={memberPayments}
+          onCustomerUpdate={() => {
+            // Only refetch if bills tab is active
+            if (activeTab === 'bills') {
+              refetchCustomer();
+            }
+          }}
+        />
+      )}
+
+      {activeTab === 'scans' && (
+        <ScansTab
+          member={member}
         />
       )}
 

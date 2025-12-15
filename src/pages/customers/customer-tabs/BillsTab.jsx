@@ -1,17 +1,204 @@
 import { useState } from 'react';
-import { CheckCircle, Clock, AlertCircle, Receipt, Plus, CreditCard, Banknote, Send } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, Receipt, Plus, Edit, Trash2, Banknote, CreditCard, Calendar, UserCheck } from 'lucide-react';
 import { Badge, Modal, Avatar } from '../../../components/common';
-import { mockMembershipPlans } from '../../../data/mockData';
-import { formatCurrency } from '../../../utils/formatters';
+import { formatCurrency, formatDate } from '../../../utils/formatters';
+import BillsForm from './BillsForm';
+import MembershipPlanForm from './MembershipPlanForm';
+import PaymentForm from './PaymentForm';
+import { useCustomerBills, useCreateCustomerBill, useUpdateCustomerBill, useDeleteCustomerBill } from '../../../hooks/useCustomerBills';
+import { useCreateOrUpdateCustomerMembership } from '../../../hooks/useCustomerMembership';
+import { useCreateCustomerPayment } from '../../../hooks/useCustomerPayments';
+import { BILL_STATUS, BILL_STATUS_LABELS, BILL_STATUS_VARIANTS, BILL_TYPE } from '../../../constants/billConstants';
+import { Alert } from '../../../utils/alert';
+import { CUSTOMER_MEMBERSHIP_STATUS } from '../../../constants/customerMembership';
 
-const BillsTab = ({ member, payments }) => {
+const BillsTab = ({ member, onCustomerUpdate }) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-  const totalPaid = payments.filter((p) => p.status === 'completed').reduce((sum, p) => sum + p.amount, 0);
-  const pendingAmount = payments.filter((p) => p.status === 'pending').reduce((sum, p) => sum + p.amount, 0);
+  const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [selectedBill, setSelectedBill] = useState(null);
+  const [paymentBill, setPaymentBill] = useState(null);
+  
+  const { data, isLoading, isError, error } = useCustomerBills(member?.id);
+  const createBillMutation = useCreateCustomerBill();
+  const updateBillMutation = useUpdateCustomerBill();
+  const deleteBillMutation = useDeleteCustomerBill();
+  const membershipMutation = useCreateOrUpdateCustomerMembership();
+  const createPaymentMutation = useCreateCustomerPayment();
+  
+  const currentMembership = member?.currentMembership;
+  const hasActiveMembership = currentMembership && currentMembership.status === CUSTOMER_MEMBERSHIP_STATUS.ACTIVE;
+  
+  const bills = data?.data?.data || data?.data || [];
+  const pagination = data?.data || null;
+  
+  // Calculate stats from bills
+  const totalPaid = bills
+    .filter((b) => b.billStatus === BILL_STATUS.PAID)
+    .reduce((sum, b) => sum + (parseFloat(b.paidAmount) || 0), 0);
+  
+  const pendingAmount = bills
+    .filter((b) => b.billStatus === BILL_STATUS.ACTIVE || b.billStatus === BILL_STATUS.PARTIAL)
+    .reduce((sum, b) => sum + (parseFloat(b.netAmount) || 0) - (parseFloat(b.paidAmount) || 0), 0);
+  
+  const balanceDue = bills
+    .filter((b) => b.billStatus !== BILL_STATUS.PAID)
+    .reduce((sum, b) => sum + (parseFloat(b.netAmount) || 0) - (parseFloat(b.paidAmount) || 0), 0);
+
+  const handleCreateBill = async (billData) => {
+    try {
+      if (selectedBill) {
+        // Update existing bill
+        await updateBillMutation.mutateAsync({ id: selectedBill.id, data: billData });
+      } else {
+        // Create new bill
+        await createBillMutation.mutateAsync(billData);
+      }
+      setShowInvoiceModal(false);
+      setSelectedBill(null);
+      // Trigger customer update callback if provided - wait a bit for backend to process
+      if (onCustomerUpdate) {
+        setTimeout(() => {
+          onCustomerUpdate();
+        }, 500);
+      }
+    } catch (error) {
+      // Error is handled by the mutation hook
+    }
+  };
+
+  const handleEdit = (bill) => {
+    setSelectedBill(bill);
+    setShowInvoiceModal(true);
+  };
+
+  const handleDelete = async (id) => {
+    const result = await Alert.confirmDelete();
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      await deleteBillMutation.mutateAsync({ id, customerId: member?.id });
+      Alert.success('Deleted!', 'Bill has been deleted.', {
+        timer: 2000,
+        showConfirmButton: false
+      });
+      // Trigger customer update callback if provided - wait a bit for backend to process
+      if (onCustomerUpdate) {
+        setTimeout(() => {
+          onCustomerUpdate();
+        }, 500);
+      }
+    } catch (error) {
+      // Error already handled in mutation
+      console.error('Error deleting bill:', error);
+    }
+  };
+
+  const handleOpenPayment = (bill) => {
+    setPaymentBill(bill);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = async (paymentData) => {
+    if (!paymentBill) return;
+
+    try {
+      await createPaymentMutation.mutateAsync({
+        billId: paymentBill.id,
+        customerId: member.id,
+        paymentData,
+      });
+
+      setShowPaymentModal(false);
+      setPaymentBill(null);
+
+      if (onCustomerUpdate) {
+        setTimeout(() => {
+          onCustomerUpdate();
+        }, 500);
+      }
+    } catch (error) {
+      // Error handled by mutation hook
+    }
+  };
+
+  const handleMembershipSubmit = async (membershipData) => {
+    try {
+      await membershipMutation.mutateAsync({ 
+        customerId: member?.id, 
+        membershipData 
+      });
+      setShowMembershipModal(false);
+      // Trigger customer update callback if provided - wait a bit for backend to process
+      if (onCustomerUpdate) {
+        setTimeout(() => {
+          onCustomerUpdate();
+        }, 500);
+      }
+    } catch (error) {
+      // Error is handled by the mutation hook
+    }
+  };
 
   return (
     <div className="space-y-6">
+      {/* Membership Plan Card */}
+      <div className="card">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-dark-800">Membership Plan</h3>
+          <button 
+            onClick={() => setShowMembershipModal(true)} 
+            className={`flex items-center gap-2 ${hasActiveMembership ? 'btn-primary' : 'btn-success'}`}
+          >
+            <UserCheck className="w-4 h-4" />
+            {hasActiveMembership ? 'Update Membership Plan' : 'Add Membership Plan'}
+          </button>
+        </div>
+        
+        {hasActiveMembership ? (
+          <div className="p-4 bg-primary-50 border border-primary-200 rounded-lg">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <h4 className="text-lg font-semibold text-dark-800">
+                    {currentMembership.membershipPlan?.planName || 'N/A'}
+                  </h4>
+                  <Badge variant="success">Active</Badge>
+                </div>
+                {currentMembership.membershipPlan && (
+                  <p className="text-sm text-dark-600 mb-2">
+                    Price: {formatCurrency(currentMembership.membershipPlan.price)} | 
+                    Duration: {currentMembership.membershipPlan.planPeriod} {currentMembership.membershipPlan.planInterval}
+                  </p>
+                )}
+                <div className="flex items-center gap-4 text-sm text-dark-500">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    <span>
+                      Started: {currentMembership.membershipStartDate ? formatDate(currentMembership.membershipStartDate) : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    <span>
+                      Expires: {currentMembership.membershipEndDate ? formatDate(currentMembership.membershipEndDate) : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 bg-dark-50 border border-dark-200 rounded-lg text-center">
+            <p className="text-dark-500">No active membership plan</p>
+            <p className="text-sm text-dark-400 mt-1">Click "Add Membership Plan" to assign a membership to this customer</p>
+          </div>
+        )}
+      </div>
+
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card bg-gradient-to-br from-success-500 to-success-600 text-white">
@@ -36,7 +223,7 @@ const BillsTab = ({ member, payments }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-danger-100 text-sm">Balance Due</p>
-              <p className="text-3xl font-bold mt-1">{formatCurrency(member.balance)}</p>
+              <p className="text-3xl font-bold mt-1">{formatCurrency(balanceDue)}</p>
             </div>
             <AlertCircle className="w-10 h-10 text-danger-200" />
           </div>
@@ -44,184 +231,178 @@ const BillsTab = ({ member, payments }) => {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3">
-        <button onClick={() => setShowInvoiceModal(true)} className="btn-secondary flex items-center gap-2">
+      <div className="flex justify-end">
+        <button onClick={() => setShowInvoiceModal(true)} className="btn-primary flex items-center gap-2">
           <Receipt className="w-4 h-4" />
-          Generate Invoice
-        </button>
-        <button onClick={() => setShowPaymentModal(true)} className="btn-primary flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Record Payment
+          Create Bill
         </button>
       </div>
 
-      {/* Payment History */}
+      {/* Bills List */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-dark-800 mb-4">Payment History</h3>
-        {payments.length > 0 ? (
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-dark-800">Bills and Payments</h3>
+            <p className="text-sm text-dark-500">{pagination?.total || bills.length} {pagination?.total === 1 ? 'record' : 'records'}</p>
+          </div>
+        </div>
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-12">
+            <p className="text-dark-500">Loading bills...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {isError && !isLoading && (
+          <div className="text-center py-12">
+            <p className="text-danger-500">Error: {error?.message || 'Failed to load bills'}</p>
+          </div>
+        )}
+
+        {/* Bills Table */}
+        {!isLoading && !isError && bills.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-dark-50">
-                  <th className="table-header">Date</th>
-                  <th className="table-header">Type</th>
-                  <th className="table-header">Method</th>
-                  <th className="table-header">Amount</th>
+                  <th className="table-header">Bill Date</th>
+                  <th className="table-header">Bill Type</th>
+                  <th className="table-header">Created By</th>
+                  <th className="table-header">Net Amount</th>
+                  <th className="table-header">Paid Amount</th>
                   <th className="table-header">Status</th>
                   <th className="table-header">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-dark-100">
-                {payments.map((payment) => (
-                  <tr key={payment.id} className="hover:bg-dark-50">
-                    <td className="table-cell">{payment.date}</td>
-                    <td className="table-cell">{payment.type}</td>
-                    <td className="table-cell">
-                      <div className="flex items-center gap-2">
-                        {payment.method === 'Credit Card' && <CreditCard className="w-4 h-4 text-dark-400" />}
-                        {payment.method === 'Cash' && <Banknote className="w-4 h-4 text-dark-400" />}
-                        {payment.method}
-                      </div>
-                    </td>
-                    <td className="table-cell font-semibold text-dark-800">{formatCurrency(payment.amount)}</td>
-                    <td className="table-cell">
-                      <Badge variant={payment.status === 'completed' ? 'success' : 'warning'}>
-                        {payment.status}
-                      </Badge>
-                    </td>
-                    <td className="table-cell">
-                      <div className="flex items-center gap-2">
-                        <button className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
-                          <Receipt className="w-4 h-4" />
-                        </button>
-                        <button className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
-                          <Send className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {bills.map((bill) => {
+                  // Format bill type display
+                  const billTypeDisplay = bill.billType === BILL_TYPE.CUSTOM_AMOUNT && bill.customService
+                    ? `${bill.billType} - ${bill.customService}`
+                    : bill.billType;
+
+                  return (
+                    <tr key={bill.id} className="hover:bg-dark-50">
+                      <td className="table-cell">{formatDate(bill.billDate)}</td>
+                      <td className="table-cell">{billTypeDisplay}</td>
+                      <td className="table-cell text-dark-600">Jomilen Dela Torre</td>
+                      <td className="table-cell font-semibold text-dark-800">
+                        {formatCurrency(bill.netAmount)}
+                      </td>
+                      <td className="table-cell font-semibold text-dark-800">
+                        {formatCurrency(bill.paidAmount)}
+                      </td>
+                      <td className="table-cell">
+                        <Badge variant={BILL_STATUS_VARIANTS[bill.billStatus] || 'warning'}>
+                          {BILL_STATUS_LABELS[bill.billStatus] || bill.billStatus}
+                        </Badge>
+                      </td>
+                      <td className="table-cell">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleOpenPayment(bill)}
+                            className="p-2 text-dark-400 hover:text-success-600 hover:bg-success-50 rounded-lg transition-colors"
+                            title="Add Payment"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleEdit(bill)}
+                            className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                            title="Edit Bill"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (bill.billStatus !== BILL_STATUS.PAID) {
+                                handleDelete(bill.id);
+                              }
+                            }}
+                            className={`p-2 rounded-lg transition-colors ${
+                              bill.billStatus === BILL_STATUS.PAID
+                                ? 'text-dark-300 cursor-not-allowed'
+                                : 'text-dark-400 hover:text-danger-600 hover:bg-danger-50'
+                            }`}
+                            title={bill.billStatus === BILL_STATUS.PAID ? 'Cannot delete a fully paid bill' : 'Delete Bill'}
+                            disabled={bill.billStatus === BILL_STATUS.PAID}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
-        ) : (
-          <p className="text-dark-400 text-center py-8">No payment history</p>
-        )}
+        ) : !isLoading && !isError ? (
+          <p className="text-dark-400 text-center py-8">No bills found</p>
+        ) : null}
       </div>
 
-      {/* Record Payment Modal */}
+      {/* Add Payment Modal */}
       <Modal
-        isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
-        title="Record Payment"
+        isOpen={showPaymentModal && !!paymentBill}
+        onClose={() => {
+          setShowPaymentModal(false);
+          setPaymentBill(null);
+        }}
+        title="Add Payment"
         size="md"
       >
-        <form className="space-y-4">
-          <div className="p-4 bg-dark-50 rounded-xl flex items-center gap-4">
-            <Avatar src={member.avatar} name={member.name} size="md" />
-            <div>
-              <p className="font-semibold text-dark-800">{member.name}</p>
-              <p className="text-sm text-dark-500">{member.membership}</p>
-            </div>
-          </div>
-          <div>
-            <label className="label">Amount</label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-400">₱</span>
-              <input type="number" className="input pl-8" placeholder="0.00" defaultValue={member.balance > 0 ? member.balance : ''} />
-            </div>
-          </div>
-          <div>
-            <label className="label">Payment Type</label>
-            <select className="input">
-              <option>Membership Renewal</option>
-              <option>Monthly Subscription</option>
-              <option>PT Package</option>
-              <option>Outstanding Balance</option>
-            </select>
-          </div>
-          <div>
-            <label className="label">Payment Method</label>
-            <div className="grid grid-cols-3 gap-3">
-              <label className="flex items-center justify-center gap-2 p-3 border border-dark-200 rounded-lg cursor-pointer hover:border-primary-500 hover:bg-primary-50 transition-colors [&:has(input:checked)]:border-primary-500 [&:has(input:checked)]:bg-primary-50">
-                <input type="radio" name="method" value="cash" className="hidden" />
-                <Banknote className="w-5 h-5" />
-                <span>Cash</span>
-              </label>
-              <label className="flex items-center justify-center gap-2 p-3 border border-dark-200 rounded-lg cursor-pointer hover:border-primary-500 hover:bg-primary-50 transition-colors [&:has(input:checked)]:border-primary-500 [&:has(input:checked)]:bg-primary-50">
-                <input type="radio" name="method" value="card" className="hidden" defaultChecked />
-                <CreditCard className="w-5 h-5" />
-                <span>Card</span>
-              </label>
-              <label className="flex items-center justify-center gap-2 p-3 border border-dark-200 rounded-lg cursor-pointer hover:border-primary-500 hover:bg-primary-50 transition-colors [&:has(input:checked)]:border-primary-500 [&:has(input:checked)]:bg-primary-50">
-                <input type="radio" name="method" value="transfer" className="hidden" />
-                <Receipt className="w-5 h-5" />
-                <span>Transfer</span>
-              </label>
-            </div>
-          </div>
-          <div className="flex gap-3 pt-4">
-            <button type="button" onClick={() => setShowPaymentModal(false)} className="flex-1 btn-secondary">
-              Cancel
-            </button>
-            <button type="submit" className="flex-1 btn-success">
-              Record Payment
-            </button>
-          </div>
-        </form>
+        {paymentBill && (
+          <PaymentForm
+            bill={paymentBill}
+            member={member}
+            onSubmit={handlePaymentSubmit}
+            onCancel={() => {
+              setShowPaymentModal(false);
+              setPaymentBill(null);
+            }}
+          />
+        )}
       </Modal>
 
-      {/* Generate Invoice Modal */}
+      {/* Create/Edit Bill Modal */}
       <Modal
         isOpen={showInvoiceModal}
-        onClose={() => setShowInvoiceModal(false)}
-        title="Generate Invoice"
+        onClose={() => {
+          setShowInvoiceModal(false);
+          setSelectedBill(null);
+        }}
+        title={selectedBill ? 'Edit Bill' : 'Create Bill'}
+        size="lg"
+      >
+        <BillsForm
+          customerId={member.id}
+          currentMembership={currentMembership}
+          onSubmit={handleCreateBill}
+          onCancel={() => {
+            setShowInvoiceModal(false);
+            setSelectedBill(null);
+          }}
+          onCustomerUpdate={onCustomerUpdate}
+          initialData={selectedBill}
+        />
+      </Modal>
+
+      {/* Add/Update Membership Plan Modal */}
+      <Modal
+        isOpen={showMembershipModal}
+        onClose={() => setShowMembershipModal(false)}
+        title={hasActiveMembership ? 'Update Membership Plan' : 'Add Membership Plan'}
         size="md"
       >
-        <form className="space-y-4">
-          <div>
-            <label className="label">Invoice For</label>
-            <select className="input">
-              <option>Membership Renewal</option>
-              <option>Personal Training Package</option>
-              <option>Outstanding Balance</option>
-              <option>Custom Amount</option>
-            </select>
-          </div>
-          <div>
-            <label className="label">Membership Plan</label>
-            <select className="input">
-              {mockMembershipPlans.map((plan) => (
-                <option key={plan.id} value={plan.id}>
-                  {plan.name} - {formatCurrency(plan.price)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="label">Discount (Optional)</label>
-            <div className="relative">
-              <input type="number" className="input pr-10" placeholder="0" />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-400">%</span>
-            </div>
-          </div>
-          <div>
-            <label className="label">Due Date</label>
-            <input type="date" className="input" />
-          </div>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" id="sendEmail" className="w-4 h-4" />
-            <label htmlFor="sendEmail" className="text-sm text-dark-600">Send invoice via email</label>
-          </div>
-          <div className="flex gap-3 pt-4">
-            <button type="button" onClick={() => setShowInvoiceModal(false)} className="flex-1 btn-secondary">
-              Cancel
-            </button>
-            <button type="submit" className="flex-1 btn-primary">
-              Generate Invoice
-            </button>
-          </div>
-        </form>
+        <MembershipPlanForm
+          customerId={member.id}
+          currentMembership={currentMembership}
+          onSubmit={handleMembershipSubmit}
+          onCancel={() => setShowMembershipModal(false)}
+        />
       </Modal>
     </div>
   );
