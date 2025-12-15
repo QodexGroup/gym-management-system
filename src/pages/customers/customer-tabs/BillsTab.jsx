@@ -36,11 +36,13 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
   const totalPaid = bills
     .filter((b) => b.billStatus === BILL_STATUS.PAID)
     .reduce((sum, b) => sum + (parseFloat(b.paidAmount) || 0), 0);
-  
-  const pendingAmount = bills
-    .filter((b) => b.billStatus === BILL_STATUS.ACTIVE || b.billStatus === BILL_STATUS.PARTIAL)
-    .reduce((sum, b) => sum + (parseFloat(b.netAmount) || 0) - (parseFloat(b.paidAmount) || 0), 0);
-  
+
+  // Number of open bills (active or partial)
+  const openBillsCount = bills.filter(
+    (b) => b.billStatus === BILL_STATUS.ACTIVE || b.billStatus === BILL_STATUS.PARTIAL
+  ).length;
+
+  // Total outstanding balance (all non‑paid bills)
   const balanceDue = bills
     .filter((b) => b.billStatus !== BILL_STATUS.PAID)
     .reduce((sum, b) => sum + (parseFloat(b.netAmount) || 0) - (parseFloat(b.paidAmount) || 0), 0);
@@ -201,6 +203,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Total Paid */}
         <div className="card bg-gradient-to-br from-success-500 to-success-600 text-white">
           <div className="flex items-center justify-between">
             <div>
@@ -210,15 +213,19 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
             <CheckCircle className="w-10 h-10 text-success-200" />
           </div>
         </div>
+
+        {/* Open Bills Count */}
         <div className="card bg-gradient-to-br from-warning-500 to-warning-600 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-warning-100 text-sm">Pending</p>
-              <p className="text-3xl font-bold mt-1">{formatCurrency(pendingAmount)}</p>
+              <p className="text-warning-100 text-sm">Open Bills</p>
+              <p className="text-3xl font-bold mt-1">{openBillsCount}</p>
             </div>
             <Clock className="w-10 h-10 text-warning-200" />
           </div>
         </div>
+
+        {/* Total Balance Due */}
         <div className="card bg-gradient-to-br from-danger-500 to-danger-600 text-white">
           <div className="flex items-center justify-between">
             <div>
