@@ -26,3 +26,6 @@ dist-ssr
 # Environment variables
 .env.development
 .env.production
+
+# Generated files containing environment configuration
+src/firebaseConfig.js

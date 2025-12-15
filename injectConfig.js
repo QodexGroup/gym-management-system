@@ -25,11 +25,11 @@ async function generateConfig() {
         };
 
         // --- Retrieve each individual parameter ---
-        const apiKey = getParamValue('ABC_API_KEY');
-        const appId = getParamValue('ABC_APP_ID');
-        const authDomain = getParamValue('ABC_AUTH_DOMAIN');
-        const projectId = getParamValue('ABC_PROJECT_ID');
-        const storageBucket = getParamValue('ABC_STORAGE_BUCKET');
+        const apiKey = getParamValue('API_KEY');
+        const appId = getParamValue('APP_ID');
+        const authDomain = getParamValue('AUTH_DOMAIN');
+        const projectId = getParamValue('PROJECT_ID');
+        const storageBucket = getParamValue('STORAGE_BUCKET');
 
 
         // --- Format the config object for the frontend ---
