@@ -1,52 +1,66 @@
+// src/firebaseService.js
+
 import { initializeApp } from "firebase/app";
 import { getStorage } from "firebase/storage";
+
 
 let firebaseApp = null;
 let firebaseStorage = null;
 
-// Initialize Firebase app with environment variables
+// Determine the configuration source based on the environment
+function getFirebaseConfig() {
+    // VITE's way to check if running in a development server
+    if (import.meta.env.DEV) { 
+        console.log("Using VITE environment variables for Firebase initialization.");
+        
+        // Use your old VITE_ keys directly
+        return {
+            apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+            authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+            projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+            storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+            appId: import.meta.env.VITE_FIREBASE_APP_ID,
+        };
+    } else {
+        
+        try {
+            const { firebaseConfig } = require('./firebaseConfig');
+            return firebaseConfig;
+
+        } catch (error) {
+            console.error("CRITICAL ERROR: Production Firebase config file (firebaseConfig.js) not found. Did injectConfig.js fail?", error);
+            // Return null or throw a critical error to stop the app
+            return null;
+        }
+    }
+}
+
+
+// The asynchronous function that handles initialization and returns the services
 async function initializeFirebaseApp() {
-  if (firebaseApp && firebaseStorage) {
-    return { storage: firebaseStorage };
-  }
+    if (firebaseApp && firebaseStorage) {
+        return { storage: firebaseStorage };
+    }
+    
+    const config = getFirebaseConfig();
 
-  try {
-    // Get Firebase config from environment variables
-    const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
-    const authDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN;
-    const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
-    const storageBucket = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET;
-    const appId = import.meta.env.VITE_FIREBASE_APP_ID;
-
-    // Validate required fields
-    if (!apiKey || !authDomain || !projectId || !storageBucket) {
-      throw new Error(
-        "Missing required Firebase environment variables. " +
-        "Please set VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, " +
-        "VITE_FIREBASE_PROJECT_ID, and VITE_FIREBASE_STORAGE_BUCKET."
-      );
+    if (!config || !config.apiKey) {
+        console.error("Firebase initialization skipped: Missing configuration.");
+        return { storage: null };
     }
 
-    // Initialize Firebase app with storage
-    const firebaseConfig = {
-      apiKey: apiKey,
-      authDomain: authDomain,
-      projectId: projectId,
-      storageBucket: storageBucket,
-      ...(appId && { appId: appId }), // Include appId if available
-    };
-
-    firebaseApp = initializeApp(firebaseConfig);
-    firebaseStorage = getStorage(firebaseApp);
-    
-    return { storage: firebaseStorage };
-  } catch (err) {
-    console.error("Failed to initialize Firebase:", err);
-    return { storage: null };
-  }
+    try {
+        firebaseApp = initializeApp(config);
+        firebaseStorage = getStorage(firebaseApp);
+        
+        return { storage: firebaseStorage };
+    } catch (err) {
+        console.error("Failed to initialize Firebase:", err);
+        return { storage: null };
+    }
 }
 
 // Export function to initialize Firebase services
 export async function initializeFirebaseServices() {
-  return await initializeFirebaseApp();
+    return await initializeFirebaseApp();
 }
