@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
+    "prebuild": "node injectConfig.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"

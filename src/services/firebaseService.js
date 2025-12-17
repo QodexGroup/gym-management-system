@@ -8,7 +8,7 @@ let firebaseApp = null;
 let firebaseStorage = null;
 
 // Determine the configuration source based on the environment
-function getFirebaseConfig() {
+async function getFirebaseConfig() {
     // VITE's way to check if running in a development server
     if (import.meta.env.DEV) { 
         console.log("Using VITE environment variables for Firebase initialization.");
@@ -24,8 +24,8 @@ function getFirebaseConfig() {
     } else {
         
         try {
-            const { firebaseConfig } = require('./firebaseConfig');
-            return firebaseConfig;
+            const configModule = await import('./firebaseConfig.js');
+            return configModule.firebaseConfig;
 
         } catch (error) {
             console.error("CRITICAL ERROR: Production Firebase config file (firebaseConfig.js) not found. Did injectConfig.js fail?", error);
@@ -42,7 +42,7 @@ async function initializeFirebaseApp() {
         return { storage: firebaseStorage };
     }
     
-    const config = getFirebaseConfig();
+    const config = await getFirebaseConfig();
 
     if (!config || !config.apiKey) {
         console.error("Firebase initialization skipped: Missing configuration.");
