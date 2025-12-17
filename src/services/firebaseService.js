@@ -2,7 +2,7 @@
 
 import { initializeApp } from "firebase/app";
 import { getStorage } from "firebase/storage";
-
+import { firebaseConfig as productionConfig } from './firebaseConfig.js';
 
 let firebaseApp = null;
 let firebaseStorage = null;
@@ -23,15 +23,12 @@ function getFirebaseConfig() {
         };
     } else {
         
-        try {
-            const { firebaseConfig } = require('./firebaseConfig');
-            return firebaseConfig;
-
-        } catch (error) {
-            console.error("CRITICAL ERROR: Production Firebase config file (firebaseConfig.js) not found. Did injectConfig.js fail?", error);
-            // Return null or throw a critical error to stop the app
+       // Production: Use the statically imported config
+        if (!productionConfig || !productionConfig.apiKey) {
+            console.error("CRITICAL ERROR: Production Firebase config file (firebaseConfig.js) not found or invalid. Did injectConfig.js fail?");
             return null;
         }
+         return productionConfig;
     }
 }
 
