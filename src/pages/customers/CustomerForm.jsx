@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Modal } from '../../components/common';
 import { Toast } from '../../utils/alert';
 import { useCreateCustomer, useUpdateCustomer } from '../../hooks/useCustomers';
 import { useMembershipPlans } from '../../hooks/useMembershipPlans';
-import { customerService } from '../../services/customerService';
+import { useTrainers } from '../../hooks/useTrainers';
 
 const CustomerForm = ({
   isOpen,
@@ -16,28 +16,14 @@ const CustomerForm = ({
   onSaveSuccess,
 }) => {
   const [errors, setErrors] = useState({});
-  const [trainers, setTrainers] = useState([]);
   
   // React Query mutations and queries
   const createMutation = useCreateCustomer();
   const updateMutation = useUpdateCustomer();
   const { data: membershipPlans = [] } = useMembershipPlans();
+  const { data: trainers = [] } = useTrainers();
   
   const isSubmitting = createMutation.isLoading || updateMutation.isLoading;
-
-  // Fetch trainers on component mount
-  useEffect(() => {
-    const fetchTrainers = async () => {
-      try {
-        const trainersData = await customerService.getTrainers();
-        setTrainers(trainersData);
-      } catch (error) {
-        console.error('Error fetching trainers:', error);
-        Toast.error('Failed to load trainers');
-      }
-    };
-    fetchTrainers();
-  }, []);
 
   // Validation functions
   const validateEmail = (email) => {
