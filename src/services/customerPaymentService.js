@@ -12,6 +12,10 @@ export const customerPaymentService = {
    * @returns {Promise<Object>}
    */
   async create(billId, paymentData) {
+    // COMMENTED OUT: Data saving disabled
+    throw new Error('Data saving is currently disabled');
+    
+    /* COMMENTED OUT - Payment creation functionality
     const response = await fetch(`${API_BASE_URL}/customers/bills/${billId}/payments`, {
       method: 'POST',
       headers: {
@@ -27,6 +31,7 @@ export const customerPaymentService = {
 
     const data = await response.json();
     return data.success ? data.data : null;
+    */
   },
 
   /**

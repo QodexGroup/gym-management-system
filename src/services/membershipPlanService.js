@@ -41,6 +41,10 @@ export const membershipPlanService = {
    * @returns {Promise<Object>}
    */
   async create(planData) {
+    // COMMENTED OUT: Data saving disabled
+    throw new Error('Data saving is currently disabled');
+    
+    /* COMMENTED OUT - Membership plan creation functionality
     const response = await fetch(`${API_BASE_URL}/membership-plans`, {
       method: 'POST',
       headers: {
@@ -56,6 +60,7 @@ export const membershipPlanService = {
 
     const data = await response.json();
     return data.success ? data.data : null;
+    */
   },
 
   /**
@@ -65,6 +70,10 @@ export const membershipPlanService = {
    * @returns {Promise<Object>}
    */
   async update(id, planData) {
+    // COMMENTED OUT: Data saving disabled
+    throw new Error('Data saving is currently disabled');
+    
+    /* COMMENTED OUT - Membership plan update functionality
     const response = await fetch(`${API_BASE_URL}/membership-plans/${id}`, {
       method: 'PUT',
       headers: {
@@ -80,6 +89,7 @@ export const membershipPlanService = {
 
     const data = await response.json();
     return data.success ? data.data : null;
+    */
   },
 
   /**

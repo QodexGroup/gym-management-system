@@ -142,6 +142,12 @@ const ScansForm = ({
       return;
     }
 
+    // COMMENTED OUT: Image upload disabled
+    Toast.error('Image upload is currently disabled');
+    e.target.value = '';
+    return;
+    
+    /* COMMENTED OUT - File upload functionality
     setUploadingFile(true);
     setUploadProgress(0);
     const accountId = 1; // Default account ID
@@ -181,6 +187,7 @@ const ScansForm = ({
       // Reset file input
       e.target.value = '';
     }
+    */
   };
 
   // Handle form submission
@@ -205,6 +212,8 @@ const ScansForm = ({
         { id: selectedScan.id, scanData },
         {
           onSuccess: async (scanData) => {
+            // COMMENTED OUT: File saving disabled
+            /* COMMENTED OUT - File saving after scan update
             // Save all new files separately after scan is updated
             // Only save if it's a new file (timestamp ID from Date.now() is 13 digits, database IDs are small numbers)
             const newFiles = uploadedFiles.filter(file => !file.id || file.id.toString().length >= 10);
@@ -233,6 +242,7 @@ const ScansForm = ({
                 Toast.error('Scan saved but some files failed to save');
               }
             }
+            */
             onSuccess?.();
             onClose();
           },
@@ -244,6 +254,8 @@ const ScansForm = ({
         { customerId: member.id, scanData },
         {
           onSuccess: async (scanData) => {
+            // COMMENTED OUT: File saving disabled
+            /* COMMENTED OUT - File saving after scan creation
             // Save all files separately after scan is created
             if (uploadedFiles.length > 0) {
               try {
@@ -269,6 +281,7 @@ const ScansForm = ({
                 Toast.error('Scan saved but some files failed to save');
               }
             }
+            */
             onSuccess?.();
             onClose();
           },

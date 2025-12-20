@@ -94,6 +94,10 @@ export const customerScanService = {
    * @returns {Promise<Object>}
    */
   async create(customerId, scanData) {
+    // COMMENTED OUT: Data saving disabled
+    throw new Error('Data saving is currently disabled');
+    
+    /* COMMENTED OUT - Scan creation functionality
     try {
       const response = await fetch(`${API_BASE_URL}/customers/scans/${customerId}`, {
         method: 'POST',
@@ -114,6 +118,7 @@ export const customerScanService = {
     } catch (error) {
       throw error;
     }
+    */
   },
 
   /**
@@ -123,6 +128,10 @@ export const customerScanService = {
    * @returns {Promise<Object>}
    */
   async update(id, scanData) {
+    // COMMENTED OUT: Data saving disabled
+    throw new Error('Data saving is currently disabled');
+    
+    /* COMMENTED OUT - Scan update functionality
     try {
       const response = await fetch(`${API_BASE_URL}/customers/scans/${id}`, {
         method: 'PUT',
@@ -143,6 +152,7 @@ export const customerScanService = {
     } catch (error) {
       throw error;
     }
+    */
   },
 
   /**

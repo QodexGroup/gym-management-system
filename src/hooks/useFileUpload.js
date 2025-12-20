@@ -89,6 +89,12 @@ export const useFileUpload = ({ customerId, accountId = 1, onInvalidate }) => {
    * Handle file upload
    */
   const handleFileUpload = async (e, maxSizeMB = 2) => {
+    // COMMENTED OUT: Image upload disabled
+    Toast.error('Image upload is currently disabled');
+    e.target.value = '';
+    return;
+    
+    /* COMMENTED OUT - File upload functionality
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
@@ -147,12 +153,17 @@ export const useFileUpload = ({ customerId, accountId = 1, onInvalidate }) => {
       // Reset file input
       e.target.value = '';
     }
+    */
   };
 
   /**
    * Save files to backend
    */
   const saveFiles = async (progressId, fileDate, remarks = 'progress_tracking') => {
+    // COMMENTED OUT: File saving disabled
+    return [];
+    
+    /* COMMENTED OUT - File saving functionality
     if (uploadedFiles.length === 0) return [];
 
     const filesToSave = uploadedFiles.filter(file => 
@@ -180,6 +191,7 @@ export const useFileUpload = ({ customerId, accountId = 1, onInvalidate }) => {
       console.error('Error saving files:', error);
       throw error;
     }
+    */
   };
 
   /**

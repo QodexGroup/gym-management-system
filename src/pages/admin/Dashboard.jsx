@@ -112,7 +112,7 @@ const AdminDashboard = () => {
       </div> */}
 
       {/* Charts Row - Second Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-8">
         {/* Revenue Overview - Commented out for future use */}
         {/* <div className="lg:col-span-2 card">
           <div className="flex items-center justify-between mb-6">
@@ -148,7 +148,7 @@ const AdminDashboard = () => {
         </div> */}
 
         {/* Memberships Expiring Soon */}
-        <div className="card">
+        <div className="card md:col-span-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-dark-50">Memberships Expiring Soon</h3>
             <a href="/customers" className="text-sm text-primary-500 hover:text-primary-600 font-medium">
@@ -206,7 +206,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Membership Distribution */}
-        <div className="card">
+        <div className="card md:col-span-4">
           <h3 className="text-lg font-semibold text-dark-50 mb-6">Membership Distribution</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">

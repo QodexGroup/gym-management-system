@@ -12,6 +12,10 @@ const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
  * @returns {Promise<{fileUrl: string, fileName: string, fileSize: number, mimeType: string}>}
  */
 export async function uploadFile(file, accountId, customerId, onProgress = null) {
+  // COMMENTED OUT: Image upload functionality disabled
+  throw new Error('Image upload is currently disabled');
+  
+  /* COMMENTED OUT - Image upload functionality
   // Validate file size
   if (file.size > MAX_FILE_SIZE) {
     throw new Error(`File size exceeds 2MB limit. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
@@ -79,6 +83,7 @@ export async function uploadFile(file, accountId, customerId, onProgress = null)
     console.error('File upload error:', error);
     throw error;
   }
+  */
 }
 
 /**
@@ -103,6 +108,10 @@ function formatFileSize(bytes) {
  * @returns {Promise<Array>} - Array of upload results
  */
 export async function uploadMultipleFiles(files, accountId, customerId, onProgress = null) {
+  // COMMENTED OUT: Image upload functionality disabled
+  throw new Error('Image upload is currently disabled');
+  
+  /* COMMENTED OUT - Multiple files upload functionality
   const uploadPromises = files.map((file, index) => {
     return uploadFile(
       file,
@@ -117,6 +126,7 @@ export async function uploadMultipleFiles(files, accountId, customerId, onProgre
   });
 
   return Promise.all(uploadPromises);
+  */
 }
 
 /**

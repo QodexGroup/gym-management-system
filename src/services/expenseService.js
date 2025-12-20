@@ -41,6 +41,10 @@ export const expenseService = {
    * @returns {Promise<Object>}
    */
   async create(expenseData) {
+    // COMMENTED OUT: Data saving disabled
+    throw new Error('Data saving is currently disabled');
+    
+    /* COMMENTED OUT - Expense creation functionality
     const response = await fetch(`${API_BASE_URL}/expenses`, {
       method: 'POST',
       headers: {
@@ -57,6 +61,7 @@ export const expenseService = {
 
     const data = await response.json();
     return data.success ? data.data : null;
+    */
   },
 
   /**
@@ -66,6 +71,10 @@ export const expenseService = {
    * @returns {Promise<Object>}
    */
   async update(id, expenseData) {
+    // COMMENTED OUT: Data saving disabled
+    throw new Error('Data saving is currently disabled');
+    
+    /* COMMENTED OUT - Expense update functionality
     const response = await fetch(`${API_BASE_URL}/expenses/${id}`, {
       method: 'PUT',
       headers: {
@@ -82,6 +91,7 @@ export const expenseService = {
 
     const data = await response.json();
     return data.success ? data.data : null;
+    */
   },
 
   /**

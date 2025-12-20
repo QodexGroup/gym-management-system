@@ -122,18 +122,48 @@
 }
 
 @layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(71, 85, 105) rgb(15, 23, 42);
+  }
+  
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   
   .scrollbar-thin::-webkit-scrollbar-track {
-    @apply bg-dark-800 rounded-full;
+    @apply bg-dark-900 rounded-full;
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb {
     @apply bg-dark-600 rounded-full hover:bg-dark-500;
   }
+}
+
+/* Global scrollbar styling for all scrollable elements */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(71, 85, 105) rgb(15, 23, 42);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgb(15, 23, 42); /* dark-900 */
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgb(71, 85, 105); /* dark-600 - visible gray */
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgb(100, 116, 139); /* dark-500 - lighter on hover */
 }
 
 /* SweetAlert2 Button Styling Fix - Must be outside Tailwind layers */
