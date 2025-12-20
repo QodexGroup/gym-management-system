@@ -138,7 +138,7 @@ const CustomerList = () => {
   };
 
   const handleViewCustomer = (customerId) => {
-    navigate(`/customers/${customerId}`);
+    navigate(`/members/${customerId}`);
   };
 
   if (loading && customers.length === 0) {
