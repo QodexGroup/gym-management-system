@@ -1,3 +1,5 @@
+import { authenticatedFetch } from './authService';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 /**
@@ -12,11 +14,8 @@ export const customerPaymentService = {
    * @returns {Promise<Object>}
    */
   async create(billId, paymentData) {
-    const response = await fetch(`${API_BASE_URL}/customers/bills/${billId}/payments`, {
+    const response = await authenticatedFetch(`${API_BASE_URL}/customers/bills/${billId}/payments`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(paymentData),
     });
 
@@ -35,12 +34,8 @@ export const customerPaymentService = {
    * @returns {Promise<Array>}
    */
   async getByBillId(billId) {
-    const response = await fetch(`${API_BASE_URL}/customers/bills/${billId}/payments`, {
+    const response = await authenticatedFetch(`${API_BASE_URL}/customers/bills/${billId}/payments`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
     });
 
     if (!response.ok) {
@@ -58,11 +53,8 @@ export const customerPaymentService = {
    * @returns {Promise<boolean>}
    */
   async delete(paymentId) {
-    const response = await fetch(`${API_BASE_URL}/customers/bills/payments/${paymentId}`, {
+    const response = await authenticatedFetch(`${API_BASE_URL}/customers/bills/payments/${paymentId}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
 
     if (!response.ok) {

@@ -1,3 +1,4 @@
+import { authenticatedFetch } from './authService';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -12,12 +13,8 @@ export const expenseCategoryService = {
    */
   async getAll() {
     try {
-      const response = await fetch(`${API_BASE_URL}/expense-categories`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/expense-categories`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
       });
 
       if (!response.ok) {
@@ -41,12 +38,8 @@ export const expenseCategoryService = {
    * @returns {Promise<Object>}
    */
   async getById(id) {
-    const response = await fetch(`${API_BASE_URL}/expense-categories/${id}`, {
+    const response = await authenticatedFetch(`${API_BASE_URL}/expense-categories/${id}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
     });
 
     if (!response.ok) {
@@ -64,12 +57,8 @@ export const expenseCategoryService = {
    * @returns {Promise<Object>}
    */
   async create(categoryData) {
-    const response = await fetch(`${API_BASE_URL}/expense-categories`, {
+    const response = await authenticatedFetch(`${API_BASE_URL}/expense-categories`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
       body: JSON.stringify(categoryData),
     });
 
@@ -89,12 +78,8 @@ export const expenseCategoryService = {
    * @returns {Promise<Object>}
    */
   async update(id, categoryData) {
-    const response = await fetch(`${API_BASE_URL}/expense-categories/${id}`, {
+    const response = await authenticatedFetch(`${API_BASE_URL}/expense-categories/${id}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
       body: JSON.stringify(categoryData),
     });
 
@@ -113,12 +98,8 @@ export const expenseCategoryService = {
    * @returns {Promise<boolean>}
    */
   async delete(id) {
-    const response = await fetch(`${API_BASE_URL}/expense-categories/${id}`, {
+    const response = await authenticatedFetch(`${API_BASE_URL}/expense-categories/${id}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
     });
 
     if (!response.ok) {

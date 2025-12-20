@@ -1,3 +1,5 @@
+import { authenticatedFetch } from './authService';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 /**
@@ -13,12 +15,8 @@ export const customerScanService = {
    */
   async getByCustomerId(customerId, page = 1) {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers/scans/${customerId}?page=${page}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/scans/${customerId}?page=${page}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
       });
 
       if (!response.ok) {
@@ -64,12 +62,8 @@ export const customerScanService = {
    */
   async getById(id) {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers/scans/${id}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/scans/${id}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
       });
 
       if (!response.ok) {
@@ -95,12 +89,8 @@ export const customerScanService = {
    */
   async create(customerId, scanData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers/scans/${customerId}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/scans/${customerId}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
         body: JSON.stringify(scanData),
       });
 
@@ -124,12 +114,8 @@ export const customerScanService = {
    */
   async update(id, scanData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers/scans/${id}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/scans/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
         body: JSON.stringify(scanData),
       });
 
@@ -153,12 +139,8 @@ export const customerScanService = {
    */
   async getByType(customerId, scanType) {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers/scans/${customerId}/type/${scanType}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/scans/${customerId}/type/${scanType}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
       });
 
       if (!response.ok) {
@@ -183,12 +165,8 @@ export const customerScanService = {
    */
   async delete(id) {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers/scans/${id}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/scans/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
       });
 
       if (!response.ok) {

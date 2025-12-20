@@ -1,3 +1,5 @@
+import { authenticatedFetch } from './authService';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 /**
@@ -13,12 +15,8 @@ export const customerFileService = {
    */
   async createProgressFile(progressId, fileData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers/progress/${progressId}/files`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/progress/${progressId}/files`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
         body: JSON.stringify(fileData),
       });
 
@@ -42,12 +40,8 @@ export const customerFileService = {
    */
   async createScanFile(scanId, fileData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers/scans/${scanId}/files`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/scans/${scanId}/files`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
         body: JSON.stringify(fileData),
       });
 
@@ -70,12 +64,8 @@ export const customerFileService = {
    */
   async getByCustomerId(customerId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers/files/${customerId}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/files/${customerId}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
       });
 
       if (!response.ok) {
@@ -97,12 +87,8 @@ export const customerFileService = {
    */
   async delete(id) {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers/files/${id}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/files/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
       });
 
       if (!response.ok) {

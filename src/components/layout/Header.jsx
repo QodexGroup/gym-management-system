@@ -12,7 +12,7 @@ import { mockNotifications } from '../../data/mockData';
 
 const Header = ({ title, subtitle }) => {
   const navigate = useNavigate();
-  const { user, switchRole, isAdmin } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,6 +27,12 @@ const Header = ({ title, subtitle }) => {
   const handleMyProfile = () => {
     setShowUserMenu(false);
     navigate('/my-account');
+  };
+
+  const handleLogout = async () => {
+    setShowUserMenu(false);
+    await logout();
+    navigate('/login');
   };
 
   return (
@@ -152,8 +158,8 @@ const Header = ({ title, subtitle }) => {
               className="flex items-center gap-2 p-1.5 pr-3 hover:bg-dark-700 rounded-xl transition-colors"
             >
               <img
-                src={user.avatar}
-                alt={user.name}
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullname || 'User')}&background=random`}
+                alt={user?.fullname || 'User'}
                 className="w-9 h-9 rounded-lg object-cover"
               />
               <ChevronDown className="w-4 h-4 text-dark-400" />
@@ -163,8 +169,8 @@ const Header = ({ title, subtitle }) => {
             {showUserMenu && (
               <div className="absolute right-0 mt-2 w-56 bg-dark-800 rounded-xl shadow-lg border border-dark-700 overflow-hidden">
                 <div className="px-4 py-3 border-b border-dark-700">
-                  <p className="font-semibold text-dark-50">{user.name}</p>
-                  <p className="text-xs text-dark-400">{user.email}</p>
+                  <p className="font-semibold text-dark-50">{user?.fullname || user?.firstname || 'User'}</p>
+                  <p className="text-xs text-dark-400">{user?.email || ''}</p>
                 </div>
                 <div className="py-2">
                   <button
@@ -176,7 +182,10 @@ const Header = ({ title, subtitle }) => {
                   </button>
                 </div>
                 <div className="border-t border-dark-700 py-2">
-                  <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-danger-500 hover:bg-danger-500/10 transition-colors">
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-danger-500 hover:bg-danger-500/10 transition-colors"
+                  >
                     <LogOut className="w-4 h-4" />
                     Sign Out
                   </button>

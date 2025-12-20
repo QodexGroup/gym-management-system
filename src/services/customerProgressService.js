@@ -1,3 +1,5 @@
+import { authenticatedFetch } from './authService';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 /**
@@ -13,12 +15,8 @@ export const customerProgressService = {
    */
   async getByCustomerId(customerId, page = 1) {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers/progress/${customerId}?page=${page}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/progress/${customerId}?page=${page}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
       });
 
       if (!response.ok) {
@@ -64,12 +62,8 @@ export const customerProgressService = {
    */
   async getById(id) {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers/progress/${id}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/progress/${id}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
       });
 
       if (!response.ok) {
@@ -95,12 +89,8 @@ export const customerProgressService = {
    */
   async create(customerId, progressData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers/progress/${customerId}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/progress/${customerId}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
         body: JSON.stringify(progressData),
       });
 
@@ -124,12 +114,8 @@ export const customerProgressService = {
    */
   async update(id, progressData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers/progress/${id}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/progress/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
         body: JSON.stringify(progressData),
       });
 
@@ -152,12 +138,8 @@ export const customerProgressService = {
    */
   async delete(id) {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers/progress/${id}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/progress/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
       });
 
       if (!response.ok) {

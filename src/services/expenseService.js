@@ -1,3 +1,4 @@
+import { authenticatedFetch } from './authService';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -12,12 +13,8 @@ export const expenseService = {
    */
   async getAll() {
     try {
-      const response = await fetch(`${API_BASE_URL}/expenses`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/expenses`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
       });
 
       if (!response.ok) {
@@ -41,12 +38,8 @@ export const expenseService = {
    * @returns {Promise<Object>}
    */
   async create(expenseData) {
-    const response = await fetch(`${API_BASE_URL}/expenses`, {
+    const response = await authenticatedFetch(`${API_BASE_URL}/expenses`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
       body: JSON.stringify(expenseData),
     });
 
@@ -66,12 +59,8 @@ export const expenseService = {
    * @returns {Promise<Object>}
    */
   async update(id, expenseData) {
-    const response = await fetch(`${API_BASE_URL}/expenses/${id}`, {
+    const response = await authenticatedFetch(`${API_BASE_URL}/expenses/${id}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
       body: JSON.stringify(expenseData),
     });
 
@@ -90,12 +79,8 @@ export const expenseService = {
    * @returns {Promise<boolean>}
    */
   async delete(id) {
-    const response = await fetch(`${API_BASE_URL}/expenses/${id}`, {
+    const response = await authenticatedFetch(`${API_BASE_URL}/expenses/${id}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
     });
 
     if (!response.ok) {
