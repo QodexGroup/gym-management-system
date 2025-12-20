@@ -93,10 +93,6 @@ export const customerService = {
    * @returns {Promise<Object>}
    */
   async create(customerData) {
-    // COMMENTED OUT: Data saving disabled
-    throw new Error('Data saving is currently disabled');
-    
-    /* COMMENTED OUT - Customer creation functionality
     const response = await fetch(`${API_BASE_URL}/customers`, {
       method: 'POST',
       headers: {
@@ -113,7 +109,6 @@ export const customerService = {
 
     const data = await response.json();
     return data.success ? data.data : null;
-    */
   },
 
   /**
@@ -123,10 +118,6 @@ export const customerService = {
    * @returns {Promise<Object>}
    */
   async update(id, customerData) {
-    // COMMENTED OUT: Data saving disabled
-    throw new Error('Data saving is currently disabled');
-    
-    /* COMMENTED OUT - Customer update functionality
     const response = await fetch(`${API_BASE_URL}/customers/${id}`, {
       method: 'PUT',
       headers: {
@@ -143,7 +134,6 @@ export const customerService = {
 
     const data = await response.json();
     return data.success ? data.data : null;
-    */
   },
 
   /**

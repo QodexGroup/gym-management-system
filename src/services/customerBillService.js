@@ -41,10 +41,6 @@ export const customerBillService = {
    * @returns {Promise<Object>}
    */
   async create(billData) {
-    // COMMENTED OUT: Data saving disabled
-    throw new Error('Data saving is currently disabled');
-    
-    /* COMMENTED OUT - Bill creation functionality
     const response = await fetch(`${API_BASE_URL}/customers/bills`, {
       method: 'POST',
       headers: {
@@ -60,7 +56,6 @@ export const customerBillService = {
 
     const data = await response.json();
     return data.success ? data.data : null;
-    */
   },
 
   /**
@@ -70,10 +65,6 @@ export const customerBillService = {
    * @returns {Promise<Object>}
    */
   async update(id, billData) {
-    // COMMENTED OUT: Data saving disabled
-    throw new Error('Data saving is currently disabled');
-    
-    /* COMMENTED OUT - Bill update functionality
     const response = await fetch(`${API_BASE_URL}/customers/bills/${id}`, {
       method: 'PUT',
       headers: {
@@ -89,7 +80,6 @@ export const customerBillService = {
 
     const data = await response.json();
     return data.success ? data.data : null;
-    */
   },
 
   /**

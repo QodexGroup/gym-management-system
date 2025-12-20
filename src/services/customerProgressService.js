@@ -94,10 +94,6 @@ export const customerProgressService = {
    * @returns {Promise<Object>}
    */
   async create(customerId, progressData) {
-    // COMMENTED OUT: Data saving disabled
-    throw new Error('Data saving is currently disabled');
-    
-    /* COMMENTED OUT - Progress creation functionality
     try {
       const response = await fetch(`${API_BASE_URL}/customers/progress/${customerId}`, {
         method: 'POST',
@@ -118,7 +114,6 @@ export const customerProgressService = {
     } catch (error) {
       throw error;
     }
-    */
   },
 
   /**
@@ -128,10 +123,6 @@ export const customerProgressService = {
    * @returns {Promise<Object>}
    */
   async update(id, progressData) {
-    // COMMENTED OUT: Data saving disabled
-    throw new Error('Data saving is currently disabled');
-    
-    /* COMMENTED OUT - Progress update functionality
     try {
       const response = await fetch(`${API_BASE_URL}/customers/progress/${id}`, {
         method: 'PUT',
@@ -152,7 +143,6 @@ export const customerProgressService = {
     } catch (error) {
       throw error;
     }
-    */
   },
 
   /**

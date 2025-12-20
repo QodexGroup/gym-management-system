@@ -12,10 +12,6 @@ export const customerFileService = {
    * @returns {Promise<Object>}
    */
   async createProgressFile(progressId, fileData) {
-    // COMMENTED OUT: Data saving disabled
-    throw new Error('Data saving is currently disabled');
-    
-    /* COMMENTED OUT - File record creation functionality
     try {
       const response = await fetch(`${API_BASE_URL}/customers/progress/${progressId}/files`, {
         method: 'POST',
@@ -36,7 +32,6 @@ export const customerFileService = {
     } catch (error) {
       throw error;
     }
-    */
   },
 
   /**
@@ -46,10 +41,6 @@ export const customerFileService = {
    * @returns {Promise<Object>}
    */
   async createScanFile(scanId, fileData) {
-    // COMMENTED OUT: Data saving disabled
-    throw new Error('Data saving is currently disabled');
-    
-    /* COMMENTED OUT - File record creation functionality
     try {
       const response = await fetch(`${API_BASE_URL}/customers/scans/${scanId}/files`, {
         method: 'POST',
@@ -70,7 +61,6 @@ export const customerFileService = {
     } catch (error) {
       throw error;
     }
-    */
   },
 
   /**

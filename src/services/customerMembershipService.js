@@ -14,10 +14,6 @@ export const customerMembershipService = {
    * @returns {Promise<Object>} Response data
    */
   async createOrUpdate(customerId, membershipData) {
-    // COMMENTED OUT: Data saving disabled
-    throw new Error('Data saving is currently disabled');
-    
-    /* COMMENTED OUT - Membership create/update functionality
     const response = await fetch(`${API_BASE_URL}/customers/${customerId}/membership`, {
       method: 'POST',
       headers: {
@@ -32,7 +28,6 @@ export const customerMembershipService = {
     }
 
     return await response.json();
-    */
   },
 };
 
