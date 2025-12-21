@@ -132,4 +132,60 @@ export const notificationService = {
             throw error;
         }
     },
+
+    /**
+     * Get notification preferences
+     * @returns {Promise<Object>} - Returns preference settings
+     */
+    async getPreferences() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/notification-preferences`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.data || {};
+        } catch (error) {
+            console.error('Error fetching preferences:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Update notification preferences
+     * @param {Object} preferences - Preference settings
+     * @returns {Promise<Object>}
+     */
+    async updatePreferences(preferences) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/notification-preferences`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify(preferences),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.data || {};
+        } catch (error) {
+            console.error('Error updating preferences:', error);
+            throw error;
+        }
+    },
 };

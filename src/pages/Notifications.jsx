@@ -15,6 +15,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
+import { notificationService } from '../services/notificationService';
 
 const Notifications = () => {
   const navigate = useNavigate();
@@ -30,11 +31,55 @@ const Notifications = () => {
   } = useNotifications();
 
   const [filter, setFilter] = useState('all');
+  const [preferences, setPreferences] = useState({
+    membership_expiry_enabled: true,
+    payment_alerts_enabled: true,
+    new_registrations_enabled: true,
+  });
+  const [loadingPreferences, setLoadingPreferences] = useState(false);
+  const [savingPreferences, setSavingPreferences] = useState(false);
 
   // Fetch notifications on mount
   useEffect(() => {
     fetchNotifications(1, 20);
+    loadPreferences();
   }, [fetchNotifications]);
+
+  // Load preferences from API
+  const loadPreferences = async () => {
+    try {
+      setLoadingPreferences(true);
+      const prefs = await notificationService.getPreferences();
+      setPreferences(prefs);
+    } catch (error) {
+      console.error('Error loading preferences:', error);
+    } finally {
+      setLoadingPreferences(false);
+    }
+  };
+
+  // Handle toggle change
+  const handleToggleChange = async (key) => {
+    try {
+      setSavingPreferences(true);
+      const newPreferences = {
+        ...preferences,
+        [key]: !preferences[key],
+      };
+
+      // Optimistically update UI
+      setPreferences(newPreferences);
+
+      // Save to API
+      await notificationService.updatePreferences(newPreferences);
+    } catch (error) {
+      console.error('Error saving preferences:', error);
+      // Revert on error
+      loadPreferences();
+    } finally {
+      setSavingPreferences(false);
+    }
+  };
 
   const filteredNotifications = notifications.filter((n) => {
     if (filter === 'all') return true;
@@ -276,7 +321,13 @@ const Notifications = () => {
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={preferences.membership_expiry_enabled}
+                    onChange={() => handleToggleChange('membership_expiry_enabled')}
+                    disabled={savingPreferences}
+                  />
                   <div className="w-11 h-6 bg-dark-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
                 </label>
               </div>
@@ -292,7 +343,13 @@ const Notifications = () => {
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={preferences.payment_alerts_enabled}
+                    onChange={() => handleToggleChange('payment_alerts_enabled')}
+                    disabled={savingPreferences}
+                  />
                   <div className="w-11 h-6 bg-dark-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
                 </label>
               </div>
@@ -308,7 +365,13 @@ const Notifications = () => {
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={preferences.new_registrations_enabled}
+                    onChange={() => handleToggleChange('new_registrations_enabled')}
+                    disabled={savingPreferences}
+                  />
                   <div className="w-11 h-6 bg-dark-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
                 </label>
               </div>
