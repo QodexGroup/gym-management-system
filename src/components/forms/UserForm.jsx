@@ -84,7 +84,9 @@ const UserForm = ({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-dark-200 mb-2">First Name</label>
+          <label className="block text-sm font-medium text-dark-200 mb-2">
+            First Name <span className="text-danger-500">*</span>
+          </label>
           <input
             type="text"
             name="firstname"
@@ -95,7 +97,9 @@ const UserForm = ({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-dark-200 mb-2">Last Name</label>
+          <label className="block text-sm font-medium text-dark-200 mb-2">
+            Last Name <span className="text-danger-500">*</span>
+          </label>
           <input
             type="text"
             name="lastname"
@@ -107,7 +111,9 @@ const UserForm = ({
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-dark-200 mb-2">Email</label>
+        <label className="block text-sm font-medium text-dark-200 mb-2">
+          Email {!selectedUser && <span className="text-danger-500">*</span>}
+        </label>
         <input
           type="email"
           name="email"
@@ -133,7 +139,9 @@ const UserForm = ({
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-dark-200 mb-2">Role</label>
+        <label className="block text-sm font-medium text-dark-200 mb-2">
+          Role <span className="text-danger-500">*</span>
+        </label>
         <select 
           name="role" 
           className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 rounded-lg focus:bg-dark-600 focus:border-primary-500 outline-none transition-colors" 
@@ -198,7 +206,9 @@ const UserForm = ({
       )}
       {!selectedUser && (
         <div>
-          <label className="block text-sm font-medium text-dark-200 mb-2">Temporary Password</label>
+          <label className="block text-sm font-medium text-dark-200 mb-2">
+            Temporary Password <span className="text-danger-500">*</span>
+          </label>
           <input
             type="password"
             name="password"

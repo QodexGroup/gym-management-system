@@ -126,6 +126,25 @@ export const userService = {
   },
 
   /**
+   * Activate a user
+   * @param {number} id
+   * @returns {Promise<boolean>}
+   */
+  async activate(id) {
+    const response = await authenticatedFetch(`${API_BASE_URL}/users/${id}/activate`, {
+      method: 'PUT',
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to activate user');
+    }
+
+    const data = await response.json();
+    return data.success;
+  },
+
+  /**
    * Reset user password
    * @param {number} id
    * @param {string} password

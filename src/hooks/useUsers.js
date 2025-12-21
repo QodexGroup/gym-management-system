@@ -107,6 +107,26 @@ export const useDeactivateUser = () => {
 };
 
 /**
+ * Hook to activate a user
+ */
+export const useActivateUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id) => {
+      return await userService.activate(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      Toast.success('User activated successfully');
+    },
+    onError: (error) => {
+      Toast.error(error.message || 'Failed to activate user');
+    },
+  });
+};
+
+/**
  * Hook to reset user password
  */
 export const useResetPassword = () => {

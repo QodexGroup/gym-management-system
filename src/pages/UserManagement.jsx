@@ -20,6 +20,7 @@ import {
   useUsers,
   useDeleteUser,
   useDeactivateUser,
+  useActivateUser,
   useResetPassword,
 } from '../hooks/useUsers';
 import permissionsData from '../data/permissions.json';
@@ -41,6 +42,7 @@ const UserManagement = () => {
   const { data: usersData = [], isLoading, error } = useUsers();
   const deleteUserMutation = useDeleteUser();
   const deactivateUserMutation = useDeactivateUser();
+  const activateUserMutation = useActivateUser();
   const resetPasswordMutation = useResetPassword();
 
   // Transform API data to match component expectations
@@ -125,7 +127,13 @@ const UserManagement = () => {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
+    const { Alert } = await import('../utils/alert');
+    const result = await Alert.confirmDelete({
+      title: 'Delete User?',
+      text: 'Are you sure you want to delete this user? This action cannot be undone.',
+    });
+
+    if (result.isConfirmed) {
       await deleteUserMutation.mutateAsync(userId);
       setShowActionMenu(null);
     }
@@ -133,6 +141,11 @@ const UserManagement = () => {
 
   const handleDeactivateUser = async (userId) => {
     await deactivateUserMutation.mutateAsync(userId);
+    setShowActionMenu(null);
+  };
+
+  const handleActivateUser = async (userId) => {
+    await activateUserMutation.mutateAsync(userId);
     setShowActionMenu(null);
   };
 
@@ -434,19 +447,18 @@ const UserManagement = () => {
                                   <XCircle className="w-4 h-4" />
                                   Deactivate
                                 </button>
-                              ) : (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    // TODO: Implement activate functionality
-                                    setShowActionMenu(null);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-success-500 hover:bg-success-500/10 transition-colors"
-                                >
-                                  <CheckCircle className="w-4 h-4" />
-                                  Activate
-                                </button>
-                              )}
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleActivateUser(user.id);
+                              }}
+                              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-success-500 hover:bg-success-500/10 transition-colors"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                              Activate
+                            </button>
+                          )}
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
