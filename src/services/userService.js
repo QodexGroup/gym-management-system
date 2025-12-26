@@ -47,6 +47,40 @@ export const userService = {
   },
 
   /**
+   * Get all active coaches
+   * @returns {Promise<Array>}
+   */
+  async getCoaches() {
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/users/coaches`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        return [];
+      }
+
+      // Handle non-paginated response (coaches endpoint returns collection)
+      if (Array.isArray(data.data)) {
+        return data.data;
+      }
+
+      return [];
+    } catch (error) {
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('Cannot connect to API. Please check if the server is running and CORS is configured.');
+      }
+      throw error;
+    }
+  },
+
+  /**
    * Create a new user
    * @param {Object} userData
    * @returns {Promise<Object>}

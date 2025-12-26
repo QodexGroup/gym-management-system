@@ -19,11 +19,19 @@ const ScansTab = ({ member }) => {
   const [lightboxCurrentIndex, setLightboxCurrentIndex] = useState(0);
 
   // Use React Query hooks
-  const { data, isLoading, isError, error } = useCustomerScans(member?.id, currentPage);
+  const { data, isLoading, isError, error } = useCustomerScans(member?.id, { page: currentPage, pagelimit: 50 });
   const deleteScanMutation = useDeleteCustomerScan();
 
+  // Extract data and pagination from response
   const scans = data?.data || [];
-  const pagination = data?.pagination || null;
+  const pagination = data ? {
+    currentPage: data.current_page,
+    lastPage: data.last_page,
+    from: data.from,
+    to: data.to,
+    total: data.total,
+    perPage: data.per_page,
+  } : null;
   const totalPages = pagination?.lastPage || 1;
   const paginatedScans = scans; // API handles pagination
 

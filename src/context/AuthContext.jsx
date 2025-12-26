@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { initializeFirebaseServices } from '../services/firebaseService';
-import { authService } from '../services/authService';
+import { authService, setLogoutFunction } from '../services/authService';
 import { Toast } from '../utils/alert';
 import { USER_ROLES, isAdminRole, isStaffRole, isCoachRole } from '../constants/userRoles';
 
@@ -22,8 +22,10 @@ export const AuthProvider = ({ children }) => {
 
   // Session duration: 24 hours in milliseconds
   const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+  // Firebase token refresh interval: 50 minutes (tokens expire after 1 hour)
+  const TOKEN_REFRESH_INTERVAL = 50 * 60 * 1000; // 50 minutes
 
-  // Check if session has expired
+  // Check if session has expired (based on login timestamp, not token expiration)
   const isSessionExpired = () => {
     const loginTime = localStorage.getItem('login_timestamp');
     if (!loginTime) {
@@ -80,15 +82,24 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async (idToken, firebaseUid) => {
     try {
-      setToken(idToken);
-      localStorage.setItem('firebase_token', idToken);
-      // Store login timestamp for 24-hour expiration
+      // Store login timestamp FIRST to prevent isSessionExpired from returning true
       localStorage.setItem('login_timestamp', Date.now().toString());
+      localStorage.setItem('firebase_token', idToken);
       if (firebaseUid) {
         localStorage.setItem('firebase_uid', firebaseUid);
       }
       
+      // Set token state
+      setToken(idToken);
+      
+      // Fetch user data (this will set user state)
       const userData = await fetchUserData(idToken);
+      
+      // Ensure user state is set
+      if (userData) {
+        setUser(userData);
+      }
+      
       return userData;
     } catch (error) {
       // Clear session on error
@@ -98,7 +109,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Logout function
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       const { auth } = await initializeFirebaseServices();
       if (auth) {
@@ -109,7 +120,12 @@ export const AuthProvider = ({ children }) => {
     }
     
     clearSession();
-  };
+  }, []); // clearSession is stable, no dependencies needed
+
+  // Register logout function with authService for global invalid token handling
+  useEffect(() => {
+    setLogoutFunction(logout);
+  }, [logout]);
 
   // Initialize auth state
   useEffect(() => {
@@ -130,7 +146,7 @@ export const AuthProvider = ({ children }) => {
 
         // Listen to auth state changes
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-          // Check session expiration again
+          // Check session expiration (24 hours) - this is what matters, not token expiration
           if (isSessionExpired()) {
             clearSession();
             await firebaseSignOut(auth);
@@ -140,7 +156,8 @@ export const AuthProvider = ({ children }) => {
 
           if (firebaseUser) {
             try {
-              const idToken = await firebaseUser.getIdToken();
+              // Force refresh token to get a fresh one (even if current is still valid)
+              const idToken = await firebaseUser.getIdToken(true);
               setToken(idToken);
               localStorage.setItem('firebase_token', idToken);
               localStorage.setItem('firebase_uid', firebaseUser.uid);
@@ -149,10 +166,21 @@ export const AuthProvider = ({ children }) => {
               await fetchUserData(idToken);
             } catch (error) {
               console.error('Error getting token or fetching user data:', error);
-              // If token is invalid, clear session
-              if (error.message.includes('Invalid token')) {
+              // Only clear session if it's actually expired (24 hours), not just token refresh failure
+              if (isSessionExpired()) {
                 clearSession();
-                Toast.error('Your session is invalid. Please login again.');
+                Toast.error('Your session has expired. Please login again.');
+              } else if (error.message.includes('Invalid token') || error.code === 'auth/user-token-expired') {
+                // Try to refresh the token
+                try {
+                  const refreshedToken = await firebaseUser.getIdToken(true);
+                  localStorage.setItem('firebase_token', refreshedToken);
+                  setToken(refreshedToken);
+                  await fetchUserData(refreshedToken);
+                } catch (refreshError) {
+                  clearSession();
+                  Toast.error('Your session is invalid. Please login again.');
+                }
               } else {
                 setUser(null);
               }
@@ -208,19 +236,54 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token, user]);
 
-  // Periodic session expiration check (every 5 minutes)
+  // Periodic token refresh (every 50 minutes to keep Firebase token valid)
   useEffect(() => {
     if (!user || !token) return;
 
-    const checkInterval = setInterval(() => {
+    const refreshToken = async () => {
+      try {
+        const { auth } = await initializeFirebaseServices();
+        if (!auth || !auth.currentUser) return;
+
+        // Check if 24-hour session has expired
+        if (isSessionExpired()) {
+          await logout();
+          return;
+        }
+
+        // Refresh Firebase token (force refresh to get new token)
+        const newToken = await auth.currentUser.getIdToken(true);
+        setToken(newToken);
+        localStorage.setItem('firebase_token', newToken);
+        
+        // Token refreshed successfully, session is still valid
+        console.log('Token refreshed successfully');
+      } catch (error) {
+        console.error('Error refreshing token:', error);
+        // Only logout if 24-hour session expired, not if token refresh failed temporarily
+        if (isSessionExpired()) {
+          await logout();
+        }
+      }
+    };
+
+    // Refresh token every 50 minutes (before 1-hour expiration)
+    const refreshInterval = setInterval(refreshToken, TOKEN_REFRESH_INTERVAL);
+
+    // Also check session expiration every 5 minutes
+    const sessionCheckInterval = setInterval(() => {
       if (isSessionExpired()) {
-        clearInterval(checkInterval);
+        clearInterval(refreshInterval);
+        clearInterval(sessionCheckInterval);
         logout();
       }
     }, 5 * 60 * 1000); // Check every 5 minutes
 
-    return () => clearInterval(checkInterval);
-  }, [user, token]);
+    return () => {
+      clearInterval(refreshInterval);
+      clearInterval(sessionCheckInterval);
+    };
+  }, [user, token, logout]);
 
   const isAdmin = isAdminRole(user?.role);
   const isTrainer = isCoachRole(user?.role);

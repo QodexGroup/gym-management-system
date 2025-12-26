@@ -23,7 +23,21 @@ export const membershipPlanService = {
       }
 
       const data = await response.json();
-      return data.success ? data.data : [];
+      if (!data.success) {
+        return [];
+      }
+
+      // Handle paginated response - extract the data array from pagination object
+      if (data.data && Array.isArray(data.data.data)) {
+        return data.data.data; // Paginated response: { data: { data: [...], ...pagination } }
+      }
+      
+      // Handle non-paginated response (fallback)
+      if (Array.isArray(data.data)) {
+        return data.data;
+      }
+
+      return [];
     } catch (error) {
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
         throw new Error('Cannot connect to API. Please check if the server is running and CORS is configured.');

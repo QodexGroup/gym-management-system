@@ -132,38 +132,38 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel }) => {
           <button
             type="button"
             onClick={() => setMethod('cash')}
-            className={`flex items-center justify-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
+            className={`flex items-center justify-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all ${
               method === 'cash'
-                ? 'border-primary-500 bg-primary-50'
-                : 'border-dark-200 hover:border-primary-500 hover:bg-primary-50'
+                ? 'border-primary-500 bg-primary-500 text-white shadow-lg shadow-primary-500/30'
+                : 'border-dark-200 bg-dark-50 text-dark-700 hover:border-primary-400 hover:bg-primary-50'
             }`}
           >
-            <Banknote className="w-5 h-5" />
-            <span>Cash</span>
+            <Banknote className={`w-5 h-5 ${method === 'cash' ? 'text-white' : 'text-dark-600'}`} />
+            <span className="font-medium">Cash</span>
           </button>
           <button
             type="button"
             onClick={() => setMethod('card')}
-            className={`flex items-center justify-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
+            className={`flex items-center justify-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all ${
               method === 'card'
-                ? 'border-primary-500 bg-primary-50'
-                : 'border-dark-200 hover:border-primary-500 hover:bg-primary-50'
+                ? 'border-primary-500 bg-primary-500 text-white shadow-lg shadow-primary-500/30'
+                : 'border-dark-200 bg-dark-50 text-dark-700 hover:border-primary-400 hover:bg-primary-50'
             }`}
           >
-            <CreditCard className="w-5 h-5" />
-            <span>Card</span>
+            <CreditCard className={`w-5 h-5 ${method === 'card' ? 'text-white' : 'text-dark-600'}`} />
+            <span className="font-medium">Card</span>
           </button>
           <button
             type="button"
             onClick={() => setMethod('gcash')}
-            className={`flex items-center justify-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
+            className={`flex items-center justify-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all ${
               method === 'gcash'
-                ? 'border-primary-500 bg-primary-50'
-                : 'border-dark-200 hover:border-primary-500 hover:bg-primary-50'
+                ? 'border-primary-500 bg-primary-500 text-white shadow-lg shadow-primary-500/30'
+                : 'border-dark-200 bg-dark-50 text-dark-700 hover:border-primary-400 hover:bg-primary-50'
             }`}
           >
-            <Smartphone className="w-5 h-5" />
-            <span>GCash</span>
+            <Smartphone className={`w-5 h-5 ${method === 'gcash' ? 'text-white' : 'text-dark-600'}`} />
+            <span className="font-medium">GCash</span>
           </button>
         </div>
       </div>

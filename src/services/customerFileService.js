@@ -64,7 +64,9 @@ export const customerFileService = {
    */
   async getByCustomerId(customerId) {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/customers/files/${customerId}`, {
+      const params = new URLSearchParams();
+      params.append('customerId', customerId);
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/files?${params.toString()}`, {
         method: 'GET',
       });
 

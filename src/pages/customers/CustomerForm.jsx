@@ -5,7 +5,7 @@ import { Modal } from '../../components/common';
 import { Toast } from '../../utils/alert';
 import { useCreateCustomer, useUpdateCustomer } from '../../hooks/useCustomers';
 import { useMembershipPlans } from '../../hooks/useMembershipPlans';
-import { customerService } from '../../services/customerService';
+import { userService } from '../../services/userService';
 
 const CustomerForm = ({
   isOpen,
@@ -25,18 +25,24 @@ const CustomerForm = ({
   
   const isSubmitting = createMutation.isLoading || updateMutation.isLoading;
 
-  // Fetch trainers on component mount
+  // Fetch coaches on component mount
   useEffect(() => {
-    const fetchTrainers = async () => {
+    const fetchCoaches = async () => {
       try {
-        const trainersData = await customerService.getTrainers();
-        setTrainers(trainersData);
+        const coachesData = await userService.getCoaches();
+        if (Array.isArray(coachesData) && coachesData.length > 0) {
+          setTrainers(coachesData);
+        } else {
+          console.warn('No coaches found or invalid data format:', coachesData);
+          setTrainers([]);
+        }
       } catch (error) {
-        console.error('Error fetching trainers:', error);
-        Toast.error('Failed to load trainers');
+        console.error('Error fetching coaches:', error);
+        Toast.error('Failed to load coaches');
+        setTrainers([]);
       }
     };
-    fetchTrainers();
+    fetchCoaches();
   }, []);
 
   // Validation functions
@@ -378,7 +384,7 @@ const CustomerForm = ({
         {/* Membership - Only show when creating new customer */}
         {!selectedCustomer && (
           <div className="border-b border-dark-200 pb-6">
-            <h3 className="text-lg font-semibold text-dark-50 mb-4">Membership & Trainer</h3>
+            <h3 className="text-lg font-semibold text-dark-50 mb-4">Membership & Coach</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="label">Membership Plan</label>
@@ -402,23 +408,27 @@ const CustomerForm = ({
               </div>
               
               <div>
-                <label className="label">Trainer</label>
+                <label className="label">Coach</label>
                 <select
                   className="input"
-                  value={formData.currentTrainerId}
+                  value={formData.currentTrainerId || ''}
                   onChange={(e) => {
                     setFormData({ 
                       ...formData, 
-                      currentTrainerId: e.target.value,
+                      currentTrainerId: e.target.value || null,
                     });
                   }}
                 >
-                  <option value="">No trainer</option>
-                  {trainers.map((trainer) => (
-                    <option key={trainer.id} value={trainer.id}>
-                      {trainer.name}
-                    </option>
-                  ))}
+                  <option value="">No coach</option>
+                  {trainers.length > 0 ? (
+                    trainers.map((coach) => (
+                      <option key={coach.id} value={coach.id}>
+                        {coach.fullname || `${coach.firstname || ''} ${coach.lastname || ''}`.trim() || 'Unnamed Coach'}
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled>Loading coaches...</option>
+                  )}
                 </select>
               </div>
             </div>

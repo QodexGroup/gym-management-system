@@ -10,7 +10,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [firebaseAuth, setFirebaseAuth] = useState(null);
-  const { login, isAuthenticated, loading: authLoading } = useAuth();
+  const { login, isAuthenticated, user, token, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already authenticated
@@ -19,6 +19,18 @@ const Login = () => {
       navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, authLoading, navigate]);
+  
+  useEffect(() => {
+    const storedToken = localStorage.getItem('firebase_token');
+    const hasToken = token || storedToken;
+    const hasUser = user;
+    
+    if (!authLoading && hasUser && hasToken) {
+      // We have user and token, so we should be authenticated
+      // Navigate to dashboard
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, token, authLoading, navigate]);
 
   useEffect(() => {
     // Initialize Firebase Auth
@@ -74,7 +86,47 @@ const Login = () => {
       }
 
       Toast.success('Login successful!');
-      navigate('/dashboard');
+      
+      // Wait for React to process state updates
+      // Poll for isAuthenticated to become true (max 2 seconds)
+      // Check localStorage directly since state updates are asynchronous
+      let attempts = 0;
+      const maxAttempts = 20;
+      
+      const waitForAuth = () => {
+        return new Promise((resolve) => {
+          const checkAuth = () => {
+            attempts++;
+            // Check localStorage directly for token since state might not be updated yet
+            const storedToken = localStorage.getItem('firebase_token');
+            const storedLoginTime = localStorage.getItem('login_timestamp');
+            const hasToken = !!storedToken;
+            const hasUser = !!user || !!userData;
+            const hasLoginTime = !!storedLoginTime;
+            
+            // Check if we have all required data
+            const currentAuth = isAuthenticated || (hasUser && hasToken && hasLoginTime);
+            
+            if (currentAuth || attempts >= maxAttempts) {
+              resolve(currentAuth);
+            } else {
+              setTimeout(checkAuth, 100);
+            }
+          };
+          checkAuth();
+        });
+      };
+      
+      await waitForAuth();
+      
+      navigate('/dashboard', { replace: true });
+      
+      // Final fallback: if still on login page after 2 seconds, force redirect
+      setTimeout(() => {
+        if (window.location.pathname === '/login' || window.location.pathname === '/') {
+          window.location.href = '/dashboard';
+        }
+      }, 2000);
     } catch (error) {
       console.error('Login error:', error);
       
