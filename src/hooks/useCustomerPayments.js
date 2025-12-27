@@ -6,12 +6,19 @@ import { customerKeys } from './useCustomers';
 
 /**
  * Hook to fetch payments for a bill
+ * @param {number} billId
+ * @param {Object} options - Optional query parameters (page, pagelimit, sort, filters, etc.)
  */
-export const useCustomerPaymentsByBill = (billId) => {
+export const useCustomerPaymentsByBill = (billId, options = {}) => {
   return useQuery({
-    queryKey: ['customerPayments', 'bill', billId],
+    queryKey: ['customerPayments', 'bill', billId, options],
     queryFn: async () => {
-      return await customerPaymentService.getByBillId(billId);
+      const result = await customerPaymentService.getByBillId(billId, options);
+      // If paginated, extract the data array; otherwise return as-is
+      if (result && typeof result === 'object' && Array.isArray(result.data)) {
+        return result.data;
+      }
+      return Array.isArray(result) ? result : [];
     },
     enabled: !!billId,
   });

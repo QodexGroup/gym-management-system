@@ -1,3 +1,5 @@
+import { authenticatedFetch } from './authService';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 /**
@@ -14,11 +16,8 @@ export const customerMembershipService = {
    * @returns {Promise<Object>} Response data
    */
   async createOrUpdate(customerId, membershipData) {
-    const response = await fetch(`${API_BASE_URL}/customers/${customerId}/membership`, {
+    const response = await authenticatedFetch(`${API_BASE_URL}/customers/${customerId}/membership`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify(membershipData),
     });
 

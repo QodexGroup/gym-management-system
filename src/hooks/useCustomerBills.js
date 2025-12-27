@@ -15,12 +15,16 @@ export const customerBillKeys = {
 
 /**
  * Hook to fetch bills for a customer
+ * @param {number} customerId
+ * @param {Object} options - Optional query parameters (page, pagelimit, sort, filters, etc.)
  */
-export const useCustomerBills = (customerId) => {
+export const useCustomerBills = (customerId, options = {}) => {
   return useQuery({
-    queryKey: customerBillKeys.byCustomer(customerId),
+    queryKey: [...customerBillKeys.byCustomer(customerId), options],
     queryFn: async () => {
-      return await customerBillService.getByCustomerId(customerId);
+      const result = await customerBillService.getByCustomerId(customerId, options);
+      // Return the full pagination object
+      return result;
     },
     enabled: !!customerId,
   });

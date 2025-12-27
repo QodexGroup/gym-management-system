@@ -88,7 +88,7 @@ const CustomerProfile = () => {
     return (
       <Layout title="Loading...">
         <div className="card text-center py-12">
-          <p className="text-dark-500">Loading customer profile...</p>
+          <p className="text-dark-500">Loading Member profile...</p>
         </div>
       </Layout>
     );
@@ -99,9 +99,9 @@ const CustomerProfile = () => {
       <Layout title="Customer Not Found">
         <div className="card text-center py-12">
           <User className="w-16 h-16 text-dark-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-dark-300">Customer not found</h3>
+          <h3 className="text-lg font-semibold text-dark-300">Member not found</h3>
           <button onClick={() => navigate('/customers')} className="btn-primary mt-4">
-            Back to Customers
+            Back to Members
           </button>
         </div>
       </Layout>
@@ -124,7 +124,7 @@ const CustomerProfile = () => {
   return (
     <Layout
       title={member.name}
-      subtitle="Customer Profile"
+      subtitle="Member Profile"
     >
       {/* Back Button */}
       <button
@@ -132,7 +132,7 @@ const CustomerProfile = () => {
         className="flex items-center gap-2 text-dark-500 hover:text-dark-700 mb-4 transition-colors"
       >
         <ArrowLeft className="w-5 h-5" />
-        Back to Customers
+        Back to Members
       </button>
 
       {/* Profile Header */}

@@ -2,10 +2,12 @@
 
 import { initializeApp } from "firebase/app";
 import { getStorage } from "firebase/storage";
+import { getAuth } from "firebase/auth";
 import { firebaseConfig as productionConfig } from '../firebaseConfig.js';
 
 let firebaseApp = null;
 let firebaseStorage = null;
+let firebaseAuth = null;
 
 // Determine the configuration source based on the environment
 async function getFirebaseConfig() {
@@ -35,8 +37,8 @@ async function getFirebaseConfig() {
 
 // The asynchronous function that handles initialization and returns the services
 async function initializeFirebaseApp() {
-    if (firebaseApp && firebaseStorage) {
-        return { storage: firebaseStorage };
+    if (firebaseApp && firebaseStorage && firebaseAuth) {
+        return { storage: firebaseStorage, auth: firebaseAuth };
     }
     
     const config = await getFirebaseConfig();
@@ -49,8 +51,9 @@ async function initializeFirebaseApp() {
     try {
         firebaseApp = initializeApp(config);
         firebaseStorage = getStorage(firebaseApp);
+        firebaseAuth = getAuth(firebaseApp);
         
-        return { storage: firebaseStorage };
+        return { storage: firebaseStorage, auth: firebaseAuth };
     } catch (err) {
         console.error("Failed to initialize Firebase:", err);
         return { storage: null };

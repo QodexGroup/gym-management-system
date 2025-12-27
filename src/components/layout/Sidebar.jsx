@@ -67,19 +67,19 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       section: 'MAIN',
       items: [
         { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { path: '/check-in', icon: UserCheck, label: 'Check-In System' },
-        { path: '/customers', icon: Users, label: 'Customers' },
-        { path: '/calendar', icon: CalendarDays, label: 'Calendar' },
+        // { path: '/check-in', icon: UserCheck, label: 'Check-In System' },
+        { path: '/members', icon: Users, label: 'Members List' },
+        // { path: '/calendar', icon: CalendarDays, label: 'Calendar' },
       ],
     },
     // Account Section
-    {
-      section: 'ACCOUNT',
-      items: [
-        { path: '/reports/my-collection', icon: Wallet, label: 'My Collection' },
-        // { path: '/settings', icon: Settings, label: 'Settings' },
-      ],
-    },
+    // {
+    //   section: 'ACCOUNT',
+    //   items: [
+    //     { path: '/reports/my-collection', icon: Wallet, label: 'My Collection' },
+    //     { path: '/settings', icon: Settings, label: 'Settings' },
+    //   ],
+    // },
   ];
 
   const menuSections = isAdmin ? adminMenuItems : trainerMenuItems;

@@ -25,11 +25,19 @@ const ProgressTab = ({ member }) => {
   const [lightboxCurrentIndex, setLightboxCurrentIndex] = useState(0);
 
   // Use React Query hooks
-  const { data, isLoading, isError, error } = useCustomerProgress(member?.id, currentPage);
+  const { data, isLoading, isError, error } = useCustomerProgress(member?.id, { page: currentPage, pagelimit: 50 });
   const deleteProgressMutation = useDeleteCustomerProgress();
   
+  // Extract data and pagination from response
   const progressLogs = data?.data || [];
-  const pagination = data?.pagination || null;
+  const pagination = data ? {
+    currentPage: data.current_page,
+    lastPage: data.last_page,
+    from: data.from,
+    to: data.to,
+    total: data.total,
+    perPage: data.per_page,
+  } : null;
 
   // Handle edit
   const handleEdit = (log) => {

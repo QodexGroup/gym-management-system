@@ -1,0 +1,66 @@
+{
+  "members_list": {
+    "label": "Members List",
+    "permissions": [
+      {
+        "key": "members_list_view",
+        "label": "View Members List"
+      },
+      {
+        "key": "members_list_add",
+        "label": "Add Member"
+      },
+      {
+        "key": "members_list_update",
+        "label": "Update Member"
+      },
+      {
+        "key": "members_list_delete",
+        "label": "Delete Member"
+      }
+    ]
+  },
+  "progress_tracking": {
+    "label": "Progress Tracking",
+    "permissions": [
+      {
+        "key": "progress_tracking_create",
+        "label": "Create Progress Tracking"
+      },
+      {
+        "key": "progress_tracking_update",
+        "label": "Update Progress Tracking"
+      },
+      {
+        "key": "progress_tracking_delete",
+        "label": "Delete Progress Tracking"
+      }
+    ]
+  },
+  "membership_plans_payment": {
+    "label": "Membership Plans & Payment",
+    "permissions": [
+      {
+        "key": "membership_plan_update",
+        "label": "Update Membership Plan"
+      },
+      {
+        "key": "bill_create",
+        "label": "Create Bill"
+      },
+      {
+        "key": "bill_update",
+        "label": "Update Bill"
+      },
+      {
+        "key": "bill_delete",
+        "label": "Delete Bill"
+      },
+      {
+        "key": "payment_create",
+        "label": "Create Payment"
+      }
+    ]
+  }
+}
+

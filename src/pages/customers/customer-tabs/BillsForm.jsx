@@ -6,7 +6,7 @@ import { useCustomerPaymentsByBill, useDeleteCustomerPayment } from '../../../ho
 import { BILL_TYPE, BILL_TYPE_OPTIONS } from '../../../constants/billConstants';
 import { formatCurrency, formatDate } from '../../../utils/formatters';
 import { Alert } from '../../../utils/alert';
-import { Trash2, Info } from 'lucide-react';
+import { Trash2, Info, Banknote, CreditCard, Smartphone } from 'lucide-react';
 
 const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustomerUpdate, initialData = null }) => {
   const { data: membershipPlans = [], isLoading: loadingPlans } = useMembershipPlans();
@@ -147,8 +147,8 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Warning for paid bills */}
       {isPaidBill && (
-        <div className="p-3 bg-warning-50 border border-warning-200 rounded-lg text-sm text-warning-800">
-          This bill is already <strong>paid</strong>. Make sure you know what you are doing before updating this bill.
+        <div className="p-3 bg-blue-500/10 border-2 border-blue-400 rounded-lg text-sm text-blue-300 font-medium">
+          <strong className="text-blue-200">This bill is already paid.</strong> Make sure you know what you are doing before updating this bill.
         </div>
       )}
 
@@ -360,7 +360,16 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
 
                   {/* Method & Ref # */}
                   <div className="space-y-0.5">
-                    <div className="capitalize text-dark-700">{payment.paymentMethod}</div>
+                    {payment.paymentMethod ? (
+                      <div className="flex items-center gap-1.5">
+                        {payment.paymentMethod === 'cash' && <Banknote className="w-3.5 h-3.5 text-dark-600" />}
+                        {payment.paymentMethod === 'card' && <CreditCard className="w-3.5 h-3.5 text-dark-600" />}
+                        {payment.paymentMethod === 'gcash' && <Smartphone className="w-3.5 h-3.5 text-dark-600" />}
+                        <span className="capitalize font-medium text-dark-800">{payment.paymentMethod}</span>
+                      </div>
+                    ) : (
+                      <span className="text-dark-400 text-xs">N/A</span>
+                    )}
                     {payment.referenceNumber && (
                       <div className="text-dark-500 text-[11px]">Ref #: {payment.referenceNumber}</div>
                     )}

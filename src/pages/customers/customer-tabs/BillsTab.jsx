@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle, Clock, AlertCircle, Receipt, Plus, Edit, Trash2, Banknote, CreditCard, Calendar, UserCheck } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, Receipt, Plus, Edit, Trash2, Banknote, CreditCard, Calendar, UserCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Badge, Modal, Avatar } from '../../../components/common';
 import { formatCurrency, formatDate } from '../../../utils/formatters';
 import BillsForm from './BillsForm';
@@ -19,7 +19,8 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
   const [selectedBill, setSelectedBill] = useState(null);
   const [paymentBill, setPaymentBill] = useState(null);
   
-  const { data, isLoading, isError, error } = useCustomerBills(member?.id);
+  const [currentPage, setCurrentPage] = useState(1);
+  const { data, isLoading, isError, error } = useCustomerBills(member?.id, { page: currentPage, pagelimit: 50 });
   const createBillMutation = useCreateCustomerBill();
   const updateBillMutation = useUpdateCustomerBill();
   const deleteBillMutation = useDeleteCustomerBill();
@@ -29,8 +30,16 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
   const currentMembership = member?.currentMembership;
   const hasActiveMembership = currentMembership && currentMembership.status === CUSTOMER_MEMBERSHIP_STATUS.ACTIVE;
   
-  const bills = data?.data?.data || data?.data || [];
-  const pagination = data?.data || null;
+  // Extract bills and pagination from response
+  const bills = data?.data || [];
+  const pagination = data ? {
+    current_page: data.current_page,
+    last_page: data.last_page,
+    per_page: data.per_page,
+    total: data.total,
+    from: data.from,
+    to: data.to,
+  } : null;
   
   // Calculate stats from bills
   const totalPaid = bills
@@ -349,6 +358,34 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
         ) : !isLoading && !isError ? (
           <p className="text-dark-400 text-center py-8">No bills found</p>
         ) : null}
+
+        {/* Pagination Controls */}
+        {pagination && pagination.last_page > 1 && (
+          <div className="mt-6 flex items-center justify-between border-t border-dark-200 pt-4">
+            <div className="text-sm text-dark-400">
+              Showing {pagination.from || 0} to {pagination.to || 0} of {pagination.total || 0} bills
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-dark-600 text-dark-300 hover:bg-dark-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-sm text-dark-300 px-4">
+                Page {pagination.current_page || currentPage} of {pagination.last_page}
+              </span>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(pagination.last_page, prev + 1))}
+                disabled={currentPage === pagination.last_page}
+                className="p-2 rounded-lg border border-dark-600 text-dark-300 hover:bg-dark-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Add Payment Modal */}

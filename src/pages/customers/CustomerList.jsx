@@ -287,7 +287,7 @@ const CustomerList = () => {
                   <td className="table-cell">
                       {customer.currentTrainer ? (
                         <span className="text-sm text-dark-300">
-                          {customer.currentTrainer.name}
+                          {customer.currentTrainer.fullname || `${customer.currentTrainer.firstname || ''} ${customer.currentTrainer.lastname || ''}`.trim()}
                         </span>
                       ) : (
                         <span className="text-dark-400">-</span>

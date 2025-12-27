@@ -16,67 +16,57 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
-import { mockTrainers } from '../data/mockData';
+import {
+  useUsers,
+  useDeleteUser,
+  useDeactivateUser,
+  useActivateUser,
+  useResetPassword,
+} from '../hooks/useUsers';
+import permissionsData from '../data/permissions.json';
+import UserForm from '../components/forms/UserForm';
+import { USER_ROLES, isAdminRole } from '../constants/userRoles';
 
 const UserManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRole, setFilterRole] = useState('all');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showActionMenu, setShowActionMenu] = useState(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const menuRefs = useRef({});
+  const buttonRefs = useRef({});
 
-  // Mock users data
-  const users = [
-    {
-      id: 1,
-      name: 'Admin User',
-      email: 'admin@gym.com',
-      phone: '+1 234 567 0001',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop',
-      role: 'admin',
-      status: 'active',
-      permissions: ['all'],
-      lastLogin: '2024-12-09 08:30',
-    },
-    ...mockTrainers.map((trainer) => ({
-      ...trainer,
-      role: 'trainer',
-      permissions: ['customers', 'appointments', 'progress', 'calendar'],
-      lastLogin: '2024-12-09 07:00',
-    })),
-    {
-      id: 10,
-      name: 'Front Desk Staff',
-      email: 'frontdesk@gym.com',
-      phone: '+1 234 567 0010',
-      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop',
-      role: 'staff',
-      status: 'active',
-      permissions: ['checkin', 'customers_view'],
-      lastLogin: '2024-12-08 18:00',
-    },
-  ];
+  // Hooks
+  const { data: usersData = [], isLoading, error } = useUsers();
+  const deleteUserMutation = useDeleteUser();
+  const deactivateUserMutation = useDeactivateUser();
+  const activateUserMutation = useActivateUser();
+  const resetPasswordMutation = useResetPassword();
+
+  // Transform API data to match component expectations
+  const users = usersData.map((user) => ({
+    id: user.id,
+    name: user.fullname || `${user.firstname} ${user.lastname || ''}`.trim(),
+    firstname: user.firstname,
+    lastname: user.lastname,
+    email: user.email,
+    phone: user.phone,
+    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullname || user.firstname)}&background=random`,
+    role: user.role,
+    status: user.status,
+    permissions: user.permissions?.map((p) => p.permission) || [],
+  }));
 
   const roles = [
-    { value: 'admin', label: 'Administrator', color: 'danger' },
-    { value: 'coach', label: 'Coach', color: 'primary' },
-    { value: 'staff', label: 'Staff', color: 'success' },
+    { value: USER_ROLES.ADMIN, label: 'Administrator', color: 'danger' },
+    { value: USER_ROLES.COACH, label: 'Coach', color: 'primary' },
+    { value: USER_ROLES.STAFF, label: 'Staff', color: 'success' },
   ];
 
-  const permissionsList = [
-    { key: 'all', label: 'Full Access' },
-    { key: 'customers', label: 'Customer Management' },
-    { key: 'customers_view', label: 'View Customers Only' },
-    { key: 'billing', label: 'Bills & Payments' },
-    { key: 'expenses', label: 'Expenses' },
-    { key: 'appointments', label: 'Appointments' },
-    { key: 'progress', label: 'Progress Tracking' },
-    { key: 'calendar', label: 'Calendar' },
-    { key: 'reports', label: 'Reports' },
-    { key: 'checkin', label: 'Check-In System' },
-  ];
+  const [selectedRole, setSelectedRole] = useState(USER_ROLES.ADMIN);
+  const [selectedPermissions, setSelectedPermissions] = useState([]);
 
   // Filter users
   const filteredUsers = users.filter((user) => {
@@ -96,10 +86,104 @@ const UserManagement = () => {
     );
   };
 
+  // Get default permissions for a role (only for creating users)
+  const getDefaultPermissionsForRole = (role) => {
+    if (role === USER_ROLES.COACH) {
+      // All progress tracking permissions
+      return permissionsData.progress_tracking.permissions.map(p => p.key);
+    } else if (role === USER_ROLES.STAFF) {
+      // Bill and payment permissions
+      return [
+        'bill_create',
+        'bill_update',
+        'bill_delete',
+        'payment_create'
+      ];
+    }
+    return [];
+  };
+
+  // Update selected permissions when role changes (only for Create User modal)
+  useEffect(() => {
+    if (showUserModal && !selectedUser) {
+      const defaults = getDefaultPermissionsForRole(selectedRole);
+      setSelectedPermissions(defaults);
+    }
+  }, [selectedRole, showUserModal, selectedUser]);
+
   const handleEditUser = (user) => {
     setSelectedUser(user);
-    setShowEditModal(true);
+    setSelectedRole(user.role);
+    setSelectedPermissions(user.permissions || []);
+    setShowUserModal(true);
     setShowActionMenu(null);
+  };
+
+  const handleAddUser = () => {
+    setSelectedUser(null);
+    setSelectedRole(USER_ROLES.ADMIN);
+    setSelectedPermissions([]);
+    setShowUserModal(true);
+  };
+
+  const handleDeleteUser = async (userId) => {
+    const { Alert } = await import('../utils/alert');
+    const result = await Alert.confirmDelete({
+      title: 'Delete User?',
+      text: 'Are you sure you want to delete this user? This action cannot be undone.',
+    });
+
+    if (result.isConfirmed) {
+      await deleteUserMutation.mutateAsync(userId);
+      setShowActionMenu(null);
+    }
+  };
+
+  const handleDeactivateUser = async (userId) => {
+    await deactivateUserMutation.mutateAsync(userId);
+    setShowActionMenu(null);
+  };
+
+  const handleActivateUser = async (userId) => {
+    await activateUserMutation.mutateAsync(userId);
+    setShowActionMenu(null);
+  };
+
+  const handleResetPassword = (user) => {
+    setSelectedUser(user);
+    setShowResetPasswordModal(true);
+    setShowActionMenu(null);
+  };
+
+  const handleSubmitResetPassword = async (e) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+
+    const formData = new FormData(e.target);
+    const password = formData.get('password');
+
+    await resetPasswordMutation.mutateAsync({
+      id: selectedUser.id,
+      password: password,
+    });
+
+    setShowResetPasswordModal(false);
+    setSelectedUser(null);
+    e.target.reset();
+  };
+
+  const handleUserFormSuccess = () => {
+    setShowUserModal(false);
+    setSelectedUser(null);
+    setSelectedRole(USER_ROLES.ADMIN);
+    setSelectedPermissions([]);
+  };
+
+  const handleCancel = () => {
+    setShowUserModal(false);
+    setSelectedUser(null);
+    setSelectedRole(USER_ROLES.ADMIN);
+    setSelectedPermissions([]);
   };
 
   // Remove duplicate menus (React Strict Mode fix)
@@ -173,9 +257,9 @@ const UserManagement = () => {
         <div className="card bg-gradient-to-br from-warning-500 to-warning-600 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-warning-100 text-sm">Trainers</p>
+              <p className="text-warning-100 text-sm">Coaches</p>
               <p className="text-3xl font-bold mt-1">
-                {users.filter((u) => u.role === 'trainer').length}
+                {users.filter((u) => u.role === USER_ROLES.COACH).length}
               </p>
             </div>
             <UserCog className="w-10 h-10 text-warning-200" />
@@ -186,7 +270,7 @@ const UserManagement = () => {
             <div>
               <p className="text-danger-100 text-sm">Admins</p>
               <p className="text-3xl font-bold mt-1">
-                {users.filter((u) => u.role === 'admin').length}
+                {users.filter((u) => u.role === USER_ROLES.ADMIN).length}
               </p>
             </div>
             <Shield className="w-10 h-10 text-danger-200" />
@@ -221,29 +305,37 @@ const UserManagement = () => {
               ))}
             </select>
           </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="btn-primary flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add User
-          </button>
+            <button
+              onClick={handleAddUser}
+              className="btn-primary flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add User
+            </button>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-dark-50">
-                <th className="table-header">User</th>
-                <th className="table-header">Contact</th>
-                <th className="table-header">Role</th>
-                <th className="table-header">Status</th>
-                <th className="table-header">Last Login</th>
-                <th className="table-header">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-dark-100">
-              {filteredUsers.map((user) => (
+          {isLoading ? (
+            <div className="text-center py-8 text-dark-400">Loading users...</div>
+          ) : error ? (
+            <div className="text-center py-8 text-danger-600">
+              Error loading users: {error.message}
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="text-center py-8 text-dark-400">No users found</div>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr className="bg-dark-50">
+                  <th className="table-header">User</th>
+                  <th className="table-header">Contact</th>
+                  <th className="table-header">Role</th>
+                  <th className="table-header">Status</th>
+                  <th className="table-header">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-dark-100">
+                {filteredUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-dark-700">
                   <td className="table-cell">
                     <div className="flex items-center gap-3">
@@ -274,15 +366,27 @@ const UserManagement = () => {
                       {user.status}
                     </Badge>
                   </td>
-                  <td className="table-cell text-sm text-dark-500">
-                    {user.lastLogin}
-                  </td>
                   <td className="table-cell">
                     <div className="relative" onClick={(e) => e.stopPropagation()}>
                       <button
                         data-menu-button={`menu-btn-${user.id}`}
+                        ref={(el) => {
+                          if (el) {
+                            buttonRefs.current[user.id] = el;
+                          } else {
+                            delete buttonRefs.current[user.id];
+                          }
+                        }}
                         onClick={(e) => {
                           e.stopPropagation();
+                          const button = buttonRefs.current[user.id];
+                          if (button) {
+                            const rect = button.getBoundingClientRect();
+                            setMenuPosition({
+                              top: rect.bottom + 4,
+                              right: window.innerWidth - rect.right,
+                            });
+                          }
                           setShowActionMenu(
                             showActionMenu === user.id ? null : user.id
                           );
@@ -302,7 +406,11 @@ const UserManagement = () => {
                               delete menuRefs.current[user.id];
                             }
                           }}
-                          className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-dark-100 py-1 z-50"
+                          className="fixed w-48 bg-dark-800 rounded-lg shadow-xl border border-dark-700 py-1 z-[100]"
+                          style={{
+                            top: `${menuPosition.top}px`,
+                            right: `${menuPosition.right}px`,
+                          }}
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
@@ -310,7 +418,7 @@ const UserManagement = () => {
                               e.stopPropagation();
                               handleEditUser(user);
                             }}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-dark-200 hover:bg-dark-700"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-dark-100 hover:bg-dark-700 transition-colors"
                           >
                             <Edit className="w-4 h-4" />
                             Edit User
@@ -318,250 +426,131 @@ const UserManagement = () => {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setShowActionMenu(null);
+                              handleResetPassword(user);
                             }}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-dark-200 hover:bg-dark-700"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-dark-100 hover:bg-dark-700 transition-colors"
                           >
                             <Key className="w-4 h-4" />
                             Reset Password
                           </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowActionMenu(null);
-                            }}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-dark-200 hover:bg-dark-700"
-                          >
-                            <Shield className="w-4 h-4" />
-                            Permissions
-                          </button>
-                          <hr className="my-1 border-dark-100" />
-                          {user.status === 'active' ? (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setShowActionMenu(null);
-                              }}
-                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-warning-600 hover:bg-warning-50"
-                            >
-                              <XCircle className="w-4 h-4" />
-                              Deactivate
-                            </button>
+                          {!isAdminRole(user.role) && (
+                            <>
+                              <hr className="my-1 border-dark-700" />
+                              {user.status === 'active' ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeactivateUser(user.id);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-warning-500 hover:bg-warning-500/10 transition-colors"
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                  Deactivate
+                                </button>
                           ) : (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setShowActionMenu(null);
+                                handleActivateUser(user.id);
                               }}
-                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-success-600 hover:bg-success-50"
+                              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-success-500 hover:bg-success-500/10 transition-colors"
                             >
                               <CheckCircle className="w-4 h-4" />
                               Activate
                             </button>
                           )}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowActionMenu(null);
-                            }}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-danger-600 hover:bg-danger-50"
-                          >
-                            <Trash className="w-4 h-4" />
-                            Delete
-                          </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteUser(user.id);
+                                }}
+                                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-danger-500 hover:bg-danger-500/10 transition-colors"
+                              >
+                                <Trash className="w-4 h-4" />
+                                Delete
+                              </button>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 
-      {/* Add User Modal */}
+      {/* Unified User Modal */}
       <Modal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        title="Add New User"
+        isOpen={showUserModal}
+        onClose={handleCancel}
+        title={selectedUser ? 'Edit User' : 'Add New User'}
         size="lg"
       >
-        <form className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="label">First Name</label>
-              <input type="text" className="input" placeholder="John" />
-            </div>
-            <div>
-              <label className="label">Last Name</label>
-              <input type="text" className="input" placeholder="Doe" />
-            </div>
-          </div>
-          <div>
-            <label className="label">Email</label>
-            <input type="email" className="input" placeholder="john@gym.com" />
-          </div>
-          <div>
-            <label className="label">Phone</label>
-            <input type="tel" className="input" placeholder="+1 234 567 8900" />
-          </div>
-          <div>
-            <label className="label">Role</label>
-            <select className="input">
-              {roles.map((role) => (
-                <option key={role.value} value={role.value}>
-                  {role.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="label">Permissions</label>
-            <div className="grid grid-cols-2 gap-2 p-4 bg-dark-700 rounded-lg border border-dark-600">
-              {permissionsList.map((perm) => (
-                <label
-                  key={perm.key}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <input type="checkbox" className="w-4 h-4" />
-                  <span className="text-sm text-dark-200">{perm.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="label">Temporary Password</label>
-            <input
-              type="password"
-              className="input"
-              placeholder="••••••••"
-            />
-            <p className="text-xs text-dark-400 mt-1">
-              User will be required to change password on first login
-            </p>
-          </div>
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => setShowAddModal(false)}
-              className="flex-1 btn-secondary"
-            >
-              Cancel
-            </button>
-            <button type="submit" className="flex-1 btn-primary">
-              Create User
-            </button>
-          </div>
-        </form>
+        <UserForm
+          selectedUser={selectedUser}
+          selectedRole={selectedRole}
+          selectedPermissions={selectedPermissions}
+          roles={roles}
+          onRoleChange={setSelectedRole}
+          onPermissionsChange={setSelectedPermissions}
+          onSuccess={handleUserFormSuccess}
+          onCancel={handleCancel}
+          getRoleBadge={getRoleBadge}
+        />
       </Modal>
 
-      {/* Edit User Modal */}
+      {/* Reset Password Modal */}
       <Modal
-        isOpen={showEditModal}
+        isOpen={showResetPasswordModal}
         onClose={() => {
-          setShowEditModal(false);
+          setShowResetPasswordModal(false);
           setSelectedUser(null);
         }}
-        title="Edit User"
-        size="lg"
+        title="Reset Password"
+        size="md"
       >
         {selectedUser && (
-          <form className="space-y-4">
-            <div className="flex items-center gap-4 p-4 bg-dark-50 rounded-xl">
-              <Avatar src={selectedUser.avatar} name={selectedUser.name} size="xl" />
-              <div>
-                <h3 className="font-semibold text-dark-50">{selectedUser.name}</h3>
-                <p className="text-sm text-dark-500">{selectedUser.email}</p>
-                {getRoleBadge(selectedUser.role)}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="label">First Name</label>
-                <input
-                  type="text"
-                  className="input"
-                  defaultValue={selectedUser.name.split(' ')[0]}
-                />
-              </div>
-              <div>
-                <label className="label">Last Name</label>
-                <input
-                  type="text"
-                  className="input"
-                  defaultValue={selectedUser.name.split(' ')[1] || ''}
-                />
-              </div>
+          <form onSubmit={handleSubmitResetPassword} className="space-y-4">
+            <div className="mb-4">
+              <p className="text-sm text-dark-300">
+                Reset password for <span className="font-semibold text-dark-50">{selectedUser.name}</span>
+              </p>
             </div>
             <div>
-              <label className="label">Email</label>
+              <label className="block text-sm font-medium text-dark-200 mb-2">New Password</label>
               <input
-                type="email"
-                className="input"
-                defaultValue={selectedUser.email}
+                type="password"
+                name="password"
+                className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 rounded-lg focus:bg-dark-600 focus:border-primary-500 outline-none transition-colors"
+                placeholder="Enter new password"
+                required
+                minLength={6}
               />
-            </div>
-            <div>
-              <label className="label">Phone</label>
-              <input
-                type="tel"
-                className="input"
-                defaultValue={selectedUser.phone}
-              />
-            </div>
-            <div>
-              <label className="label">Role</label>
-              <select className="input" defaultValue={selectedUser.role}>
-                {roles.map((role) => (
-                  <option key={role.value} value={role.value}>
-                    {role.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="label">Status</label>
-              <select className="input" defaultValue={selectedUser.status}>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
-            <div>
-              <label className="label">Permissions</label>
-              <div className="grid grid-cols-2 gap-2 p-4 bg-dark-700 rounded-lg border border-dark-600">
-                {permissionsList.map((perm) => (
-                  <label
-                    key={perm.key}
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      className="w-4 h-4"
-                      defaultChecked={
-                        selectedUser.permissions?.includes(perm.key) ||
-                        selectedUser.permissions?.includes('all')
-                      }
-                    />
-                    <span className="text-sm text-dark-200">{perm.label}</span>
-                  </label>
-                ))}
-              </div>
+              <p className="text-xs text-dark-400 mt-1">
+                Password must be at least 6 characters long
+              </p>
             </div>
             <div className="flex gap-3 pt-4">
               <button
                 type="button"
                 onClick={() => {
-                  setShowEditModal(false);
+                  setShowResetPasswordModal(false);
                   setSelectedUser(null);
                 }}
                 className="flex-1 btn-secondary"
               >
                 Cancel
               </button>
-              <button type="submit" className="flex-1 btn-primary">
-                Save Changes
+              <button
+                type="submit"
+                className="flex-1 btn-primary"
+                disabled={resetPasswordMutation.isPending}
+              >
+                {resetPasswordMutation.isPending ? 'Resetting...' : 'Reset Password'}
               </button>
             </div>
           </form>

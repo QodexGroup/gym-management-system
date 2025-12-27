@@ -1,3 +1,4 @@
+import { authenticatedFetch } from './authService';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -8,17 +9,14 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export const customerService = {
   /**
    * Get a customer by ID
-   * @param {number} id - Customer ID
+   * @param {number|string} id - Customer ID
    * @returns {Promise<Object>}
    */
   async getById(id) {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers/${id}`, {
+      const customerId = parseInt(id, 10);
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/${customerId}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
       });
 
       if (!response.ok) {
@@ -43,12 +41,8 @@ export const customerService = {
    */
   async getAll(page = 1) {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers?page=${page}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers?page=${page}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
       });
 
       if (!response.ok) {
@@ -93,12 +87,8 @@ export const customerService = {
    * @returns {Promise<Object>}
    */
   async create(customerData) {
-    const response = await fetch(`${API_BASE_URL}/customers`, {
+    const response = await authenticatedFetch(`${API_BASE_URL}/customers`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
       body: JSON.stringify(customerData),
     });
 
@@ -113,17 +103,14 @@ export const customerService = {
 
   /**
    * Update a customer
-   * @param {number} id
+   * @param {number|string} id
    * @param {Object} customerData
    * @returns {Promise<Object>}
    */
   async update(id, customerData) {
-    const response = await fetch(`${API_BASE_URL}/customers/${id}`, {
+    const customerId = parseInt(id, 10);
+    const response = await authenticatedFetch(`${API_BASE_URL}/customers/${customerId}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
       body: JSON.stringify(customerData),
     });
 
@@ -138,16 +125,13 @@ export const customerService = {
 
   /**
    * Delete a customer
-   * @param {number} id
+   * @param {number|string} id
    * @returns {Promise<boolean>}
    */
   async delete(id) {
-    const response = await fetch(`${API_BASE_URL}/customers/${id}`, {
+    const customerId = parseInt(id, 10);
+    const response = await authenticatedFetch(`${API_BASE_URL}/customers/${customerId}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
     });
 
     if (!response.ok) {
@@ -165,12 +149,8 @@ export const customerService = {
    */
   async getTrainers() {
     try {
-      const response = await fetch(`${API_BASE_URL}/customers/trainers`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers/trainers`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
       });
 
       if (!response.ok) {

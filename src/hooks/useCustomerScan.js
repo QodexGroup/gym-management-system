@@ -9,7 +9,7 @@ import { Toast } from '../utils/alert';
 export const customerScanKeys = {
   all: ['customerScans'],
   lists: () => [...customerScanKeys.all, 'list'],
-  list: (customerId, page) => [...customerScanKeys.lists(), customerId, page],
+  list: (customerId, options) => [...customerScanKeys.lists(), customerId, options],
   details: () => [...customerScanKeys.all, 'detail'],
   detail: (id) => [...customerScanKeys.details(), id],
 };
@@ -17,15 +17,11 @@ export const customerScanKeys = {
 /**
  * Hook to fetch scans for a customer with pagination
  */
-export const useCustomerScans = (customerId, page = 1) => {
+export const useCustomerScans = (customerId, options = {}) => {
   return useQuery({
-    queryKey: customerScanKeys.list(customerId, page),
+    queryKey: customerScanKeys.list(customerId, options),
     queryFn: async () => {
-      const result = await customerScanService.getByCustomerId(customerId, page);
-      return {
-        data: result.data || [],
-        pagination: result.pagination,
-      };
+      return await customerScanService.getByCustomerId(customerId, options);
     },
     enabled: !!customerId, // Only run query if customerId exists
     placeholderData: keepPreviousData, // Keep previous page data while loading new page
