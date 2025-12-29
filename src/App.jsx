@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import AlertProvider from './components/AlertProvider';
 import { queryClient } from './lib/queryClient';
 
@@ -60,51 +61,51 @@ function App() {
       <AuthProvider>
         <AlertProvider>
           <Router>
-          <Routes>
-            {/* Auth Routes */}
-            <Route path="/login" element={<Login />} />
-            
-            {/* Protected Routes */}
-            <Route path="/" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Routes>
+              {/* Auth Routes */}
+              <Route path="/login" element={<Login />} />
 
-            {/* Check-In System */}
-            {/* <Route path="/check-in" element={<CheckIn />} /> */}
+              {/* Protected Routes */}
+              <Route path="/" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 
-            {/* Customer Management */}
-            <Route path="/members" element={<ProtectedRoute><CustomerList /></ProtectedRoute>} />
-            <Route path="/members/:id" element={<ProtectedRoute><CustomerProfile /></ProtectedRoute>} />
+              {/* Check-In System */}
+              {/* <Route path="/check-in" element={<CheckIn />} /> */}
 
-            {/* Membership Plans (Admin Only) */}
-            <Route path="/membership-plans" element={<ProtectedRoute><MembershipPlans /></ProtectedRoute>} />
+              {/* Customer Management */}
+              <Route path="/members" element={<ProtectedRoute><CustomerList /></ProtectedRoute>} />
+              <Route path="/members/:id" element={<ProtectedRoute><CustomerProfile /></ProtectedRoute>} />
 
-            {/* Expenses (Admin Only) */}
-            {/* <Route path="/expenses" element={<Expenses />} /> */}
+              {/* Membership Plans (Admin Only) */}
+              <Route path="/membership-plans" element={<ProtectedRoute><MembershipPlans /></ProtectedRoute>} />
 
-            {/* Calendar */}
-            {/* <Route path="/calendar" element={<Calendar />} /> */}
+              {/* Expenses (Admin Only) */}
+              {/* <Route path="/expenses" element={<Expenses />} /> */}
 
-            {/* Reports */}
-            {/* <Route path="/reports/summary" element={<SummaryReport />} />
-            <Route path="/reports/collection" element={<CollectionReport />} />
-            <Route path="/reports/expense" element={<ExpenseReport />} />
-            <Route path="/reports/my-collection" element={<MyCollection />} /> */}
+              {/* Calendar */}
+              {/* <Route path="/calendar" element={<Calendar />} /> */}
 
-            {/* User Management (Admin Only) */}
-            <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
+              {/* Reports */}
+              {/* <Route path="/reports/summary" element={<SummaryReport />} />
+              <Route path="/reports/collection" element={<CollectionReport />} />
+              <Route path="/reports/expense" element={<ExpenseReport />} />
+              <Route path="/reports/my-collection" element={<MyCollection />} /> */}
 
-            {/* Notifications */}
-            <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+              {/* User Management (Admin Only) */}
+              <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
 
-            {/* My Account */}
-            <Route path="/my-account" element={<ProtectedRoute><MyAccount /></ProtectedRoute>} />
+              {/* Notifications */}
+              <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
 
-            {/* Settings */}
-            {/* <Route path="/settings" element={<Settings />} /> */}
+              {/* My Account */}
+              <Route path="/my-account" element={<ProtectedRoute><MyAccount /></ProtectedRoute>} />
 
-            {/* Catch all - redirect to dashboard or login */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
+              {/* Settings */}
+              {/* <Route path="/settings" element={<Settings />} /> */}
+
+              {/* Catch all - redirect to dashboard or login */}
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
           </Router>
         </AlertProvider>
       </AuthProvider>

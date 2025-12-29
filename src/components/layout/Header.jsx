@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import NotificationBell from '../NotificationBell';
 import {
   Search,
-  Bell,
   ChevronDown,
   User,
   LogOut,
 } from 'lucide-react';
-import { mockNotifications } from '../../data/mockData';
 
 const Header = ({ title, subtitle }) => {
   const navigate = useNavigate();
@@ -16,13 +15,6 @@ const Header = ({ title, subtitle }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
-  const unreadCount = mockNotifications.filter((n) => !n.read).length;
-
-  const handleViewAllNotifications = () => {
-    setShowNotifications(false);
-    navigate('/notifications');
-  };
 
   const handleMyProfile = () => {
     setShowUserMenu(false);
@@ -83,73 +75,8 @@ const Header = ({ title, subtitle }) => {
             </button>
           </div> */}
 
-          {/* Notifications */}
-          <div className="relative">
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2.5 text-dark-400 hover:text-dark-200 hover:bg-dark-700 rounded-xl transition-colors"
-            >
-              <Bell className="w-5 h-5" />
-              {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-5 h-5 bg-danger-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-
-            {/* Notifications Dropdown */}
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-dark-800 rounded-xl shadow-lg border border-dark-700 overflow-hidden">
-                <div className="px-4 py-3 border-b border-dark-700 flex items-center justify-between">
-                  <h3 className="font-semibold text-dark-50">Notifications</h3>
-                  <span className="text-xs text-primary-500 hover:text-primary-600 cursor-pointer">
-                    Mark all read
-                  </span>
-                </div>
-                <div className="max-h-80 overflow-y-auto">
-                  {mockNotifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={`px-4 py-3 border-b border-dark-700 hover:bg-dark-700 cursor-pointer ${
-                        !notification.read ? 'bg-primary-500/10' : ''
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={`w-2 h-2 rounded-full mt-2 ${
-                            notification.type === 'warning'
-                              ? 'bg-warning-500'
-                              : notification.type === 'success'
-                              ? 'bg-success-500'
-                              : 'bg-primary-500'
-                          }`}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-dark-50">
-                            {notification.title}
-                          </p>
-                          <p className="text-xs text-dark-400 mt-0.5 line-clamp-2">
-                            {notification.message}
-                          </p>
-                          <p className="text-xs text-dark-500 mt-1">
-                            {notification.time}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="px-4 py-3 bg-dark-700 text-center">
-                  <button
-                    onClick={handleViewAllNotifications}
-                    className="text-sm text-primary-500 hover:text-primary-600 cursor-pointer font-medium"
-                  >
-                    View All Notifications
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Notifications - Using our new NotificationBell component */}
+          <NotificationBell />
 
           {/* User Menu */}
           <div className="relative">
@@ -182,7 +109,7 @@ const Header = ({ title, subtitle }) => {
                   </button>
                 </div>
                 <div className="border-t border-dark-700 py-2">
-                  <button 
+                  <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-danger-500 hover:bg-danger-500/10 transition-colors"
                   >
