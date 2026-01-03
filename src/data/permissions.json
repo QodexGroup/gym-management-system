@@ -86,6 +86,27 @@
         "label": "Create Payment"
       }
     ]
+  },
+  "expenses": {
+    "label": "Expenses",
+    "permissions": [
+      {
+        "key": "expense_create",
+        "label": "Create Expense"
+      },
+      {
+        "key": "expense_update",
+        "label": "Update Expense"
+      },
+      {
+        "key": "expense_delete",
+        "label": "Delete Expense"
+      },
+      {
+        "key": "expense_view",
+        "label": "View Expense"
+      }
+    ]
   }
 }
 

@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle,
+  DollarSign,
   // Receipt,
   // Upload,
 } from 'lucide-react';
@@ -29,9 +30,11 @@ import {
 import { formatDate, formatDateForInput, formatCurrency } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
 import { isAdminRole } from '../constants/userRoles';
+import { usePermissions } from '../hooks/usePermissions';
 
 const Expenses = () => {
   const { user } = useAuth();
+  const { hasPermission } = usePermissions();
   const isAdmin = isAdminRole(user?.role);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
@@ -271,11 +274,34 @@ const Expenses = () => {
   //   console.log('Upload receipt for expense:', expenseId);
   // };
 
+  // Check if user can view expenses
+  const canViewExpenses = hasPermission('expense_view');
+
   if (loading) {
     return (
       <Layout title="Expense List" subtitle="Track and manage gym expenses">
         <div className="flex items-center justify-center h-64">
           <p className="text-dark-500">Loading expenses...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  // If user doesn't have view permission, show message
+  if (!canViewExpenses) {
+    return (
+      <Layout title="Expense List" subtitle="Track and manage gym expenses">
+        <div className="card">
+          <div className="text-center py-12">
+            <DollarSign className="w-16 h-16 text-dark-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-dark-50 mb-2">Access Restricted</h3>
+            <p className="text-dark-400 mb-1">
+              You have no permission to view expenses.
+            </p>
+            <p className="text-sm text-dark-500">
+              Please contact admin for the <strong>View Expense</strong> permission.
+            </p>
+          </div>
         </div>
       </Layout>
     );
@@ -311,13 +337,15 @@ const Expenses = () => {
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => handleOpenModal()}
-              className="btn-primary flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Expense
-            </button>
+            {hasPermission('expense_create') && (
+              <button
+                onClick={() => handleOpenModal()}
+                className="btn-primary flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Expense
+              </button>
+            )}
           </div>
         </div>
 
@@ -376,7 +404,7 @@ const Expenses = () => {
                     </td> */}
                     <td className="table-cell">
                       <div className="flex items-center gap-2">
-                        {!isPosted && (
+                        {!isPosted && hasPermission('expense_update') && (
                           <button
                             onClick={() => handleOpenModal(expense)}
                             className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
@@ -386,13 +414,15 @@ const Expenses = () => {
                           </button>
                         )}
                         {isPosted ? (
-                          <button
-                            onClick={() => handleVoidExpense(expense.id)}
-                            className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
-                            title="Void expense"
-                          >
-                            <XCircle className="w-4 h-4" />
-                          </button>
+                          isAdmin && (
+                            <button
+                              onClick={() => handleVoidExpense(expense.id)}
+                              className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+                              title="Void expense"
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </button>
+                          )
                         ) : (
                           <>
                             {isAdmin && (
@@ -404,13 +434,15 @@ const Expenses = () => {
                                 <CheckCircle className="w-4 h-4" />
                               </button>
                             )}
-                            <button
-                              onClick={() => handleDeleteExpense(expense.id)}
-                              className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
-                              title="Delete expense"
-                            >
-                              <Trash className="w-4 h-4" />
-                            </button>
+                            {hasPermission('expense_delete') && (
+                              <button
+                                onClick={() => handleDeleteExpense(expense.id)}
+                                className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+                                title="Delete expense"
+                              >
+                                <Trash className="w-4 h-4" />
+                              </button>
+                            )}
                           </>
                         )}
                       </div>
