@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { expenseService } from '../services/expenseService';
 import { expenseCategoryService } from '../services/expenseCategoryService';
 import { Toast } from '../utils/alert';
@@ -9,7 +9,7 @@ import { Toast } from '../utils/alert';
 export const expenseKeys = {
   all: ['expenses'],
   lists: () => [...expenseKeys.all, 'list'],
-  list: () => [...expenseKeys.lists()],
+  list: (options) => [...expenseKeys.lists(), options],
   details: () => [...expenseKeys.all, 'detail'],
   detail: (id) => [...expenseKeys.details(), id],
 };
@@ -24,28 +24,30 @@ export const expenseCategoryKeys = {
 };
 
 /**
- * Hook to fetch all expenses
- * Uses global default staleTime: 1 hour
+ * Hook to fetch all expenses with pagination
+ * @param {Object} options - Query options (page, pagelimit, sort, filters, relations)
  */
-export const useExpenses = () => {
+export const useExpenses = (options = {}) => {
   return useQuery({
-    queryKey: expenseKeys.list(),
+    queryKey: expenseKeys.list(options),
     queryFn: async () => {
-      return await expenseService.getAll();
+      return await expenseService.getAll(options);
     },
+    placeholderData: keepPreviousData, // Keep previous page data while loading new page
   });
 };
 
 /**
- * Hook to fetch all expense categories
- * Uses global default staleTime: 1 hour
+ * Hook to fetch all expense categories with pagination
+ * @param {Object} options - Query options (page, pagelimit, sort, filters, relations)
  */
-export const useExpenseCategories = () => {
+export const useExpenseCategories = (options = {}) => {
   return useQuery({
-    queryKey: expenseCategoryKeys.list(),
+    queryKey: expenseCategoryKeys.list(options),
     queryFn: async () => {
-      return await expenseCategoryService.getAll();
+      return await expenseCategoryService.getAll(options);
     },
+    placeholderData: keepPreviousData, // Keep previous page data while loading new page
   });
 };
 
@@ -86,6 +88,26 @@ export const useUpdateExpense = () => {
     },
     onError: (error) => {
       Toast.error(error.message || 'Failed to update expense');
+    },
+  });
+};
+
+/**
+ * Hook to post an expense
+ */
+export const usePostExpense = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id) => {
+      return await expenseService.post(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: expenseKeys.lists() });
+      Toast.success('Expense posted successfully');
+    },
+    onError: (error) => {
+      Toast.error(error.message || 'Failed to post expense');
     },
   });
 };

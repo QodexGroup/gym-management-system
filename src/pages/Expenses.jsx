@@ -10,6 +10,10 @@ import {
   Edit,
   Trash,
   XCircle,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle,
+  DollarSign,
   // Receipt,
   // Upload,
 } from 'lucide-react';
@@ -20,11 +24,19 @@ import {
   useExpenseCategories, 
   useCreateExpense, 
   useUpdateExpense, 
+  usePostExpense,
   useDeleteExpense 
 } from '../hooks/useExpenses';
 import { formatDate, formatDateForInput, formatCurrency } from '../utils/formatters';
+import { useAuth } from '../context/AuthContext';
+import { isAdminRole } from '../constants/userRoles';
+import { usePermissions } from '../hooks/usePermissions';
 
 const Expenses = () => {
+  const { user } = useAuth();
+  const { hasPermission } = usePermissions();
+  const isAdmin = isAdminRole(user?.role);
+  const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [showModal, setShowModal] = useState(false);
@@ -36,17 +48,58 @@ const Expenses = () => {
     description: '',
     amount: '',
     expenseDate: '',
-    status: 'POSTED',
   });
 
+  // Build query options
+  const expenseOptions = useMemo(() => {
+    const filters = {};
+    if (searchQuery) {
+      filters.description = searchQuery;
+    }
+    if (filterCategory !== 'all') {
+      filters.category = filterCategory;
+    }
+    
+    return {
+      page: currentPage,
+      pagelimit: 10,
+      relations: 'category',
+      filters: Object.keys(filters).length > 0 ? filters : undefined,
+    };
+  }, [currentPage, searchQuery, filterCategory]);
+
+  // Reset to page 1 when search or filter changes
+  const handleSearchChange = (value) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
+  const handleCategoryFilterChange = (value) => {
+    setFilterCategory(value);
+    setCurrentPage(1);
+  };
+
   // React Query hooks
-  const { data: expenses = [], isLoading: loading } = useExpenses();
-  const { data: categories = [] } = useExpenseCategories();
+  const { data: expensesData, isLoading: loading } = useExpenses(expenseOptions);
+  const { data: categoriesData } = useExpenseCategories({});
   const createMutation = useCreateExpense();
   const updateMutation = useUpdateExpense();
+  const postMutation = usePostExpense();
   const deleteMutation = useDeleteExpense();
 
   const isSubmitting = createMutation.isLoading || updateMutation.isLoading;
+
+  // Extract paginated data
+  const expenses = expensesData?.data || [];
+  const pagination = expensesData ? {
+    current_page: expensesData.current_page,
+    last_page: expensesData.last_page,
+    per_page: expensesData.per_page,
+    total: expensesData.total,
+    from: expensesData.from,
+    to: expensesData.to,
+  } : null;
+  const categories = categoriesData?.data || [];
 
   // Transform API data to component format
   const transformedExpenses = useMemo(() => {
@@ -76,15 +129,8 @@ const Expenses = () => {
     });
   }, [expenses, categories]);
 
-  // Filter expenses
-  const filteredExpenses = transformedExpenses.filter((exp) => {
-    const matchesSearch = exp.description
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      filterCategory === 'all' || exp.category === filterCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // No need for client-side filtering since we're using server-side filters
+  const filteredExpenses = transformedExpenses;
 
   const handleOpenModal = (expense = null) => {
     if (expense) {
@@ -99,7 +145,6 @@ const Expenses = () => {
         description: expense.description,
         amount: expense.amount.toString(),
         expenseDate: formatDateForInput(expense.date),
-        status: expense.status, // Already POSTED or UNPOSTED
       });
     } else {
       // Create mode
@@ -109,7 +154,6 @@ const Expenses = () => {
         description: '',
         amount: '',
         expenseDate: '',
-        status: EXPENSE_STATUS.POSTED,
       });
     }
     setShowModal(true);
@@ -123,7 +167,6 @@ const Expenses = () => {
       description: '',
       amount: '',
       expenseDate: '',
-      status: 'POSTED',
     });
   };
 
@@ -135,7 +178,7 @@ const Expenses = () => {
       description: formData.description,
       amount: parseFloat(formData.amount),
       expenseDate: formData.expenseDate,
-      status: formData.status,
+      status: EXPENSE_STATUS.UNPOSTED, // Always create as UNPOSTED
     };
 
     try {
@@ -174,6 +217,29 @@ const Expenses = () => {
     }
   };
 
+  const handlePostExpense = async (expenseId) => {
+    const result = await Alert.confirm({
+      title: 'Post Expense?',
+      text: 'Are you sure you want to post this expense? This action cannot be undone.',
+      icon: 'question',
+      confirmButtonColor: '#10b981',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, post it!',
+      cancelButtonText: 'Cancel',
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      await postMutation.mutateAsync(expenseId);
+    } catch (error) {
+      // Error already handled in mutation hook
+      console.error('Error posting expense:', error);
+    }
+  };
+
   const handleVoidExpense = async (expenseId) => {
     const result = await Alert.confirm({
       title: 'Void Expense?',
@@ -208,11 +274,34 @@ const Expenses = () => {
   //   console.log('Upload receipt for expense:', expenseId);
   // };
 
+  // Check if user can view expenses
+  const canViewExpenses = hasPermission('expense_view');
+
   if (loading) {
     return (
       <Layout title="Expense List" subtitle="Track and manage gym expenses">
         <div className="flex items-center justify-center h-64">
           <p className="text-dark-500">Loading expenses...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  // If user doesn't have view permission, show message
+  if (!canViewExpenses) {
+    return (
+      <Layout title="Expense List" subtitle="Track and manage gym expenses">
+        <div className="card">
+          <div className="text-center py-12">
+            <DollarSign className="w-16 h-16 text-dark-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-dark-50 mb-2">Access Restricted</h3>
+            <p className="text-dark-400 mb-1">
+              You have no permission to view expenses.
+            </p>
+            <p className="text-sm text-dark-500">
+              Please contact admin for the <strong>View Expense</strong> permission.
+            </p>
+          </div>
         </div>
       </Layout>
     );
@@ -230,31 +319,33 @@ const Expenses = () => {
                 type="text"
                 placeholder="Search expenses..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-dark-50 border border-dark-200 rounded-lg focus:bg-white focus:border-primary-500 outline-none transition-colors"
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 placeholder-dark-400 rounded-lg focus:bg-dark-600 focus:border-primary-500 outline-none transition-colors"
               />
             </div>
             <select
               value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="px-4 py-2.5 bg-dark-50 border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
+              onChange={(e) => handleCategoryFilterChange(e.target.value)}
+              className="px-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 rounded-lg focus:border-primary-500 outline-none"
             >
-              <option value="all">All Categories</option>
+              <option value="all" className="bg-dark-700 text-dark-50">All Categories</option>
               {categories.map((cat) => (
-                <option key={cat.id} value={cat.name}>
+                <option key={cat.id} value={cat.name} className="bg-dark-700 text-dark-50">
                   {cat.name}
                 </option>
               ))}
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => handleOpenModal()}
-              className="btn-primary flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Expense
-            </button>
+            {hasPermission('expense_create') && (
+              <button
+                onClick={() => handleOpenModal()}
+                className="btn-primary flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Expense
+              </button>
+            )}
           </div>
         </div>
 
@@ -276,7 +367,7 @@ const Expenses = () => {
               {filteredExpenses.map((expense) => {
                 const isPosted = expense.status === EXPENSE_STATUS.POSTED;
                 return (
-                  <tr key={expense.id} className="hover:bg-dark-50">
+                  <tr key={expense.id} className="hover:bg-dark-700">
                     <td className="table-cell">{expense.formattedDate}</td>
                     <td className="table-cell">
                       <Badge variant="default">{expense.category}</Badge>
@@ -313,34 +404,46 @@ const Expenses = () => {
                     </td> */}
                     <td className="table-cell">
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleOpenModal(expense)}
-                          disabled={isPosted}
-                          className={`p-2 rounded-lg transition-colors ${
-                            isPosted
-                              ? 'text-dark-200 cursor-not-allowed opacity-50'
-                              : 'text-dark-400 hover:text-primary-600 hover:bg-primary-50'
-                          }`}
-                          title={isPosted ? 'Cannot edit posted expense' : 'Edit expense'}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
+                        {!isPosted && hasPermission('expense_update') && (
+                          <button
+                            onClick={() => handleOpenModal(expense)}
+                            className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                            title="Edit expense"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                        )}
                         {isPosted ? (
-                          <button
-                            onClick={() => handleVoidExpense(expense.id)}
-                            className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
-                            title="Void expense"
-                          >
-                            <XCircle className="w-4 h-4" />
-                          </button>
+                          isAdmin && (
+                            <button
+                              onClick={() => handleVoidExpense(expense.id)}
+                              className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+                              title="Void expense"
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </button>
+                          )
                         ) : (
-                          <button
-                            onClick={() => handleDeleteExpense(expense.id)}
-                            className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
-                            title="Delete expense"
-                          >
-                            <Trash className="w-4 h-4" />
-                          </button>
+                          <>
+                            {isAdmin && (
+                              <button
+                                onClick={() => handlePostExpense(expense.id)}
+                                className="p-2 text-dark-400 hover:text-success-600 hover:bg-success-50 rounded-lg transition-colors"
+                                title="Post expense"
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                              </button>
+                            )}
+                            {hasPermission('expense_delete') && (
+                              <button
+                                onClick={() => handleDeleteExpense(expense.id)}
+                                className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+                                title="Delete expense"
+                              >
+                                <Trash className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>
@@ -350,6 +453,40 @@ const Expenses = () => {
             </tbody>
           </table>
         </div>
+
+        {filteredExpenses.length === 0 && !loading && (
+          <div className="text-center py-12">
+            <p className="text-dark-400">No expenses found matching your criteria</p>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {pagination && pagination.last_page > 1 && (
+          <div className="flex items-center justify-between mt-6 pt-6 border-t border-dark-200">
+            <div className="text-sm text-dark-300">
+              Showing {pagination.from} to {pagination.to} of {pagination.total} expenses
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-dark-200 hover:bg-dark-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-dark-400"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="px-4 py-2 text-sm text-dark-300">
+                Page {pagination.current_page} of {pagination.last_page}
+              </span>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(pagination.last_page, prev + 1))}
+                disabled={currentPage === pagination.last_page}
+                className="p-2 rounded-lg border border-dark-200 hover:bg-dark-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-dark-400"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Combined Create/Edit Modal */}
@@ -425,34 +562,6 @@ const Expenses = () => {
                   }
                 }}
               />
-            </div>
-          </div>
-
-          <div>
-            <label className="label">Status</label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="status"
-                  value={EXPENSE_STATUS.POSTED}
-                  checked={formData.status === EXPENSE_STATUS.POSTED}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="w-4 h-4 text-primary-600"
-                />
-                <span>{EXPENSE_STATUS_LABELS[EXPENSE_STATUS.POSTED]}</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="status"
-                  value={EXPENSE_STATUS.UNPOSTED}
-                  checked={formData.status === EXPENSE_STATUS.UNPOSTED}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="w-4 h-4 text-primary-600"
-                />
-                <span>{EXPENSE_STATUS_LABELS[EXPENSE_STATUS.UNPOSTED]}</span>
-              </label>
             </div>
           </div>
 

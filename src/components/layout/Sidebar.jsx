@@ -36,11 +36,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     {
       section: 'MAIN',
       items: [
-        { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard'}, // Dashboard always visible
+        { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard'},
         // { path: '/check-in', icon: UserCheck, label: 'Check-In System', permission: null },
-        { path: '/members', icon: Users, label: 'Members List'}, // All authenticated users can view
+        { path: '/members', icon: Users, label: 'Members List'},
         // { path: '/calendar', icon: CalendarDays, label: 'Calendar', permission: null },
-        // { path: '/expenses', icon: Receipt, label: 'Expense List', permission: null },
+        { path: '/expenses', icon: Receipt, label: 'Expense List'},
       ],
     },
     // Account Section
