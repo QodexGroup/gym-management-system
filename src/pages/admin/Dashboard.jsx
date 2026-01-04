@@ -228,7 +228,7 @@ const AdminDashboard = () => {
                     <td className="table-cell">
                       <Badge
                         variant={
-                          member.membershipStatus === 'expiring' ? 'warning' : 'danger'
+                          member.membershipStatus === 'expiring' ? 'warning' : member.membershipStatus === 'expired' ? 'danger' : 'success'
                         }
                       >
                         {member.membershipStatus}
