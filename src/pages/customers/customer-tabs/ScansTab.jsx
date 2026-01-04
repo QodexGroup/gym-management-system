@@ -9,6 +9,7 @@ import { Alert } from '../../../utils/alert';
 import { getFileUrl } from '../../../services/firebaseUrlService';
 import ScansForm from './ScansForm';
 import { PhotoThumbnail, FileIcon, ImageLightbox } from '../../../components/common';
+import { usePermissions } from '../../../hooks/usePermissions';
 
 const ScansTab = ({ member }) => {
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -21,6 +22,10 @@ const ScansTab = ({ member }) => {
   // Use React Query hooks
   const { data, isLoading, isError, error } = useCustomerScans(member?.id, { page: currentPage, pagelimit: 50 });
   const deleteScanMutation = useDeleteCustomerScan();
+  const { hasPermission } = usePermissions();
+
+  // Check if user can view scans
+  const canViewScans = hasPermission('scans_view');
 
   // Extract data and pagination from response
   const scans = data?.data || [];
@@ -72,6 +77,26 @@ const ScansTab = ({ member }) => {
       : 'bg-accent-500 text-white';
   };
 
+  // If user doesn't have view permission, show message
+  if (!canViewScans) {
+    return (
+      <div className="space-y-6">
+        <div className="card">
+          <div className="text-center py-12">
+            <FileText className="w-16 h-16 text-dark-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-dark-50 mb-2">Access Restricted</h3>
+            <p className="text-dark-400 mb-1">
+              You have no permission to view scans.
+            </p>
+            <p className="text-sm text-dark-500">
+              Please contact admin for the <strong>View Scan</strong> permission.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header with Stats */}
@@ -120,16 +145,18 @@ const ScansTab = ({ member }) => {
             <h3 className="text-lg font-semibold text-dark-50">Body Composition Scans</h3>
             <p className="text-sm text-dark-500">{pagination?.total || 0} records</p>
           </div>
-          <button 
-            onClick={() => {
-              setSelectedScan(null);
-              setShowUploadModal(true);
-            }}
-            className="btn-primary flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Upload Scan
-          </button>
+          {hasPermission('scans_create') && (
+            <button 
+              onClick={() => {
+                setSelectedScan(null);
+                setShowUploadModal(true);
+              }}
+              className="btn-primary flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Upload Scan
+            </button>
+          )}
         </div>
 
         {/* Loading State */}
@@ -246,20 +273,24 @@ const ScansTab = ({ member }) => {
 
                 {/* File Preview / Actions */}
                 <div className="col-span-2 flex items-center justify-end gap-2">
-                  <button 
-                    onClick={() => handleEdit(scan)}
-                    className="p-2 text-dark-400 hover:text-warning-400 hover:bg-dark-600 rounded-lg transition-colors"
-                    title="Edit"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(scan.id)}
-                    className="p-2 text-dark-400 hover:text-danger-400 hover:bg-dark-600 rounded-lg transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {hasPermission('scans_update') && (
+                    <button 
+                      onClick={() => handleEdit(scan)}
+                      className="p-2 text-dark-400 hover:text-warning-400 hover:bg-dark-600 rounded-lg transition-colors"
+                      title="Edit"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                  )}
+                  {hasPermission('scans_delete') && (
+                    <button 
+                      onClick={() => handleDelete(scan.id)}
+                      className="p-2 text-dark-400 hover:text-danger-400 hover:bg-dark-600 rounded-lg transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -268,12 +299,14 @@ const ScansTab = ({ member }) => {
           <div className="text-center py-12">
             <FileText className="w-12 h-12 text-dark-300 mx-auto mb-3" />
             <p className="text-dark-500">No scans uploaded yet</p>
-            <button 
-              onClick={() => setShowUploadModal(true)}
-              className="btn-primary mt-4"
-            >
-              Upload First Scan
-            </button>
+            {hasPermission('scans_create') && (
+              <button 
+                onClick={() => setShowUploadModal(true)}
+                className="btn-primary mt-4"
+              >
+                Upload First Scan
+              </button>
+            )}
           </div>
         ) : null}
 

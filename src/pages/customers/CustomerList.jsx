@@ -20,9 +20,11 @@ import { getInitialCustomerFormData, mapCustomerToFormData } from '../../models/
 import CustomerForm from './CustomerForm';
 import { useCustomers, useDeleteCustomer } from '../../hooks/useCustomers';
 import { formatDate, formatCurrency } from '../../utils/formatters';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const CustomerList = () => {
   const navigate = useNavigate();
+  const { hasPermission } = usePermissions();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -193,13 +195,15 @@ const CustomerList = () => {
               <Download className="w-4 h-4" />
               Export
             </button> */}
-            <button
-              onClick={() => handleOpenModal()}
-              className="btn-primary flex items-center gap-2"
-            >
-              <UserPlus className="w-4 h-4" />
-              Add Member
-            </button>
+            {hasPermission('members_list_add') && (
+              <button
+                onClick={() => handleOpenModal()}
+                className="btn-primary flex items-center gap-2"
+              >
+                <UserPlus className="w-4 h-4" />
+                Add Member
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -307,20 +311,24 @@ const CustomerList = () => {
                         >
                           <ChevronRight className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={() => handleOpenModal(customer)}
-                          className="p-2 text-dark-400 hover:text-primary-400 hover:bg-dark-700 rounded-lg transition-colors"
-                          title="Edit customer"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteCustomer(customer.id)}
-                          className="p-2 text-dark-400 hover:text-danger-400 hover:bg-dark-700 rounded-lg transition-colors"
-                          title="Delete customer"
-                        >
-                          <Trash className="w-4 h-4" />
-                        </button>
+                        {hasPermission('members_list_update') && (
+                          <button
+                            onClick={() => handleOpenModal(customer)}
+                            className="p-2 text-dark-400 hover:text-primary-400 hover:bg-dark-700 rounded-lg transition-colors"
+                            title="Edit customer"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                        )}
+                        {hasPermission('members_list_delete') && (
+                          <button
+                            onClick={() => handleDeleteCustomer(customer.id)}
+                            className="p-2 text-dark-400 hover:text-danger-400 hover:bg-dark-700 rounded-lg transition-colors"
+                            title="Delete customer"
+                          >
+                            <Trash className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                   </td>
                 </tr>

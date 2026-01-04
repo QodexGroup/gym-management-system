@@ -11,8 +11,10 @@ import { useCreateCustomerPayment } from '../../../hooks/useCustomerPayments';
 import { BILL_STATUS, BILL_STATUS_LABELS, BILL_STATUS_VARIANTS, BILL_TYPE } from '../../../constants/billConstants';
 import { Alert } from '../../../utils/alert';
 import { CUSTOMER_MEMBERSHIP_STATUS } from '../../../constants/customerMembership';
+import { usePermissions } from '../../../hooks/usePermissions';
 
 const BillsTab = ({ member, onCustomerUpdate }) => {
+  const { hasPermission } = usePermissions();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showMembershipModal, setShowMembershipModal] = useState(false);
@@ -160,13 +162,15 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-dark-50">Membership Plan</h3>
-          <button 
-            onClick={() => setShowMembershipModal(true)} 
-            className={`flex items-center gap-2 ${hasActiveMembership ? 'btn-primary' : 'btn-success'}`}
-          >
-            <UserCheck className="w-4 h-4" />
-            {hasActiveMembership ? 'Update Membership Plan' : 'Add Membership Plan'}
-          </button>
+          {hasPermission('membership_plan_update') && (
+            <button 
+              onClick={() => setShowMembershipModal(true)} 
+              className={`flex items-center gap-2 ${hasActiveMembership ? 'btn-primary' : 'btn-success'}`}
+            >
+              <UserCheck className="w-4 h-4" />
+              {hasActiveMembership ? 'Update Membership Plan' : 'Add Membership Plan'}
+            </button>
+          )}
         </div>
         
         {hasActiveMembership ? (
@@ -247,12 +251,14 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end">
-        <button onClick={() => setShowInvoiceModal(true)} className="btn-primary flex items-center gap-2">
-          <Receipt className="w-4 h-4" />
-          Create Bill
-        </button>
-      </div>
+      {hasPermission('bill_create') && (
+        <div className="flex justify-end">
+          <button onClick={() => setShowInvoiceModal(true)} className="btn-primary flex items-center gap-2">
+            <Receipt className="w-4 h-4" />
+            Create Bill
+          </button>
+        </div>
+      )}
 
       {/* Bills List */}
       <div className="card">
@@ -317,36 +323,42 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
                       </td>
                       <td className="table-cell">
                         <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleOpenPayment(bill)}
-                            className="p-2 text-dark-400 hover:text-success-600 hover:bg-success-50 rounded-lg transition-colors"
-                            title="Add Payment"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleEdit(bill)}
-                            className="p-2 text-dark-400 hover:text-primary-400 hover:bg-dark-700 rounded-lg transition-colors"
-                            title="Edit Bill"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (bill.billStatus !== BILL_STATUS.PAID) {
-                                handleDelete(bill.id);
-                              }
-                            }}
-                            className={`p-2 rounded-lg transition-colors ${
-                              bill.billStatus === BILL_STATUS.PAID
-                                ? 'text-dark-300 cursor-not-allowed'
-                                : 'text-dark-400 hover:text-danger-600 hover:bg-danger-50'
-                            }`}
-                            title={bill.billStatus === BILL_STATUS.PAID ? 'Cannot delete a fully paid bill' : 'Delete Bill'}
-                            disabled={bill.billStatus === BILL_STATUS.PAID}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {hasPermission('payment_create') && (
+                            <button
+                              onClick={() => handleOpenPayment(bill)}
+                              className="p-2 text-dark-400 hover:text-success-600 hover:bg-success-50 rounded-lg transition-colors"
+                              title="Add Payment"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          )}
+                          {hasPermission('bill_update') && (
+                            <button
+                              onClick={() => handleEdit(bill)}
+                              className="p-2 text-dark-400 hover:text-primary-400 hover:bg-dark-700 rounded-lg transition-colors"
+                              title="Edit Bill"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                          )}
+                          {hasPermission('bill_delete') && (
+                            <button
+                              onClick={() => {
+                                if (bill.billStatus !== BILL_STATUS.PAID) {
+                                  handleDelete(bill.id);
+                                }
+                              }}
+                              className={`p-2 rounded-lg transition-colors ${
+                                bill.billStatus === BILL_STATUS.PAID
+                                  ? 'text-dark-300 cursor-not-allowed'
+                                  : 'text-dark-400 hover:text-danger-600 hover:bg-danger-50'
+                              }`}
+                              title={bill.billStatus === BILL_STATUS.PAID ? 'Cannot delete a fully paid bill' : 'Delete Bill'}
+                              disabled={bill.billStatus === BILL_STATUS.PAID}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

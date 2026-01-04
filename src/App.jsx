@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import AlertProvider from './components/AlertProvider';
 import { queryClient } from './lib/queryClient';
+import { usePermissions } from './hooks/usePermissions';
 
 // Auth Pages
 import Login from './auth/Login';
@@ -49,6 +50,54 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// Permission Protected Route Component
+const PermissionProtectedRoute = ({ children, permission }) => {
+  const { isAuthenticated, loading } = useAuth();
+  const { hasPermission } = usePermissions();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // If permission is required, check it
+  if (permission && !hasPermission(permission)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
+// Admin Only Protected Route Component
+const AdminProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading, isAdmin } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
 // Dashboard component that renders based on user role
 const Dashboard = () => {
   const { isAdmin } = useAuth();
@@ -77,11 +126,11 @@ function App() {
                 <Route path="/members" element={<ProtectedRoute><CustomerList /></ProtectedRoute>} />
                 <Route path="/members/:id" element={<ProtectedRoute><CustomerProfile /></ProtectedRoute>} />
 
-                {/* Membership Plans (Admin Only) */}
-                <Route path="/membership-plans" element={<ProtectedRoute><MembershipPlans /></ProtectedRoute>} />
+                <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
 
-                {/* Expenses (Admin Only) */}
-                {/* <Route path="/expenses" element={<Expenses />} /> */}
+                {/* Membership Plans (Admin Only) */}
+                <Route path="/membership-plans" element={<AdminProtectedRoute><MembershipPlans /></AdminProtectedRoute>} />
+
 
                 {/* Calendar */}
                 {/* <Route path="/calendar" element={<Calendar />} /> */}
@@ -93,7 +142,7 @@ function App() {
                 <Route path="/reports/my-collection" element={<MyCollection />} /> */}
 
                 {/* User Management (Admin Only) */}
-                <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
+                <Route path="/users" element={<AdminProtectedRoute><UserManagement /></AdminProtectedRoute>} />
 
                 {/* Notifications */}
                 <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />

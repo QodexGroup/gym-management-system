@@ -3,10 +3,6 @@
     "label": "Members List",
     "permissions": [
       {
-        "key": "members_list_view",
-        "label": "View Members List"
-      },
-      {
         "key": "members_list_add",
         "label": "Add Member"
       },
@@ -34,6 +30,35 @@
       {
         "key": "progress_tracking_delete",
         "label": "Delete Progress Tracking"
+      },
+      {
+        "key": "progress_tracking_view",
+        "label": "View Progress Tracking"
+      },
+      {
+        "key": "progress_tracking_view_logs",
+        "label": "View Progress Tracking Logs"
+      }
+    ]
+  },
+  "scans": {
+    "label": "Scans",
+    "permissions": [
+      {
+        "key": "scans_create",
+        "label": "Create Scan"
+      },
+      {
+        "key": "scans_update",
+        "label": "Update Scan"
+      },
+      {
+        "key": "scans_delete",
+        "label": "Delete Scan"
+      },
+      {
+        "key": "scans_view",
+        "label": "View Scan"
       }
     ]
   },
@@ -59,6 +84,27 @@
       {
         "key": "payment_create",
         "label": "Create Payment"
+      }
+    ]
+  },
+  "expenses": {
+    "label": "Expenses",
+    "permissions": [
+      {
+        "key": "expense_create",
+        "label": "Create Expense"
+      },
+      {
+        "key": "expense_update",
+        "label": "Update Expense"
+      },
+      {
+        "key": "expense_delete",
+        "label": "Delete Expense"
+      },
+      {
+        "key": "expense_view",
+        "label": "View Expense"
       }
     ]
   }

@@ -147,9 +147,9 @@ const MyAccount = () => {
               </button>
             </div>
             <div className="flex items-center gap-6">
-              <Avatar src={user.avatar} name={user.name} size="xl" />
+              <Avatar src={user.avatar} name={user.fullname} size="xl" />
               <div className="flex-1">
-                <h4 className="text-xl font-bold text-dark-50">{user.name}</h4>
+                <h4 className="text-xl font-bold text-dark-50">{user.fullname}</h4>
                 <p className="text-dark-500">{user.email}</p>
                 <Badge variant="primary" size="lg">
                   {user.role}
@@ -492,7 +492,7 @@ const MyAccount = () => {
         <form className="space-y-4">
           <div className="flex justify-center mb-4">
             <div className="relative">
-              <Avatar src={user.avatar} name={user.name} size="xl" />
+              <Avatar src={user.avatar} name={user.fullname} size="xl" />
               <button type="button" className="absolute bottom-0 right-0 p-2 bg-primary-500 text-white rounded-full hover:bg-primary-600 transition-colors">
                 <Edit className="w-4 h-4" />
               </button>
@@ -501,11 +501,11 @@ const MyAccount = () => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="label">First Name</label>
-              <input type="text" className="input" defaultValue={user.name.split(' ')[0]} />
+              <input type="text" className="input" defaultValue={user.firstname || ''} />
             </div>
             <div>
               <label className="label">Last Name</label>
-              <input type="text" className="input" defaultValue={user.name.split(' ')[1] || ''} />
+              <input type="text" className="input" defaultValue={user.lastname || ''} />
             </div>
           </div>
           <div>

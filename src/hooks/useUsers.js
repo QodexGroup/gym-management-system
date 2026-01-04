@@ -11,6 +11,7 @@ export const userKeys = {
   list: () => [...userKeys.lists()],
   details: () => [...userKeys.all, 'detail'],
   detail: (id) => [...userKeys.details(), id],
+  coaches: () => [...userKeys.all, 'coaches'],
 };
 
 /**
@@ -143,6 +144,21 @@ export const useResetPassword = () => {
     onError: (error) => {
       Toast.error(error.message || 'Failed to reset password');
     },
+  });
+};
+
+/**
+ * Hook to fetch all coaches
+ * Uses React Query caching to prevent unnecessary API calls
+ */
+export const useCoaches = () => {
+  return useQuery({
+    queryKey: userKeys.coaches(),
+    queryFn: async () => {
+      return await userService.getCoaches();
+    },
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
 };
 

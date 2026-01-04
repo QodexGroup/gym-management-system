@@ -11,11 +11,13 @@ import ProgressForm from './ProgressForm';
 import { Alert } from '../../../utils/alert';
 import { getFileUrl } from '../../../services/firebaseUrlService';
 import { PhotoThumbnail, ImageLightbox } from '../../../components/common';
+import { usePermissions } from '../../../hooks/usePermissions';
 
 
 
 
 const ProgressTab = ({ member }) => {
+  const { hasPermission } = usePermissions();
   const [showAddProgressModal, setShowAddProgressModal] = useState(false);
   const [selectedLog, setSelectedLog] = useState(null);
   const [viewLog, setViewLog] = useState(null);
@@ -105,6 +107,29 @@ const ProgressTab = ({ member }) => {
 
 
 
+  // Check if user can view progress tracking
+  const canViewProgress = hasPermission('progress_tracking_view');
+
+  // If user doesn't have view permission, show message
+  if (!canViewProgress) {
+    return (
+      <div className="space-y-6">
+        <div className="card">
+          <div className="text-center py-12">
+            <Activity className="w-16 h-16 text-dark-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-dark-50 mb-2">Access Restricted</h3>
+            <p className="text-dark-400 mb-1">
+              You have no permission to view progress tracking.
+            </p>
+            <p className="text-sm text-dark-500">
+              Please contact admin for the <strong>View Progress Tracking</strong> permission.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Quick Stats Cards - 2 rows of 4 */}
@@ -157,20 +182,20 @@ const ProgressTab = ({ member }) => {
               <p className="text-xs text-dark-500">BMI</p>
               <p className="text-lg font-bold text-dark-50">{latestLog?.bmi || '--'}</p>
               {renderChangeIndicator(latestLog?.bmi, previousLog?.bmi, true)}
+            </div>
           </div>
         </div>
-      </div>
 
         <div className="card border-l-4 border-l-danger-500">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-danger-100 rounded-lg">
               <Heart className="w-5 h-5 text-danger-600" />
-          </div>
+            </div>
             <div>
               <p className="text-xs text-dark-500">Visceral Fat</p>
               <p className="text-lg font-bold text-dark-50">{latestLog?.visceralFatLevel || '--'}</p>
               {renderChangeIndicator(latestLog?.visceralFatLevel, previousLog?.visceralFatLevel, true)}
-              </div>
+            </div>
           </div>
         </div>
 
@@ -183,9 +208,9 @@ const ProgressTab = ({ member }) => {
               <p className="text-xs text-dark-500">Body Water</p>
               <p className="text-lg font-bold text-dark-50">{latestLog?.totalBodyWater || '--'} L</p>
               {renderChangeIndicator(latestLog?.totalBodyWater, previousLog?.totalBodyWater)}
+            </div>
           </div>
         </div>
-      </div>
 
         <div className="card border-l-4 border-l-orange-500">
           <div className="flex items-center gap-3">
@@ -221,13 +246,15 @@ const ProgressTab = ({ member }) => {
             <h3 className="text-lg font-semibold text-dark-50">Progress Tracking</h3>
             <p className="text-sm text-dark-500">{pagination?.total || 0} records</p>
           </div>
-          <button 
-            onClick={() => setShowAddProgressModal(true)} 
-            className="btn-primary flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Create Progress Tracking
-          </button>
+          {hasPermission('progress_tracking_create') && (
+            <button 
+              onClick={() => setShowAddProgressModal(true)} 
+              className="btn-primary flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Create Progress Tracking
+            </button>
+          )}
         </div>
 
         {/* List Header */}
@@ -362,27 +389,33 @@ const ProgressTab = ({ member }) => {
 
                     {/* Actions */}
                     <div className="col-span-2 flex items-center justify-end gap-1">
-                      <button 
-                        onClick={() => setViewLog(log)}
-                        className="p-2 text-dark-400 hover:text-primary-400 hover:bg-dark-600 rounded-lg transition-colors"
-                        title="View Details"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleEdit(log)}
-                        className="p-2 text-dark-400 hover:text-warning-400 hover:bg-dark-600 rounded-lg transition-colors"
-                        title="Edit"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(log.id)}
-                        className="p-2 text-dark-400 hover:text-danger-400 hover:bg-dark-600 rounded-lg transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {hasPermission('progress_tracking_view_logs') && (
+                        <button 
+                          onClick={() => setViewLog(log)}
+                          className="p-2 text-dark-400 hover:text-primary-400 hover:bg-dark-600 rounded-lg transition-colors"
+                          title="View Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      )}
+                      {hasPermission('progress_tracking_update') && (
+                        <button 
+                          onClick={() => handleEdit(log)}
+                          className="p-2 text-dark-400 hover:text-warning-400 hover:bg-dark-600 rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      )}
+                      {hasPermission('progress_tracking_delete') && (
+                        <button 
+                          onClick={() => handleDelete(log.id)}
+                          className="p-2 text-dark-400 hover:text-danger-400 hover:bg-dark-600 rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -392,12 +425,14 @@ const ProgressTab = ({ member }) => {
             <div className="text-center py-12">
               <Activity className="w-12 h-12 text-dark-300 mx-auto mb-3" />
               <p className="text-dark-500">No progress tracking records yet</p>
-              <button 
-                onClick={() => setShowAddProgressModal(true)}
-                className="btn-primary mt-4"
-              >
-                Create First Record
-              </button>
+              {hasPermission('progress_tracking_create') && (
+                <button 
+                  onClick={() => setShowAddProgressModal(true)}
+                  className="btn-primary mt-4"
+                >
+                  Create First Record
+                </button>
+              )}
               </div>
           )
         )}

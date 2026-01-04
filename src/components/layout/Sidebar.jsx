@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { usePermissions } from '../../hooks/usePermissions';
 import {
   LayoutDashboard,
   UserCheck,
@@ -19,6 +20,7 @@ import {
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const { isAdmin } = useAuth();
+  const { hasPermission } = usePermissions();
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState(['reports']);
 
@@ -28,61 +30,94 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     );
   };
 
-  const adminMenuItems = [
+  // Menu items with permission requirements
+  const allMenuItems = [
     // Main Section
     {
       section: 'MAIN',
       items: [
-        { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        // { path: '/check-in', icon: UserCheck, label: 'Check-In System' },
-        { path: '/members', icon: Users, label: 'Members List' },
-        // { path: '/calendar', icon: CalendarDays, label: 'Calendar' },
-        // { path: '/expenses', icon: Receipt, label: 'Expense List' },
+        { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard'},
+        // { path: '/check-in', icon: UserCheck, label: 'Check-In System', permission: null },
+        { path: '/members', icon: Users, label: 'Members List'},
+        // { path: '/calendar', icon: CalendarDays, label: 'Calendar', permission: null },
+        { path: '/expenses', icon: Receipt, label: 'Expense List'},
       ],
     },
     // Account Section
     {
       section: 'ACCOUNT',
       items: [
-        { path: '/membership-plans', icon: CreditCard, label: 'Membership Plans' },
-        { path: '/users', icon: UserCog, label: 'User Management' },
+        { path: '/membership-plans', icon: CreditCard, label: 'Membership Plans', adminOnly: true }, // Admin only
+        { path: '/users', icon: UserCog, label: 'User Management', adminOnly: true }, // Admin only
         // {
         //   label: 'Reports',
         //   icon: FileBarChart,
         //   key: 'reports',
+        //   permission: null,
         //   children: [
-        //     { path: '/reports/summary', label: 'Summary Report' },
-        //     { path: '/reports/collection', label: 'Collection Report' },
-        //     { path: '/reports/expense', label: 'Expense Report' },
+        //     { path: '/reports/summary', label: 'Summary Report', permission: null },
+        //     { path: '/reports/collection', label: 'Collection Report', permission: null },
+        //     { path: '/reports/expense', label: 'Expense Report', permission: null },
         //   ],
         // },
-        // { path: '/settings', icon: Settings, label: 'Settings' },
+        // { path: '/settings', icon: Settings, label: 'Settings', permission: null },
       ],
     },
   ];
 
-  const trainerMenuItems = [
-    // Main Section
-    {
-      section: 'MAIN',
-      items: [
-        { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        // { path: '/check-in', icon: UserCheck, label: 'Check-In System' },
-        { path: '/members', icon: Users, label: 'Members List' },
-        // { path: '/calendar', icon: CalendarDays, label: 'Calendar' },
-      ],
-    },
-    // Account Section
-    // {
-    //   section: 'ACCOUNT',
-    //   items: [
-    //     { path: '/reports/my-collection', icon: Wallet, label: 'My Collection' },
-    //     { path: '/settings', icon: Settings, label: 'Settings' },
-    //   ],
-    // },
-  ];
+  // Filter menu items based on permissions and role
+  const menuSections = useMemo(() => {
+    return allMenuItems
+      .filter((section) => {
+        // Hide ACCOUNT section for non-admin users
+        if (section.section === 'ACCOUNT' && !isAdmin) {
+          return false;
+        }
+        return true;
+      })
+      .map((section) => ({
+        ...section,
+        items: section.items
+          .filter((item) => {
+            // If item is admin-only, only show to admins
+            if (item.adminOnly) {
+              return isAdmin;
+            }
 
-  const menuSections = isAdmin ? adminMenuItems : trainerMenuItems;
+            // Admin can see everything (except items with explicit permission requirements)
+            if (isAdmin) {
+              // If item has a permission requirement, check it
+              if (item.permission) {
+                return hasPermission(item.permission);
+              }
+              return true;
+            }
+
+            // Non-admin users: check permissions
+            if (item.permission) {
+              return hasPermission(item.permission);
+            }
+
+            // Items without permission requirements are visible to all authenticated users
+            return true;
+          })
+          .map((item) => {
+            // Filter children if item has children
+            if (item.children) {
+              return {
+                ...item,
+                children: item.children.filter((child) => {
+                  if (isAdmin) {
+                    return child.permission ? hasPermission(child.permission) : true;
+                  }
+                  return child.permission ? hasPermission(child.permission) : true;
+                }),
+              };
+            }
+            return item;
+          }),
+      }));
+  }, [isAdmin, hasPermission]);
 
   const isMenuActive = (item) => {
     if (item.path) {

@@ -5,7 +5,7 @@ import { Modal } from '../../components/common';
 import { Toast } from '../../utils/alert';
 import { useCreateCustomer, useUpdateCustomer } from '../../hooks/useCustomers';
 import { useMembershipPlans } from '../../hooks/useMembershipPlans';
-import { userService } from '../../services/userService';
+import { useCoaches } from '../../hooks/useUsers';
 
 const CustomerForm = ({
   isOpen,
@@ -16,34 +16,21 @@ const CustomerForm = ({
   onSaveSuccess,
 }) => {
   const [errors, setErrors] = useState({});
-  const [trainers, setTrainers] = useState([]);
   
   // React Query mutations and queries
   const createMutation = useCreateCustomer();
   const updateMutation = useUpdateCustomer();
   const { data: membershipPlans = [] } = useMembershipPlans();
+  const { data: trainers = [], isLoading: loadingCoaches, error: coachesError } = useCoaches();
   
   const isSubmitting = createMutation.isLoading || updateMutation.isLoading;
 
-  // Fetch coaches on component mount
+  // Show error toast if coaches fetch fails
   useEffect(() => {
-    const fetchCoaches = async () => {
-      try {
-        const coachesData = await userService.getCoaches();
-        if (Array.isArray(coachesData) && coachesData.length > 0) {
-          setTrainers(coachesData);
-        } else {
-          console.warn('No coaches found or invalid data format:', coachesData);
-          setTrainers([]);
-        }
-      } catch (error) {
-        console.error('Error fetching coaches:', error);
-        Toast.error('Failed to load coaches');
-        setTrainers([]);
-      }
-    };
-    fetchCoaches();
-  }, []);
+    if (coachesError) {
+      Toast.error('Failed to load coaches');
+    }
+  }, [coachesError]);
 
   // Validation functions
   const validateEmail = (email) => {
@@ -420,14 +407,16 @@ const CustomerForm = ({
                   }}
                 >
                   <option value="">No coach</option>
-                  {trainers.length > 0 ? (
+                  {loadingCoaches ? (
+                    <option disabled>Loading coaches...</option>
+                  ) : trainers.length > 0 ? (
                     trainers.map((coach) => (
                       <option key={coach.id} value={coach.id}>
                         {coach.fullname || `${coach.firstname || ''} ${coach.lastname || ''}`.trim() || 'Unnamed Coach'}
                       </option>
                     ))
                   ) : (
-                    <option disabled>Loading coaches...</option>
+                    <option disabled>No coaches available</option>
                   )}
                 </select>
               </div>
