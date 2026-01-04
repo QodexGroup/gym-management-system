@@ -621,12 +621,26 @@ const MyAccount = () => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="label">First Name</label>
-              <input type="text" className="input" defaultValue={user.firstname || ''} />
+              <label className="label">First Name *</label>
+              <input
+                type="text"
+                name="firstname"
+                className="input"
+                value={formData.firstname}
+                onChange={handleInputChange}
+                required
+              />
             </div>
             <div>
-              <label className="label">Last Name</label>
-              <input type="text" className="input" defaultValue={user.lastname || ''} />
+              <label className="label">Last Name *</label>
+              <input
+                type="text"
+                name="lastname"
+                className="input"
+                value={formData.lastname}
+                onChange={handleInputChange}
+                required
+              />
             </div>
           </div>
           <div>
