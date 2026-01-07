@@ -204,7 +204,7 @@ const Notifications = () => {
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="px-3 py-2 text-sm bg-dark-50 border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
+                className="px-3 py-2 text-sm bg-dark-700 border border-dark-500 rounded-lg focus:border-primary-800 outline-none"
               >
                 <option value="all">All</option>
                 <option value="unread">Unread</option>
@@ -215,7 +215,7 @@ const Notifications = () => {
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllAsRead}
-                  className="px-3 py-2 text-sm text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                  className="px-3 py-2 text-sm text-primary-600 hover:bg-primary-200 rounded-lg transition-colors"
                 >
                   Mark all read
                 </button>
@@ -235,8 +235,8 @@ const Notifications = () => {
                   <div
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification)}
-                    className={`flex items-start gap-4 p-4 rounded-xl transition-colors cursor-pointer ${!notification.isRead ? 'bg-primary-50/50' : 'bg-dark-50'
-                      } hover:bg-dark-100`}
+                    className={`flex items-start gap-4 p-4 rounded-xl cursor-pointer transition-colors ${!notification.isRead ? 'bg-dark-700 border-l-4 border-primary-500' : 'bg-dark-800'
+                      } hover:bg-dark-600`}
                   >
                     <div className={`p-2 rounded-lg ${getIconBg(notification.type)}`}>
                       {getIcon(notification.type)}
@@ -310,7 +310,7 @@ const Notifications = () => {
               Notification Settings
             </h3>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-dark-50 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-dark-700 rounded-lg">
                 <div className="flex items-center gap-3">
                   <AlertTriangle className="w-5 h-5 text-warning-500" />
                   <div>
@@ -332,7 +332,7 @@ const Notifications = () => {
                 </label>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-dark-50 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-dark-700 rounded-lg">
                 <div className="flex items-center gap-3">
                   <DollarSign className="w-5 h-5 text-success-500" />
                   <div>
@@ -354,7 +354,7 @@ const Notifications = () => {
                 </label>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-dark-50 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-dark-700 rounded-lg">
                 <div className="flex items-center gap-3">
                   <User className="w-5 h-5 text-accent-500" />
                   <div>

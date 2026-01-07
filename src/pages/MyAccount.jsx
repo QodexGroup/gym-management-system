@@ -20,14 +20,35 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { userService } from '../services/userService';
+import { Toast } from '../utils/alert';
+import { initializeFirebaseServices } from '../services/firebaseService';
+import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 
 const MyAccount = () => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, fetchUserData } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [showEditModal, setShowEditModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    firstname: user?.firstname || '',
+    lastname: user?.lastname || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+  });
+
+  // Password form state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
 
   // Mock account data
   const accountData = {
@@ -111,6 +132,156 @@ const MyAccount = () => {
   //   { key: 'profile', label: 'Profile & Security', icon: User },
   // ];
 
+  // Handle opening edit modal
+  const handleOpenEditModal = () => {
+    setFormData({
+      firstname: user?.firstname || '',
+      lastname: user?.lastname || '',
+      email: user?.email || '',
+      phone: user?.phone || '',
+    });
+    setShowEditModal(true);
+  };
+
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle profile update submission
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+
+    // Basic validation
+    if (!formData.firstname || !formData.lastname) {
+      Toast.error('First name and last name are required');
+      return;
+    }
+
+    if (!formData.email) {
+      Toast.error('Email is required');
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      // Update user profile via API - include role to satisfy backend validation
+      await userService.update(user.id, {
+        ...formData,
+        role: user.role, // Preserve current role
+      });
+
+      // Refresh user data from server
+      await fetchUserData();
+
+      Toast.success('Profile updated successfully!');
+      setShowEditModal(false);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      Toast.error(error.message || 'Failed to update profile');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Handle opening password modal
+  const handleOpenPasswordModal = () => {
+    setPasswordData({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    });
+    setShowPasswordModal(true);
+  };
+
+  // Handle password input changes
+  const handlePasswordInputChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle password change submission
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+
+    // Validation
+    if (!passwordData.currentPassword) {
+      Toast.error('Current password is required');
+      return;
+    }
+
+    if (!passwordData.newPassword) {
+      Toast.error('New password is required');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      Toast.error('New password must be at least 6 characters');
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      Toast.error('New passwords do not match');
+      return;
+    }
+
+    if (passwordData.currentPassword === passwordData.newPassword) {
+      Toast.error('New password must be different from current password');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const { auth } = await initializeFirebaseServices();
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        throw new Error('No authenticated user found');
+      }
+
+      // Reauthenticate user with current password
+      const credential = EmailAuthProvider.credential(
+        currentUser.email,
+        passwordData.currentPassword
+      );
+
+      await reauthenticateWithCredential(currentUser, credential);
+
+      // Update password in Firebase
+      await updatePassword(currentUser, passwordData.newPassword);
+
+      Toast.success('Password changed successfully!');
+      setShowPasswordModal(false);
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+    } catch (error) {
+      console.error('Error changing password:', error);
+
+      // Handle specific Firebase errors
+      if (error.code === 'auth/wrong-password') {
+        Toast.error('Current password is incorrect');
+      } else if (error.code === 'auth/weak-password') {
+        Toast.error('New password is too weak');
+      } else if (error.code === 'auth/requires-recent-login') {
+        Toast.error('Please log out and log in again before changing password');
+      } else {
+        Toast.error(error.message || 'Failed to change password');
+      }
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   return (
     <Layout title="My Account" subtitle="Manage your account settings">
       {/* Tabs - Commented out since there's only one tab */}
@@ -139,7 +310,7 @@ const MyAccount = () => {
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-dark-50">My Profile</h3>
               <button
-                onClick={() => setShowEditModal(true)}
+                onClick={handleOpenEditModal}
                 className="btn-secondary flex items-center gap-2"
               >
                 <Edit className="w-4 h-4" />
@@ -180,61 +351,12 @@ const MyAccount = () => {
             </div>
           </div>
 
-          {/* Business Info - Admin Only */}
-          {isAdmin && (
-            <div className="card">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-dark-50">Business Information</h3>
-                <button className="btn-secondary flex items-center gap-2">
-                  <Edit className="w-4 h-4" />
-                  Edit
-                </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-primary-100 rounded-xl">
-                    <Building className="w-6 h-6 text-primary-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-dark-400">Business Name</p>
-                    <p className="font-semibold text-dark-50">{accountData.gym.name}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-success-100 rounded-xl">
-                    <Mail className="w-6 h-6 text-success-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-dark-400">Business Email</p>
-                    <p className="font-semibold text-dark-50">{accountData.gym.email}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-accent-100 rounded-xl">
-                    <Phone className="w-6 h-6 text-accent-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-dark-400">Business Phone</p>
-                    <p className="font-semibold text-dark-50">{accountData.gym.phone}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-warning-100 rounded-xl">
-                    <MapPin className="w-6 h-6 text-warning-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-dark-400">Address</p>
-                    <p className="font-semibold text-dark-50">{accountData.gym.address}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+
 
           {/* Security Section */}
           <div className="card">
             <h3 className="text-lg font-semibold text-dark-50 mb-6">Security</h3>
-            
+
             <div className="space-y-4">
               {/* Password */}
               <div className="flex items-center justify-between p-4 bg-dark-50 rounded-xl">
@@ -247,8 +369,8 @@ const MyAccount = () => {
                     <p className="text-sm text-dark-500">Last changed 30 days ago</p>
                   </div>
                 </div>
-                <button 
-                  onClick={() => setShowPasswordModal(true)}
+                <button
+                  onClick={handleOpenPasswordModal}
                   className="btn-secondary"
                 >
                   Change Password
@@ -391,11 +513,10 @@ const MyAccount = () => {
               {plans.map((plan) => (
                 <div
                   key={plan.name}
-                  className={`relative p-6 rounded-xl border-2 ${
-                    plan.current
-                      ? 'border-primary-500 bg-primary-50'
-                      : 'border-dark-200 hover:border-primary-300'
-                  } transition-colors`}
+                  className={`relative p-6 rounded-xl border-2 ${plan.current
+                    ? 'border-primary-500 bg-primary-50'
+                    : 'border-dark-200 hover:border-primary-300'
+                    } transition-colors`}
                 >
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -489,7 +610,7 @@ const MyAccount = () => {
         title="Edit Profile"
         size="md"
       >
-        <form className="space-y-4">
+        <form onSubmit={handleUpdateProfile} className="space-y-4">
           <div className="flex justify-center mb-4">
             <div className="relative">
               <Avatar src={user.avatar} name={user.fullname} size="xl" />
@@ -500,28 +621,65 @@ const MyAccount = () => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="label">First Name</label>
-              <input type="text" className="input" defaultValue={user.firstname || ''} />
+              <label className="label">First Name *</label>
+              <input
+                type="text"
+                name="firstname"
+                className="input"
+                value={formData.firstname}
+                onChange={handleInputChange}
+                required
+              />
             </div>
             <div>
-              <label className="label">Last Name</label>
-              <input type="text" className="input" defaultValue={user.lastname || ''} />
+              <label className="label">Last Name *</label>
+              <input
+                type="text"
+                name="lastname"
+                className="input"
+                value={formData.lastname}
+                onChange={handleInputChange}
+                required
+              />
             </div>
           </div>
           <div>
-            <label className="label">Email</label>
-            <input type="email" className="input" defaultValue={user.email} />
+            <label className="label">Email *</label>
+            <input
+              type="email"
+              name="email"
+              className="input"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
+            />
           </div>
           <div>
             <label className="label">Phone</label>
-            <input type="tel" className="input" defaultValue="+1 234 567 8900" />
+            <input
+              type="tel"
+              name="phone"
+              className="input"
+              value={formData.phone}
+              onChange={handleInputChange}
+              placeholder="+1 234 567 8900"
+            />
           </div>
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 btn-secondary">
+            <button
+              type="button"
+              onClick={() => setShowEditModal(false)}
+              className="flex-1 btn-secondary"
+              disabled={isUpdating}
+            >
               Cancel
             </button>
-            <button type="submit" className="flex-1 btn-primary">
-              Save Changes
+            <button
+              type="submit"
+              className="flex-1 btn-primary"
+              disabled={isUpdating}
+            >
+              {isUpdating ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>
@@ -534,25 +692,59 @@ const MyAccount = () => {
         title="Change Password"
         size="md"
       >
-        <form className="space-y-4">
+        <form onSubmit={handleChangePassword} className="space-y-4">
           <div>
-            <label className="label">Current Password</label>
-            <input type="password" className="input" placeholder="Enter current password" />
+            <label className="label">Current Password *</label>
+            <input
+              type="password"
+              name="currentPassword"
+              className="input"
+              placeholder="Enter current password"
+              value={passwordData.currentPassword}
+              onChange={handlePasswordInputChange}
+              required
+            />
           </div>
           <div>
-            <label className="label">New Password</label>
-            <input type="password" className="input" placeholder="Enter new password" />
+            <label className="label">New Password *</label>
+            <input
+              type="password"
+              name="newPassword"
+              className="input"
+              placeholder="Enter new password (min 6 characters)"
+              value={passwordData.newPassword}
+              onChange={handlePasswordInputChange}
+              required
+              minLength={6}
+            />
           </div>
           <div>
-            <label className="label">Confirm New Password</label>
-            <input type="password" className="input" placeholder="Confirm new password" />
+            <label className="label">Confirm New Password *</label>
+            <input
+              type="password"
+              name="confirmPassword"
+              className="input"
+              placeholder="Confirm new password"
+              value={passwordData.confirmPassword}
+              onChange={handlePasswordInputChange}
+              required
+            />
           </div>
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={() => setShowPasswordModal(false)} className="flex-1 btn-secondary">
+            <button
+              type="button"
+              onClick={() => setShowPasswordModal(false)}
+              className="flex-1 btn-secondary"
+              disabled={isChangingPassword}
+            >
               Cancel
             </button>
-            <button type="submit" className="flex-1 btn-primary">
-              Update Password
+            <button
+              type="submit"
+              className="flex-1 btn-primary"
+              disabled={isChangingPassword}
+            >
+              {isChangingPassword ? 'Updating...' : 'Update Password'}
             </button>
           </div>
         </form>
