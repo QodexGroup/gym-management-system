@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '../../components/layout/Layout';
 import { StatCard, Avatar, Badge } from '../../components/common';
 import {
@@ -15,14 +15,7 @@ import {
   ArrowDownRight,
 } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
-import {
-  mockDashboardStats,
-  mockRevenueData,
-  mockMembershipDistribution,
-  mockMembers,
-  mockAppointments,
-  mockCheckIns,
-} from '../../data/mockData';
+import { dashboardService } from '../../services/dashboardService';
 import {
   LineChart,
   Line,
@@ -40,7 +33,59 @@ import {
 } from 'recharts';
 
 const AdminDashboard = () => {
-  const stats = mockDashboardStats;
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        setLoading(true);
+        const data = await dashboardService.getDashboardStats();
+        setStats(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+        setError(err.message || 'Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <Layout title="Dashboard" subtitle="Welcome back! Here's what's happening today.">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout title="Dashboard" subtitle="Welcome back! Here's what's happening today.">
+        <div className="card text-center py-12">
+          <AlertTriangle className="w-16 h-16 text-danger-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-dark-50 mb-2">Failed to Load Dashboard</h3>
+          <p className="text-dark-400 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="btn-primary"
+          >
+            Retry
+          </button>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!stats) {
+    return null;
+  }
 
   return (
     <Layout title="Dashboard" subtitle="Welcome back! Here's what's happening today.">
@@ -167,39 +212,35 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-dark-100">
-                {mockMembers
-                  .filter(
-                    (m) => m.membershipStatus === 'expiring' || m.membershipStatus === 'expired'
-                  )
-                  .map((member) => (
-                    <tr key={member.id} className="hover:bg-dark-700">
-                      <td className="table-cell">
-                        <div className="flex items-center gap-3">
-                          <Avatar src={member.avatar} name={member.name} size="sm" />
-                          <div>
-                            <p className="font-medium text-dark-50">{member.name}</p>
-                            <p className="text-xs text-dark-400">{member.email}</p>
-                          </div>
+                {(stats.expiringMembersList || []).map((member) => (
+                  <tr key={member.id} className="hover:bg-dark-700">
+                    <td className="table-cell">
+                      <div className="flex items-center gap-3">
+                        <Avatar src={member.avatar} name={member.name} size="sm" />
+                        <div>
+                          <p className="font-medium text-dark-50">{member.name}</p>
+                          <p className="text-xs text-dark-400">{member.email}</p>
                         </div>
-                      </td>
-                      <td className="table-cell">{member.membership}</td>
-                      <td className="table-cell">{member.membershipExpiry}</td>
-                      <td className="table-cell">
-                        <Badge
-                          variant={
-                            member.membershipStatus === 'expiring' ? 'warning' : 'danger'
-                          }
-                        >
-                          {member.membershipStatus}
-                        </Badge>
-                      </td>
-                      <td className="table-cell">
-                        <button className="btn-primary text-sm py-1.5 px-3">
-                          Send Reminder
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                      </div>
+                    </td>
+                    <td className="table-cell">{member.membership}</td>
+                    <td className="table-cell">{member.membershipExpiry}</td>
+                    <td className="table-cell">
+                      <Badge
+                        variant={
+                          member.membershipStatus === 'expiring' ? 'warning' : member.membershipStatus === 'expired' ? 'danger' : 'success'
+                        }
+                      >
+                        {member.membershipStatus}
+                      </Badge>
+                    </td>
+                    <td className="table-cell">
+                      <button className="btn-primary text-sm py-1.5 px-3">
+                        Send Reminder
+                      </button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -212,7 +253,7 @@ const AdminDashboard = () => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={mockMembershipDistribution}
+                  data={stats.membershipDistribution || []}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -220,7 +261,7 @@ const AdminDashboard = () => {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {mockMembershipDistribution.map((entry, index) => (
+                  {(stats.membershipDistribution || []).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -229,7 +270,7 @@ const AdminDashboard = () => {
             </ResponsiveContainer>
           </div>
           <div className="space-y-2 mt-4">
-            {mockMembershipDistribution.map((item) => (
+            {(stats.membershipDistribution || []).map((item) => (
               <div key={item.name} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   <span
@@ -248,7 +289,7 @@ const AdminDashboard = () => {
       {/* Bottom Section - Commented out for future use */}
       {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Today's Check-ins */}
-        {/* <div className="card">
+      {/* <div className="card">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-dark-50">Today's Check-ins</h3>
             <a href="/check-in" className="text-sm text-primary-500 hover:text-primary-600 font-medium">
@@ -297,8 +338,8 @@ const AdminDashboard = () => {
           </div>
         </div> */}
 
-        {/* Today's Appointments */}
-        {/* <div className="card">
+      {/* Today's Appointments */}
+      {/* <div className="card">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-dark-50">Today's Appointments</h3>
             <a href="/calendar" className="text-sm text-primary-500 hover:text-primary-600 font-medium">

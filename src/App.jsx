@@ -125,7 +125,7 @@ function App() {
                 {/* Customer Management */}
                 <Route path="/members" element={<ProtectedRoute><CustomerList /></ProtectedRoute>} />
                 <Route path="/members/:id" element={<ProtectedRoute><CustomerProfile /></ProtectedRoute>} />
-                
+
                 <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
 
                 {/* Membership Plans (Admin Only) */}
