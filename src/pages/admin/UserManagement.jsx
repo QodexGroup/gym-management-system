@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import Layout from '../components/layout/Layout';
-import { Avatar, Badge, Modal } from '../components/common';
+import Layout from '../../components/layout/Layout';
+import { Avatar, Badge, Modal } from '../../components/common';
 import {
   Search,
   Plus,
@@ -22,10 +22,10 @@ import {
   useDeactivateUser,
   useActivateUser,
   useResetPassword,
-} from '../hooks/useUsers';
-import permissionsData from '../data/permissions.json';
-import UserForm from '../components/forms/UserForm';
-import { USER_ROLES, isAdminRole } from '../constants/userRoles';
+} from '../../hooks/useUsers';
+import permissionsData from '../../data/permissions.json';
+import UserForm from './forms/UserForm';
+import { USER_ROLES, isAdminRole } from '../../constants/userRoles';
 
 const UserManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -127,7 +127,7 @@ const UserManagement = () => {
   };
 
   const handleDeleteUser = async (userId) => {
-    const { Alert } = await import('../utils/alert');
+    const { Alert } = await import('../../utils/alert');
     const result = await Alert.confirmDelete({
       title: 'Delete User?',
       text: 'Are you sure you want to delete this user? This action cannot be undone.',
@@ -561,3 +561,4 @@ const UserManagement = () => {
 };
 
 export default UserManagement;
+

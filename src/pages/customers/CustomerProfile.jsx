@@ -18,7 +18,7 @@ import {
   mockAppointments,
 } from '../../data/mockData';
 import { useCustomer } from '../../hooks/useCustomers';
-import CustomerForm from './CustomerForm';
+import CustomerForm from './customer-forms/CustomerForm';
 import { getInitialCustomerFormData, mapCustomerToFormData } from '../../models/customerModel';
 import { calculateAge, formatDate, formatCurrency } from '../../utils/formatters';
 import ProgressTab from './customer-tabs/ProgressTab';

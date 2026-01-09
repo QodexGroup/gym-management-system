@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import Layout from '../components/layout/Layout';
-import { Badge, Modal } from '../components/common';
+import Layout from '../../components/layout/Layout';
+import { Badge, Modal } from '../../components/common';
 import {
   Plus,
   Edit,
@@ -12,14 +12,14 @@ import {
   Award,
   Eye,
 } from 'lucide-react';
-import { Alert } from '../utils/alert';
+import { Alert } from '../../utils/alert';
 import { 
   useMembershipPlans, 
   useCreateMembershipPlan, 
   useUpdateMembershipPlan, 
   useDeleteMembershipPlan 
-} from '../hooks/useMembershipPlans';
-import { formatCurrency } from '../utils/formatters';
+} from '../../hooks/useMembershipPlans';
+import { formatCurrency } from '../../utils/formatters';
 
 const MembershipPlans = () => {
   const [showModal, setShowModal] = useState(false);
@@ -201,8 +201,8 @@ const MembershipPlans = () => {
       title="Membership Plans"
       subtitle="Manage gym membership packages and pricing"
     >
-        {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div className="card bg-gradient-to-br from-primary-500 to-primary-600 text-white">
           <div className="flex items-center justify-between">
             <div>
@@ -519,3 +519,4 @@ const MembershipPlans = () => {
 };
 
 export default MembershipPlans;
+

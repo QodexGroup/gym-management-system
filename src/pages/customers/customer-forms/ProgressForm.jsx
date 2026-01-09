@@ -11,7 +11,7 @@ import { customerProgressKeys } from '../../../hooks/useCustomerProgress';
 import { getInitialProgressFormData, mapProgressToFormData } from '../../../models/progressModel';
 import { customerScanService } from '../../../services/customerScanService';
 import { useFileUpload } from '../../../hooks/useFileUpload';
-import ProgressViewModal from './ProgressViewModal';
+import ProgressViewModal from '../customer-tabs/ProgressViewModal';
 import { getFileUrl } from '../../../services/firebaseUrlService';
 
 const ProgressForm = ({ 
@@ -647,3 +647,4 @@ const ProgressForm = ({
 };
 
 export default ProgressForm;
+

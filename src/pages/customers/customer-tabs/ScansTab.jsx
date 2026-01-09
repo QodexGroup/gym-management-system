@@ -7,7 +7,7 @@ import { useCustomerScans, useDeleteCustomerScan } from '../../../hooks/useCusto
 import { formatDate } from '../../../utils/formatters';
 import { Alert } from '../../../utils/alert';
 import { getFileUrl } from '../../../services/firebaseUrlService';
-import ScansForm from './ScansForm';
+import ScansForm from '../customer-forms/ScansForm';
 import { PhotoThumbnail, FileIcon, ImageLightbox } from '../../../components/common';
 import { usePermissions } from '../../../hooks/usePermissions';
 

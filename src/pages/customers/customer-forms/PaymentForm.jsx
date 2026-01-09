@@ -182,4 +182,3 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel }) => {
 
 export default PaymentForm;
 
-

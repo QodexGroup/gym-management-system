@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Alert } from '../../utils/alert';
 import { getInitialCustomerFormData, mapCustomerToFormData } from '../../models/customerModel';
-import CustomerForm from './CustomerForm';
+import CustomerForm from './customer-forms/CustomerForm';
 import { useCustomers, useDeleteCustomer } from '../../hooks/useCustomers';
 import { formatDate, formatCurrency } from '../../utils/formatters';
 import { usePermissions } from '../../hooks/usePermissions';

@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import Layout from '../components/layout/Layout';
-import { Badge, Modal } from '../components/common';
+import Layout from '../../components/layout/Layout';
+import { Badge, Modal } from '../../components/common';
 import {
   Plus,
   Search,
@@ -17,8 +17,8 @@ import {
   // Receipt,
   // Upload,
 } from 'lucide-react';
-import { Alert } from '../utils/alert';
-import { EXPENSE_STATUS, EXPENSE_STATUS_LABELS, EXPENSE_STATUS_VARIANTS } from '../constants/expenseConstants';
+import { Alert } from '../../utils/alert';
+import { EXPENSE_STATUS, EXPENSE_STATUS_LABELS, EXPENSE_STATUS_VARIANTS } from '../../constants/expenseConstants';
 import { 
   useExpenses, 
   useExpenseCategories, 
@@ -26,11 +26,11 @@ import {
   useUpdateExpense, 
   usePostExpense,
   useDeleteExpense 
-} from '../hooks/useExpenses';
-import { formatDate, formatDateForInput, formatCurrency } from '../utils/formatters';
-import { useAuth } from '../context/AuthContext';
-import { isAdminRole } from '../constants/userRoles';
-import { usePermissions } from '../hooks/usePermissions';
+} from '../../hooks/useExpenses';
+import { formatDate, formatDateForInput, formatCurrency } from '../../utils/formatters';
+import { useAuth } from '../../context/AuthContext';
+import { isAdminRole } from '../../constants/userRoles';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const Expenses = () => {
   const { user } = useAuth();
@@ -603,3 +603,4 @@ const Expenses = () => {
 };
 
 export default Expenses;
+

@@ -7,7 +7,7 @@ import {
 import { formatDate } from '../../../utils/formatters';
 import { getDataSourceBadge } from '../../../utils/uiHelpers';
 import { useCustomerProgress, useDeleteCustomerProgress } from '../../../hooks/useCustomerProgress';
-import ProgressForm from './ProgressForm';
+import ProgressForm from '../customer-forms/ProgressForm';
 import { Alert } from '../../../utils/alert';
 import { getFileUrl } from '../../../services/firebaseUrlService';
 import { PhotoThumbnail, ImageLightbox } from '../../../components/common';

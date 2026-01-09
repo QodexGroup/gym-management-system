@@ -1,7 +1,7 @@
-import { Avatar, Badge } from '../common';
-import permissionsData from '../../data/permissions.json';
-import { USER_ROLES } from '../../constants/userRoles';
-import { useCreateUser, useUpdateUser } from '../../hooks/useUsers';
+import { Avatar, Badge } from '../../../components/common';
+import permissionsData from '../../../data/permissions.json';
+import { USER_ROLES } from '../../../constants/userRoles';
+import { useCreateUser, useUpdateUser } from '../../../hooks/useUsers';
 
 const UserForm = ({
   selectedUser,

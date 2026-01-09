@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Modal } from '../../components/common';
-import { Toast } from '../../utils/alert';
-import { useCreateCustomer, useUpdateCustomer } from '../../hooks/useCustomers';
-import { useMembershipPlans } from '../../hooks/useMembershipPlans';
-import { useCoaches } from '../../hooks/useUsers';
+import { Modal } from '../../../components/common';
+import { Toast } from '../../../utils/alert';
+import { useCreateCustomer, useUpdateCustomer } from '../../../hooks/useCustomers';
+import { useMembershipPlans } from '../../../hooks/useMembershipPlans';
+import { useCoaches } from '../../../hooks/useUsers';
 
 const CustomerForm = ({
   isOpen,
