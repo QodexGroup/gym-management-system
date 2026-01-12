@@ -20,8 +20,6 @@ import PtMembers from './pages/trainer/PtMembers';
 import CheckIn from './pages/CheckIn';
 import CustomerList from './pages/customers/CustomerList';
 import CustomerProfile from './pages/customers/CustomerProfile';
-import MembershipPlans from './pages/MembershipPlans';
-import Expenses from './pages/Expenses';
 import PtPackageList from './pages/admin/PtPackageList';
 import SessionScheduling from './pages/common/SessionScheduling';
 import ClassScheduleList from './pages/common/ClassScheduleList';
