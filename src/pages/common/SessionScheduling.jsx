@@ -277,65 +277,30 @@ const SessionScheduling = () => {
     <Layout title="Session Scheduling" subtitle="Book and manage PT sessions">
       <div className="space-y-6">
         {/* Filters and Actions */}
-        <div className="card">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <div className="flex items-center gap-4 flex-1">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
-                <input
-                  type="text"
-                  placeholder="Search sessions..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 placeholder-dark-400 rounded-lg focus:bg-dark-600 focus:border-primary-500 outline-none transition-colors"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <DatePicker
-                  selected={filterDate}
-                  onChange={(date) => setFilterDate(date)}
-                  dateFormat="yyyy-MM-dd"
-                  className="px-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 rounded-lg focus:border-primary-500 outline-none"
-                  placeholderText="Filter by date"
-                  isClearable
-                />
-                {filterDate && (
-                  <button
-                    onClick={() => setFilterDate(null)}
-                    className="px-3 py-2 text-sm text-dark-400 hover:text-dark-50"
-                    title="Clear date filter"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
-                className="btn-secondary flex items-center gap-2"
-              >
-                {viewMode === 'calendar' ? (
-                  <>
-                    <List className="w-4 h-4" />
-                    List View
-                  </>
-                ) : (
-                  <>
-                    <Calendar className="w-4 h-4" />
-                    Calendar View
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => handleOpenModal()}
-                className="btn-primary flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Book Session
-              </button>
-            </div>
-          </div>
+        <div className="flex flex-wrap items-center justify-end gap-2 mb-6">
+          <button
+            onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
+            className="btn-secondary flex items-center gap-2"
+          >
+            {viewMode === 'calendar' ? (
+              <>
+                <List className="w-4 h-4" />
+                List View
+              </>
+            ) : (
+              <>
+                <Calendar className="w-4 h-4" />
+                Calendar View
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => handleOpenModal()}
+            className="btn-primary flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Book Session
+          </button>
         </div>
 
         {/* Calendar View or List View */}
