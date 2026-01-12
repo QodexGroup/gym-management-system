@@ -207,3 +207,31 @@ export const calculateBodyFatMass = (weight, bodyFatPercentage) => {
   return Math.round(bodyFatMass * 10) / 10;
 };
 
+/**
+ * Format time string (HH:MM) to readable format (e.g., "10:00 AM")
+ * @param {string} timeString - Time in HH:MM format
+ * @returns {string} - Formatted time string or original if invalid
+ */
+export const formatTime = (timeString) => {
+  if (!timeString) return 'N/A';
+  
+  // Check if already in readable format
+  if (timeString.includes('AM') || timeString.includes('PM')) {
+    return timeString;
+  }
+  
+  // Parse HH:MM format
+  const [hours, minutes] = timeString.split(':');
+  if (!hours || !minutes) return timeString;
+  
+  const hour = parseInt(hours, 10);
+  const minute = parseInt(minutes, 10);
+  
+  if (isNaN(hour) || isNaN(minute)) return timeString;
+  
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+  
+  return `${displayHour}:${String(minute).padStart(2, '0')} ${period}`;
+};
+

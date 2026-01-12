@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronLeft,
+  Dumbbell,
 } from 'lucide-react';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
@@ -40,7 +41,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         // { path: '/check-in', icon: UserCheck, label: 'Check-In System', permission: null },
         { path: '/members', icon: Users, label: 'Members List'},
         // { path: '/calendar', icon: CalendarDays, label: 'Calendar', permission: null },
-        { path: '/expenses', icon: Receipt, label: 'Expense List'},
+        { path: '/sessions', icon: CalendarDays, label: 'Member Session Scheduling'},
+        { path: '/classes', icon: Users, label: 'Coach Class Schedules'},
+        { path: '/expenses', icon: Receipt, label: 'Expense List'}
       ],
     },
     // Account Section
@@ -48,6 +51,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       section: 'ACCOUNT',
       items: [
         { path: '/membership-plans', icon: CreditCard, label: 'Membership Plans', adminOnly: true }, // Admin only
+        { path: '/pt-packages', icon: Dumbbell, label: 'PT Packages', adminOnly: true }, // Admin only
         { path: '/users', icon: UserCog, label: 'User Management', adminOnly: true }, // Admin only
         // {
         //   label: 'Reports',

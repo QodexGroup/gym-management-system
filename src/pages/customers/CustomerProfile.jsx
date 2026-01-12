@@ -11,6 +11,7 @@ import {
   CreditCard,
   FileText,
   FolderOpen,
+  UserCheck,
 } from 'lucide-react';
 import {
   mockPayments,
@@ -26,6 +27,8 @@ import BillsTab from './customer-tabs/BillsTab';
 import AppointmentsTab from './customer-tabs/AppointmentsTab';
 import ScansTab from './customer-tabs/ScansTab';
 import FilesTab from './customer-tabs/FilesTab';
+import PtSessionsTab from './customer-tabs/PtSessionsTab';
+import ClassAttendanceTab from './customer-tabs/ClassAttendanceTab';
 import { CUSTOMER_MEMBERSHIP_STATUS } from '../../constants/customerMembership';
 
 const CustomerProfile = () => {
@@ -116,7 +119,9 @@ const CustomerProfile = () => {
   const tabs = [
     { key: 'progress', label: 'Progress Tracking', icon: Activity },
     { key: 'scans', label: 'Scans', icon: FileText },
-    { key: 'bills', label: 'Membership Plan & Payments', icon: CreditCard },
+    { key: 'bills', label: 'Plans & Billing', icon: CreditCard },
+    { key: 'pt-sessions', label: 'PT Sessions', icon: CalendarDays },
+    { key: 'class-attendance', label: 'Class Attendance', icon: UserCheck },
     // { key: 'appointments', label: 'Appointments', icon: CalendarDays },
     // { key: 'files', label: 'Files', icon: FolderOpen },
   ];
@@ -271,6 +276,18 @@ const CustomerProfile = () => {
 
       {activeTab === 'scans' && (
         <ScansTab
+          member={member}
+        />
+      )}
+
+      {activeTab === 'pt-sessions' && (
+        <PtSessionsTab
+          member={member}
+        />
+      )}
+
+      {activeTab === 'class-attendance' && (
+        <ClassAttendanceTab
           member={member}
         />
       )}

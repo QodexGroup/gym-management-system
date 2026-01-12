@@ -14,11 +14,15 @@ import AdminDashboard from './pages/admin/Dashboard';
 
 // Trainer Pages
 import TrainerDashboard from './pages/trainer/Dashboard';
+import PtMembers from './pages/trainer/PtMembers';
 
 // Shared Pages
 import CheckIn from './pages/CheckIn';
 import CustomerList from './pages/customers/CustomerList';
 import CustomerProfile from './pages/customers/CustomerProfile';
+import PtPackageList from './pages/admin/PtPackageList';
+import SessionScheduling from './pages/common/SessionScheduling';
+import ClassScheduleList from './pages/common/ClassScheduleList';
 import Expenses from './pages/common/Expenses';
 import Calendar from './pages/Calendar';
 import CollectionReport from './pages/reports/CollectionReport';
@@ -127,6 +131,14 @@ function App() {
                 <Route path="/members/:id" element={<ProtectedRoute><CustomerProfile /></ProtectedRoute>} />
 
                 <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
+
+                {/* PT & Class Management */}
+                <Route path="/pt-packages" element={<ProtectedRoute><PtPackageList /></ProtectedRoute>} />
+                <Route path="/sessions" element={<ProtectedRoute><SessionScheduling /></ProtectedRoute>} />
+                <Route path="/classes" element={<ProtectedRoute><ClassScheduleList /></ProtectedRoute>} />
+
+                {/* Trainer Routes */}
+                <Route path="/trainer/pt-members" element={<ProtectedRoute><PtMembers /></ProtectedRoute>} />
 
                 {/* Membership Plans (Admin Only) */}
                 <Route path="/membership-plans" element={<AdminProtectedRoute><MembershipPlans /></AdminProtectedRoute>} />

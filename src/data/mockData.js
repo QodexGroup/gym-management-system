@@ -91,6 +91,21 @@ export const mockMembers = [
     lastCheckIn: '2024-12-09 07:00',
     totalVisits: 67,
   },
+  {
+    id: 13,
+    name: 'Robert Anderson',
+    email: 'robert.anderson@email.com',
+    phone: '+1 234 567 8913',
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop',
+    membership: 'Premium Annual',
+    membershipStatus: 'active',
+    membershipExpiry: '2025-06-15',
+    joinDate: '2024-10-10',
+    trainer: 'Alex Thompson',
+    balance: 0,
+    lastCheckIn: '2024-12-09 09:00',
+    totalVisits: 42,
+  },
 ];
 
 export const mockTrainers = [
@@ -377,4 +392,533 @@ export const appointmentTypes = [
   'Consultation',
   'Body Composition',
   'Nutrition Consultation',
+];
+
+// PT Packages Mock Data
+export const mockPtPackages = [
+  {
+    id: 1,
+    packageName: 'Strength Training Package',
+    description: 'Comprehensive strength and conditioning program',
+    trainingStyle: 'strength',
+    numberOfSessions: 10,
+    durationPerSession: 60,
+    price: 5000.00,
+    features: ['Nutrition Guide', 'Progress Reports', 'Custom Workout Plan'],
+    status: 'active',
+    createdAt: '2024-01-15',
+    updatedAt: '2024-12-01',
+  },
+  {
+    id: 2,
+    packageName: 'Cardio Blast Program',
+    description: 'High-intensity cardio and endurance training',
+    trainingStyle: 'cardio',
+    numberOfSessions: 5,
+    durationPerSession: 45,
+    price: 2500.00,
+    features: ['Progress Reports', 'Body Composition Analysis'],
+    status: 'active',
+    createdAt: '2024-02-01',
+    updatedAt: '2024-12-01',
+  },
+  {
+    id: 3,
+    packageName: 'Weight Loss Program',
+    description: 'Focused weight loss and body transformation',
+    trainingStyle: 'weight_loss',
+    numberOfSessions: 12,
+    durationPerSession: 60,
+    price: 6000.00,
+    features: ['Nutrition Guide', 'Progress Reports', 'Custom Workout Plan', 'Body Composition Analysis'],
+    status: 'active',
+    createdAt: '2024-03-10',
+    updatedAt: '2024-12-01',
+  },
+  {
+    id: 4,
+    packageName: 'HIIT Training Package',
+    description: 'High-intensity interval training sessions',
+    trainingStyle: 'hiit',
+    numberOfSessions: 8,
+    durationPerSession: 45,
+    price: 4000.00,
+    features: ['Progress Reports', 'Custom Workout Plan'],
+    status: 'active',
+    createdAt: '2024-04-05',
+    updatedAt: '2024-12-01',
+  },
+  {
+    id: 5,
+    packageName: 'Flexibility & Mobility',
+    description: 'Yoga and stretching focused program',
+    trainingStyle: 'flexibility',
+    numberOfSessions: 6,
+    durationPerSession: 60,
+    price: 3000.00,
+    features: ['Progress Reports'],
+    status: 'active',
+    createdAt: '2024-05-20',
+    updatedAt: '2024-12-01',
+  },
+];
+
+// Customer PT Packages Mock Data
+export const mockCustomerPtPackages = [
+  {
+    id: 1,
+    customerId: 1,
+    ptPackageId: 1,
+    trainerId: 1,
+    startDate: '2024-12-01',
+    classesTotal: 10,
+    classesCompleted: 2,
+    classesRemaining: 8,
+    status: 'active',
+    nextSessionDate: '2024-12-22',
+    nextSessionTime: '10:00',
+    ptPackage: mockPtPackages[0],
+    trainer: mockTrainers[0],
+  },
+  {
+    id: 2,
+    customerId: 2,
+    ptPackageId: 2,
+    trainerId: 2,
+    startDate: '2024-11-15',
+    classesTotal: 5,
+    classesCompleted: 3,
+    classesRemaining: 2,
+    status: 'active',
+    nextSessionDate: '2024-12-23',
+    nextSessionTime: '14:00',
+    ptPackage: mockPtPackages[1],
+    trainer: mockTrainers[1],
+  },
+  {
+    id: 3,
+    customerId: 4,
+    ptPackageId: 3,
+    trainerId: 2,
+    startDate: '2024-10-01',
+    classesTotal: 12,
+    classesCompleted: 12,
+    classesRemaining: 0,
+    status: 'completed',
+    completedDate: '2024-12-10',
+    ptPackage: mockPtPackages[2],
+    trainer: mockTrainers[1],
+  },
+  // Customer PT Package for member 13 - will be updated with proper dates after date variables are defined
+  {
+    id: 4,
+    customerId: 13,
+    ptPackageId: 4,
+    trainerId: 3,
+    startDate: '2024-12-01', // Temporary, will be updated
+    classesTotal: 8,
+    classesCompleted: 3,
+    classesRemaining: 5,
+    status: 'active',
+    nextSessionDate: '2024-12-22', // Temporary, will be updated
+    nextSessionTime: '16:00',
+    ptPackage: mockPtPackages[3],
+    trainer: mockTrainers[2],
+  },
+];
+
+// PT Sessions Mock Data
+// Generate future dates for upcoming sessions
+const today = new Date();
+const tomorrow = new Date(today);
+tomorrow.setDate(tomorrow.getDate() + 1);
+const dayAfterTomorrow = new Date(today);
+dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+const nextWeek = new Date(today);
+nextWeek.setDate(nextWeek.getDate() + 7);
+const lastWeek = new Date(today);
+lastWeek.setDate(lastWeek.getDate() - 7);
+const twoWeeksAgo = new Date(today);
+twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+const formatDateForMock = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+export const mockPtSessions = [
+  {
+    id: 1,
+    customerId: 1,
+    ptPackageId: 1,
+    trainerId: 1,
+    sessionDate: formatDateForMock(tomorrow),
+    sessionTime: '10:00',
+    duration: 60,
+    status: 'scheduled',
+    notes: 'Focus on upper body strength',
+    customer: mockMembers[0],
+    ptPackage: mockPtPackages[0],
+    trainer: mockTrainers[0],
+  },
+  {
+    id: 2,
+    customerId: 2,
+    ptPackageId: 2,
+    trainerId: 2,
+    sessionDate: formatDateForMock(dayAfterTomorrow),
+    sessionTime: '14:00',
+    duration: 45,
+    status: 'scheduled',
+    notes: 'Cardio endurance training',
+    customer: mockMembers[1],
+    ptPackage: mockPtPackages[1],
+    trainer: mockTrainers[1],
+  },
+  {
+    id: 3,
+    customerId: 1,
+    ptPackageId: 1,
+    trainerId: 1,
+    sessionDate: formatDateForMock(nextWeek),
+    sessionTime: '10:00',
+    duration: 60,
+    status: 'scheduled',
+    notes: 'Leg day workout',
+    customer: mockMembers[0],
+    ptPackage: mockPtPackages[0],
+    trainer: mockTrainers[0],
+  },
+  {
+    id: 4,
+    customerId: 1,
+    ptPackageId: 1,
+    trainerId: 1,
+    sessionDate: formatDateForMock(lastWeek),
+    sessionTime: '10:00',
+    duration: 60,
+    status: 'completed',
+    notes: 'Great progress on bench press',
+    customer: mockMembers[0],
+    ptPackage: mockPtPackages[0],
+    trainer: mockTrainers[0],
+  },
+  {
+    id: 5,
+    customerId: 1,
+    ptPackageId: 1,
+    trainerId: 1,
+    sessionDate: formatDateForMock(twoWeeksAgo),
+    sessionTime: '10:00',
+    duration: 60,
+    status: 'completed',
+    notes: 'Starting strength program',
+    customer: mockMembers[0],
+    ptPackage: mockPtPackages[0],
+    trainer: mockTrainers[0],
+  },
+  {
+    id: 6,
+    customerId: 13,
+    ptPackageId: 4,
+    trainerId: 3,
+    sessionDate: formatDateForMock(tomorrow),
+    sessionTime: '16:00',
+    duration: 45,
+    status: 'scheduled',
+    notes: 'HIIT training session',
+    customer: mockMembers[6], // Robert Anderson
+    ptPackage: mockPtPackages[3],
+    trainer: mockTrainers[2],
+  },
+  {
+    id: 7,
+    customerId: 13,
+    ptPackageId: 4,
+    trainerId: 3,
+    sessionDate: formatDateForMock(dayAfterTomorrow),
+    sessionTime: '16:00',
+    duration: 45,
+    status: 'scheduled',
+    notes: 'Cardio and endurance focus',
+    customer: mockMembers[6], // Robert Anderson
+    ptPackage: mockPtPackages[3],
+    trainer: mockTrainers[2],
+  },
+  {
+    id: 8,
+    customerId: 13,
+    ptPackageId: 4,
+    trainerId: 3,
+    sessionDate: formatDateForMock(lastWeek),
+    sessionTime: '16:00',
+    duration: 45,
+    status: 'completed',
+    notes: 'Great intensity and form',
+    customer: mockMembers[6], // Robert Anderson
+    ptPackage: mockPtPackages[3],
+    trainer: mockTrainers[2],
+  },
+];
+
+// Update customer PT package for member 13 with proper dates
+const tenDaysAgo = new Date(today);
+tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+const customer13Package = mockCustomerPtPackages.find(pkg => pkg.customerId === 13);
+if (customer13Package) {
+  customer13Package.startDate = formatDateForMock(tenDaysAgo);
+  customer13Package.nextSessionDate = formatDateForMock(tomorrow);
+}
+
+// Class Schedules Mock Data
+export const mockClassSchedules = [
+  {
+    id: 1,
+    className: 'Morning HIIT Class',
+    description: 'High-intensity interval training to start your day',
+    trainerId: 3,
+    classType: 'group',
+    capacityLimit: 20,
+    durationMinutes: 60,
+    startTime: '07:00',
+    endTime: '08:00',
+    isRecurring: true,
+    daysOfWeek: [1, 3, 5], // Monday, Wednesday, Friday
+    startDate: '2024-12-01',
+    endDate: null,
+    status: 'active',
+    enrolledCount: 15,
+    trainer: mockTrainers[2],
+  },
+  {
+    id: 2,
+    className: 'Evening Yoga Class',
+    description: 'Relaxing yoga session to end your day',
+    trainerId: 2,
+    classType: 'group',
+    capacityLimit: 15,
+    durationMinutes: 60,
+    startTime: '18:00',
+    endTime: '19:00',
+    isRecurring: true,
+    daysOfWeek: [2, 4], // Tuesday, Thursday
+    startDate: '2024-12-01',
+    endDate: null,
+    status: 'active',
+    enrolledCount: 15,
+    trainer: mockTrainers[1],
+  },
+  {
+    id: 3,
+    className: 'Weekend Bootcamp',
+    description: 'Intensive full-body workout',
+    trainerId: 1,
+    classType: 'group',
+    capacityLimit: 25,
+    durationMinutes: 90,
+    startTime: '08:00',
+    endTime: '09:30',
+    isRecurring: true,
+    daysOfWeek: [6], // Saturday
+    startDate: '2024-12-01',
+    endDate: null,
+    status: 'active',
+    enrolledCount: 18,
+    trainer: mockTrainers[0],
+  },
+  {
+    id: 4,
+    className: 'PT Strength Training',
+    description: 'One-on-one personal training for strength building',
+    trainerId: 1,
+    classType: 'individual',
+    capacityLimit: 1,
+    durationMinutes: 60,
+    startTime: '09:00',
+    endTime: '10:00',
+    isRecurring: true,
+    daysOfWeek: [1, 3, 5], // Monday, Wednesday, Friday
+    startDate: '2024-12-01',
+    endDate: null,
+    status: 'active',
+    enrolledCount: 0,
+    trainer: mockTrainers[0],
+  },
+  {
+    id: 5,
+    className: 'PT Yoga & Flexibility',
+    description: 'Personalized yoga and flexibility training session',
+    trainerId: 2,
+    classType: 'individual',
+    capacityLimit: 1,
+    durationMinutes: 45,
+    startTime: '10:00',
+    endTime: '10:45',
+    isRecurring: true,
+    daysOfWeek: [2, 4], // Tuesday, Thursday
+    startDate: '2024-12-01',
+    endDate: null,
+    status: 'active',
+    enrolledCount: 0,
+    trainer: mockTrainers[1],
+  },
+  {
+    id: 6,
+    className: 'PT HIIT Cardio',
+    description: 'High-intensity interval training personal session',
+    trainerId: 3,
+    classType: 'individual',
+    capacityLimit: 1,
+    durationMinutes: 45,
+    startTime: '16:00',
+    endTime: '16:45',
+    isRecurring: true,
+    daysOfWeek: [1, 3, 5], // Monday, Wednesday, Friday
+    startDate: '2024-12-01',
+    endDate: null,
+    status: 'active',
+    enrolledCount: 0,
+    trainer: mockTrainers[2],
+  },
+  {
+    id: 7,
+    className: 'PT Weight Loss Program',
+    description: 'Personalized weight loss and nutrition coaching',
+    trainerId: 1,
+    classType: 'individual',
+    capacityLimit: 1,
+    durationMinutes: 60,
+    startTime: '14:00',
+    endTime: '15:00',
+    isRecurring: true,
+    daysOfWeek: [2, 4, 6], // Tuesday, Thursday, Saturday
+    startDate: '2024-12-01',
+    endDate: null,
+    status: 'active',
+    enrolledCount: 0,
+    trainer: mockTrainers[0],
+  },
+];
+
+// Class Attendance Mock Data
+export const mockClassAttendances = [
+  {
+    id: 1,
+    customerId: 1,
+    scheduleId: 1,
+    attendanceDate: '2024-12-20',
+    status: 'attended',
+    notes: '',
+    classSchedule: mockClassSchedules[0],
+    customer: mockMembers[0],
+  },
+  {
+    id: 2,
+    customerId: 2,
+    scheduleId: 2,
+    attendanceDate: '2024-12-19',
+    status: 'attended',
+    notes: '',
+    classSchedule: mockClassSchedules[1],
+    customer: mockMembers[1],
+  },
+  {
+    id: 3,
+    customerId: 3,
+    scheduleId: 1,
+    attendanceDate: '2024-12-18',
+    status: 'no_show',
+    notes: 'Member did not show up',
+    classSchedule: mockClassSchedules[0],
+    customer: mockMembers[2],
+  },
+  {
+    id: 4,
+    customerId: 4,
+    scheduleId: 3,
+    attendanceDate: '2024-12-16',
+    status: 'attended',
+    notes: '',
+    classSchedule: mockClassSchedules[2],
+    customer: mockMembers[3],
+  },
+  {
+    id: 5,
+    customerId: 13,
+    scheduleId: 1,
+    attendanceDate: formatDateForMock(lastWeek),
+    status: 'attended',
+    notes: '',
+    classSchedule: mockClassSchedules[0],
+    customer: mockMembers[6], // Robert Anderson
+  },
+  {
+    id: 6,
+    customerId: 13,
+    scheduleId: 1,
+    attendanceDate: formatDateForMock(new Date(new Date().setDate(new Date().getDate() - 5))),
+    status: 'attended',
+    notes: '',
+    classSchedule: mockClassSchedules[0],
+    customer: mockMembers[6], // Robert Anderson
+  },
+  {
+    id: 7,
+    customerId: 13,
+    scheduleId: 3,
+    attendanceDate: formatDateForMock(new Date(new Date().setDate(new Date().getDate() - 3))),
+    status: 'attended',
+    notes: 'Used PT package session',
+    classSchedule: mockClassSchedules[2],
+    customer: mockMembers[6], // Robert Anderson
+  },
+];
+
+
+// PT Progress Mock Data
+export const mockPtProgress = [
+  {
+    id: 1,
+    customerId: 1,
+    ptPackageId: 1,
+    sessionNumber: 1,
+    sessionDate: '2024-12-08',
+    exercises: [
+      { name: 'Bench Press', sets: 3, reps: 10, weight: 80 },
+      { name: 'Squats', sets: 3, reps: 12, weight: 100 },
+      { name: 'Deadlifts', sets: 3, reps: 8, weight: 120 },
+    ],
+    duration: 60,
+    caloriesBurned: 450,
+    averageHeartRate: 145,
+    weight: 85.0,
+    bodyFat: 20.0,
+    muscleMass: 65.0,
+    notes: 'Starting strength program',
+    beforePhoto: null,
+    afterPhoto: null,
+  },
+  {
+    id: 2,
+    customerId: 1,
+    ptPackageId: 1,
+    sessionNumber: 2,
+    sessionDate: '2024-12-15',
+    exercises: [
+      { name: 'Bench Press', sets: 3, reps: 10, weight: 82.5 },
+      { name: 'Squats', sets: 3, reps: 12, weight: 105 },
+      { name: 'Deadlifts', sets: 3, reps: 8, weight: 125 },
+    ],
+    duration: 60,
+    caloriesBurned: 480,
+    averageHeartRate: 150,
+    weight: 84.0,
+    bodyFat: 19.5,
+    muscleMass: 66.0,
+    notes: 'Good progress on all lifts',
+    beforePhoto: null,
+    afterPhoto: null,
+  },
 ];

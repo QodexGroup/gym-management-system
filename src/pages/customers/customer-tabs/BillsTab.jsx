@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle, Clock, AlertCircle, Receipt, Plus, Edit, Trash2, Banknote, CreditCard, Calendar, UserCheck, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, Receipt, Plus, Edit, Trash2, Banknote, CreditCard, Calendar, UserCheck, ChevronLeft, ChevronRight, Dumbbell, X, UserCog } from 'lucide-react';
 import { Badge, Modal, Avatar } from '../../../components/common';
 import { formatCurrency, formatDate } from '../../../utils/formatters';
 import BillsForm from '../customer-forms/BillsForm';
@@ -9,17 +9,39 @@ import { useCustomerBills, useCreateCustomerBill, useUpdateCustomerBill, useDele
 import { useCreateOrUpdateCustomerMembership } from '../../../hooks/useCustomerMembership';
 import { useCreateCustomerPayment } from '../../../hooks/useCustomerPayments';
 import { BILL_STATUS, BILL_STATUS_LABELS, BILL_STATUS_VARIANTS, BILL_TYPE } from '../../../constants/billConstants';
-import { Alert } from '../../../utils/alert';
+import { Alert, Toast } from '../../../utils/alert';
 import { CUSTOMER_MEMBERSHIP_STATUS } from '../../../constants/customerMembership';
 import { usePermissions } from '../../../hooks/usePermissions';
+import { mockCustomerPtPackages, mockPtPackages, mockTrainers } from '../../../data/mockData';
+import { CUSTOMER_PT_PACKAGE_STATUS, CUSTOMER_PT_PACKAGE_STATUS_LABELS, CUSTOMER_PT_PACKAGE_STATUS_VARIANTS } from '../../../constants/ptConstants';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const BillsTab = ({ member, onCustomerUpdate }) => {
   const { hasPermission } = usePermissions();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [showPtPackageModal, setShowPtPackageModal] = useState(false);
   const [selectedBill, setSelectedBill] = useState(null);
   const [paymentBill, setPaymentBill] = useState(null);
+  const [ptPackageFormData, setPtPackageFormData] = useState({
+    ptPackageId: '',
+    trainerId: '',
+    startDate: '',
+  });
+  
+  // PT Packages state (using mock data)
+  const [customerPackagesList, setCustomerPackagesList] = useState(
+    mockCustomerPtPackages.filter(pkg => pkg.customerId === member?.id)
+  );
+  const packages = mockPtPackages;
+  const coaches = mockTrainers.map(t => ({
+    id: t.id,
+    firstname: t.name.split(' ')[0],
+    lastname: t.name.split(' ').slice(1).join(' '),
+    email: t.email,
+  }));
   
   const [currentPage, setCurrentPage] = useState(1);
   const { data, isLoading, isError, error } = useCustomerBills(member?.id, { page: currentPage, pagelimit: 50 });
@@ -156,63 +178,217 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
     }
   };
 
+  const handleOpenPtPackageModal = () => {
+    setPtPackageFormData({
+      ptPackageId: '',
+      trainerId: '',
+      startDate: '',
+    });
+    setShowPtPackageModal(true);
+  };
+
+  const handleClosePtPackageModal = () => {
+    setShowPtPackageModal(false);
+    setPtPackageFormData({
+      ptPackageId: '',
+      trainerId: '',
+      startDate: '',
+    });
+  };
+
+  const handleAssignPtPackage = async (e) => {
+    e.preventDefault();
+
+    const ptPackage = packages.find(p => p.id === parseInt(ptPackageFormData.ptPackageId));
+    const trainer = coaches.find(c => c.id === parseInt(ptPackageFormData.trainerId));
+
+    // Create PT Package assignment
+    const packageData = {
+      id: customerPackagesList.length + 1,
+      customerId: member.id,
+      ptPackageId: parseInt(ptPackageFormData.ptPackageId),
+      trainerId: parseInt(ptPackageFormData.trainerId) || null,
+      startDate: ptPackageFormData.startDate,
+      classesTotal: ptPackage?.numberOfSessions || 0,
+      classesCompleted: 0,
+      classesRemaining: ptPackage?.numberOfSessions || 0,
+      status: 'active',
+      ptPackage: ptPackage,
+      trainer: trainer,
+    };
+
+    setCustomerPackagesList(prev => [...prev, packageData]);
+
+    // Automatically create a bill for the PT package
+    try {
+      await createBillMutation.mutateAsync({
+        customerId: member.id,
+        billType: BILL_TYPE.CUSTOM_AMOUNT,
+        billDate: ptPackageFormData.startDate,
+        netAmount: ptPackage?.price || 0,
+        paidAmount: 0,
+        billStatus: BILL_STATUS.ACTIVE,
+        customService: `PT Package: ${ptPackage?.packageName || 'PT Package'}`,
+        description: `PT Package: ${ptPackage?.packageName} - ${ptPackage?.numberOfSessions} sessions`,
+      });
+      
+      Toast.success('PT Package assigned and bill created successfully');
+      
+      // Trigger customer update callback
+      if (onCustomerUpdate) {
+        setTimeout(() => {
+          onCustomerUpdate();
+        }, 500);
+      }
+    } catch (error) {
+      Toast.success('PT Package assigned successfully');
+      // Bill creation failed but package was assigned
+    }
+
+    handleClosePtPackageModal();
+  };
+
+  const handleCancelPtPackage = async (packageId) => {
+    const result = await Alert.confirm({
+      title: 'Cancel PT Package?',
+      text: 'Are you sure you want to cancel this PT package?',
+      icon: 'warning',
+      confirmButtonText: 'Yes, cancel it',
+      cancelButtonText: 'No',
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    setCustomerPackagesList(prev => prev.filter(pkg => pkg.id !== packageId));
+    Toast.success('PT Package cancelled successfully');
+  };
+
+  // Separate active and completed PT packages
+  const activePtPackages = customerPackagesList.filter(
+    (pkg) => pkg.status === CUSTOMER_PT_PACKAGE_STATUS.ACTIVE
+  );
+  const completedPtPackages = customerPackagesList.filter(
+    (pkg) => pkg.status === CUSTOMER_PT_PACKAGE_STATUS.COMPLETED
+  );
+
   return (
     <div className="space-y-6">
-      {/* Membership Plan Card */}
+      {/* Plans Section - Compact Grid */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-dark-50">Membership Plan</h3>
-          {hasPermission('membership_plan_update') && (
-            <button 
-              onClick={() => setShowMembershipModal(true)} 
-              className={`flex items-center gap-2 ${hasActiveMembership ? 'btn-primary' : 'btn-success'}`}
+          <h3 className="text-lg font-semibold text-dark-50">Plans</h3>
+          <div className="flex items-center gap-2">
+            {hasPermission('membership_plan_update') && (
+              <button 
+                onClick={() => setShowMembershipModal(true)} 
+                className={`flex items-center gap-2 text-sm py-1.5 px-3 ${hasActiveMembership ? 'btn-primary' : 'btn-success'}`}
+              >
+                <UserCheck className="w-4 h-4" />
+                {hasActiveMembership ? 'Update' : 'Add'} Membership
+              </button>
+            )}
+            <button
+              onClick={handleOpenPtPackageModal}
+              className="btn-primary flex items-center gap-2 text-sm py-1.5 px-3"
             >
-              <UserCheck className="w-4 h-4" />
-              {hasActiveMembership ? 'Update Membership Plan' : 'Add Membership Plan'}
+              <Plus className="w-4 h-4" />
+              Assign PT Package
             </button>
-          )}
+          </div>
         </div>
-        
-        {hasActiveMembership ? (
-          <div className="p-4 bg-dark-700 border border-dark-600 rounded-lg">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <h4 className="text-lg font-semibold text-dark-50">
-                    {currentMembership.membershipPlan?.planName || 'N/A'}
-                  </h4>
-                  <Badge variant="success">Active</Badge>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Membership Plan - Compact */}
+          <div className="bg-dark-700 border border-dark-600 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-semibold text-dark-50">Membership Plan</h4>
+                {hasActiveMembership && <Badge variant="success" size="sm">Active</Badge>}
+              </div>
+            </div>
+            {hasActiveMembership ? (
+              <div className="space-y-1.5 text-xs text-dark-300">
+                <div className="font-medium text-dark-50">
+                  {currentMembership.membershipPlan?.planName || 'N/A'}
                 </div>
                 {currentMembership.membershipPlan && (
-                  <p className="text-sm text-dark-300 mb-2">
-                    Price: {formatCurrency(currentMembership.membershipPlan.price)} | 
-                    Duration: {currentMembership.membershipPlan.planPeriod} {currentMembership.membershipPlan.planInterval}
-                  </p>
+                  <div>
+                    {formatCurrency(currentMembership.membershipPlan.price)} • {currentMembership.membershipPlan.planPeriod} {currentMembership.membershipPlan.planInterval}
+                  </div>
                 )}
-                <div className="flex items-center gap-4 text-sm text-dark-400">
+                <div className="flex items-center gap-3 pt-1">
                   <div className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    <span>
-                      Started: {currentMembership.membershipStartDate ? formatDate(currentMembership.membershipStartDate) : 'N/A'}
-                    </span>
+                    <Calendar className="w-3 h-3" />
+                    <span>{currentMembership.membershipStartDate ? formatDate(currentMembership.membershipStartDate) : 'N/A'}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    <span>
-                      Expires: {currentMembership.membershipEndDate ? formatDate(currentMembership.membershipEndDate) : 'N/A'}
-                    </span>
+                    <Clock className="w-3 h-3" />
+                    <span>{currentMembership.membershipEndDate ? formatDate(currentMembership.membershipEndDate) : 'N/A'}</span>
                   </div>
                 </div>
               </div>
+            ) : (
+              <p className="text-xs text-dark-400">No active membership</p>
+            )}
+          </div>
+
+          {/* Active PT Packages Summary - Compact */}
+          <div className="bg-dark-700 border border-dark-600 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-sm font-semibold text-dark-50">PT Packages</h4>
+              {activePtPackages.length > 0 && (
+                <Badge variant="success" size="sm">{activePtPackages.length} Active</Badge>
+              )}
             </div>
+            {activePtPackages.length > 0 ? (
+              <div className="space-y-2">
+                {activePtPackages.slice(0, 2).map((customerPackage) => {
+                  const ptPackage = customerPackage.ptPackage;
+                  const sessionsRemaining = customerPackage.classesRemaining || 0;
+                  const sessionsTotal = customerPackage.classesTotal || ptPackage?.numberOfSessions || 0;
+                  const progressPercentage = sessionsTotal > 0 ? ((sessionsTotal - sessionsRemaining) / sessionsTotal) * 100 : 0;
+
+                  return (
+                    <div key={customerPackage.id} className="border-b border-dark-600 pb-2 last:border-0 last:pb-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium text-dark-50 truncate flex-1">
+                          {ptPackage?.packageName || 'Unknown'}
+                        </span>
+                        <button
+                          onClick={() => handleCancelPtPackage(customerPackage.id)}
+                          className="p-1 text-dark-400 hover:text-danger-600 rounded transition-colors ml-2"
+                          title="Cancel"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-dark-400">
+                        <span>{sessionsRemaining}/{sessionsTotal} sessions</span>
+                        <span>•</span>
+                        <span>{formatCurrency(ptPackage?.price || 0)}</span>
+                      </div>
+                      <div className="w-full bg-dark-600 rounded-full h-1.5 mt-1">
+                        <div
+                          className="bg-primary-500 h-1.5 rounded-full transition-all"
+                          style={{ width: `${progressPercentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+                {activePtPackages.length > 2 && (
+                  <p className="text-xs text-dark-400 pt-1">+{activePtPackages.length - 2} more package(s)</p>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-dark-400">No active packages</p>
+            )}
           </div>
-        ) : (
-          <div className="p-4 bg-dark-700 border border-dark-600 rounded-lg text-center">
-            <p className="text-dark-300">No active membership plan</p>
-            <p className="text-sm text-dark-400 mt-1">Click "Add Membership Plan" to assign a membership to this customer</p>
-          </div>
-        )}
+        </div>
       </div>
+
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -459,6 +635,83 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
           onSubmit={handleMembershipSubmit}
           onCancel={() => setShowMembershipModal(false)}
         />
+      </Modal>
+
+      {/* Assign PT Package Modal */}
+      <Modal
+        isOpen={showPtPackageModal}
+        onClose={handleClosePtPackageModal}
+        title="Assign PT Package"
+        size="md"
+      >
+        <form onSubmit={handleAssignPtPackage} className="space-y-4">
+          <div>
+            <label className="label">PT Package *</label>
+            <select
+              className="input"
+              value={ptPackageFormData.ptPackageId}
+              onChange={(e) => setPtPackageFormData({ ...ptPackageFormData, ptPackageId: e.target.value })}
+              required
+            >
+              <option value="">Select PT package</option>
+              {packages
+                .filter((pkg) => pkg.status === 'active')
+                .map((pkg) => (
+                  <option key={pkg.id} value={pkg.id}>
+                    {pkg.packageName} - {formatCurrency(pkg.price)} ({pkg.numberOfSessions} sessions)
+                  </option>
+                ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="label">Trainer (Optional)</label>
+            <select
+              className="input"
+              value={ptPackageFormData.trainerId}
+              onChange={(e) => setPtPackageFormData({ ...ptPackageFormData, trainerId: e.target.value })}
+            >
+              <option value="">No trainer assigned</option>
+              {coaches.map((coach) => (
+                <option key={coach.id} value={coach.id}>
+                  {coach.firstname} {coach.lastname}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="label">Start Date *</label>
+            <DatePicker
+              selected={ptPackageFormData.startDate ? new Date(ptPackageFormData.startDate) : null}
+              onChange={(date) => {
+                const dateString = date ? date.toISOString().split('T')[0] : '';
+                setPtPackageFormData({ ...ptPackageFormData, startDate: dateString });
+              }}
+              dateFormat="yyyy-MM-dd"
+              placeholderText="Select start date"
+              className="input w-full"
+              minDate={new Date()}
+              required
+            />
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={handleClosePtPackageModal}
+              className="flex-1 btn-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 btn-primary"
+            >
+              Assign Package
+            </button>
+          </div>
+        </form>
       </Modal>
     </div>
   );
