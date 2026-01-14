@@ -501,18 +501,40 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
                         <div className="flex items-center gap-2">
                           {hasPermission('payment_create') && (
                             <button
-                              onClick={() => handleOpenPayment(bill)}
-                              className="p-2 text-dark-400 hover:text-success-600 hover:bg-success-50 rounded-lg transition-colors"
-                              title="Add Payment"
+                              onClick={() => {
+                                if (bill.billStatus !== BILL_STATUS.PAID && bill.billStatus !== BILL_STATUS.VOIDED) {
+                                  handleOpenPayment(bill);
+                                }
+                              }}
+                              className={`p-2 rounded-lg transition-colors ${
+                                bill.billStatus === BILL_STATUS.PAID || bill.billStatus === BILL_STATUS.VOIDED
+                                  ? 'text-dark-300 cursor-not-allowed'
+                                  : 'text-dark-400 hover:text-success-600 hover:bg-success-50'
+                              }`}
+                              title={
+                                bill.billStatus === BILL_STATUS.PAID
+                                  ? 'Bill is fully paid'
+                                  : 'Add Payment'
+                              }
+                              disabled={bill.billStatus === BILL_STATUS.PAID}
                             >
                               <Plus className="w-4 h-4" />
                             </button>
                           )}
                           {hasPermission('bill_update') && (
                             <button
-                              onClick={() => handleEdit(bill)}
-                              className="p-2 text-dark-400 hover:text-primary-400 hover:bg-dark-700 rounded-lg transition-colors"
-                              title="Edit Bill"
+                              onClick={() => {
+                                if (bill.billStatus !== BILL_STATUS.VOIDED) {
+                                  handleEdit(bill);
+                                }
+                              }}
+                              className={`p-2 rounded-lg transition-colors ${
+                                bill.billStatus === BILL_STATUS.VOIDED
+                                  ? 'text-dark-300 cursor-not-allowed'
+                                  : 'text-dark-400 hover:text-primary-400 hover:bg-dark-700'
+                              }`}
+                              title={bill.billStatus === BILL_STATUS.VOIDED ? 'Cannot edit a voided bill' : 'Edit Bill'}
+                              disabled={bill.billStatus === BILL_STATUS.VOIDED}
                             >
                               <Edit className="w-4 h-4" />
                             </button>

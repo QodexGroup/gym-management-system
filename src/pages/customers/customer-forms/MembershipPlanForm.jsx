@@ -79,8 +79,8 @@ const MembershipPlanForm = ({ customerId, currentMembership, onSubmit, onCancel 
       </div>
 
       {currentMembership && (
-        <div className="p-4 bg-warning-50 border border-warning-200 rounded-lg">
-          <p className="text-sm text-warning-800">
+        <div className="p-4 bg-amber-100 border border-amber-400 rounded-lg">
+          <p className="text-sm text-amber-900 font-medium">
             <strong>Note:</strong> This will deactivate the current membership plan and create a new one.
             {currentMembership.membershipPlan && (
               <>

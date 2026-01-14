@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { customerMembershipService } from '../services/customerMembershipService';
 import { customerKeys } from './useCustomers';
+import { customerBillKeys } from './useCustomerBills';
 import { Toast } from '../utils/alert';
 
 /**
@@ -22,6 +23,9 @@ export const useCreateOrUpdateCustomerMembership = () => {
       await new Promise(resolve => setTimeout(resolve, 100));
       await queryClient.refetchQueries({ queryKey, type: 'all' });
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      
+      // Invalidate and refetch customer bills (membership changes create/void bills)
+      queryClient.invalidateQueries({ queryKey: customerBillKeys.byCustomer(customerId) });
       
       Toast.success('Membership plan updated successfully');
     },
