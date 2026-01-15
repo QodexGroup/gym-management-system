@@ -2,38 +2,6 @@
  * PT Package Constants
  */
 
-export const PT_TRAINING_STYLES = {
-  STRENGTH: 'strength',
-  CARDIO: 'cardio',
-  WEIGHT_LOSS: 'weight_loss',
-  HIIT: 'hiit',
-  FLEXIBILITY: 'flexibility',
-  CROSSFIT: 'crossfit',
-  YOGA: 'yoga',
-  PILATES: 'pilates',
-};
-
-export const PT_TRAINING_STYLE_LABELS = {
-  [PT_TRAINING_STYLES.STRENGTH]: 'Strength & Conditioning',
-  [PT_TRAINING_STYLES.CARDIO]: 'Cardio & Endurance',
-  [PT_TRAINING_STYLES.WEIGHT_LOSS]: 'Weight Loss Program',
-  [PT_TRAINING_STYLES.HIIT]: 'HIIT Training',
-  [PT_TRAINING_STYLES.FLEXIBILITY]: 'Flexibility & Mobility',
-  [PT_TRAINING_STYLES.CROSSFIT]: 'CrossFit',
-  [PT_TRAINING_STYLES.YOGA]: 'Yoga',
-  [PT_TRAINING_STYLES.PILATES]: 'Pilates',
-};
-
-export const PT_PACKAGE_STATUS = {
-  ACTIVE: 'active',
-  INACTIVE: 'inactive',
-};
-
-export const PT_PACKAGE_STATUS_LABELS = {
-  [PT_PACKAGE_STATUS.ACTIVE]: 'Active',
-  [PT_PACKAGE_STATUS.INACTIVE]: 'Inactive',
-};
-
 export const CUSTOMER_PT_PACKAGE_STATUS = {
   ACTIVE: 'active',
   COMPLETED: 'completed',
@@ -111,3 +79,10 @@ export const ATTENDANCE_STATUS_VARIANTS = {
   [ATTENDANCE_STATUS.ABSENT]: 'danger',
 };
 
+export const PT_DURATION_OPTIONS = [
+  { label: '30 minutes', value: 30 },
+  { label: '1 hour', value: 60 },
+  { label: '1.5 hours', value: 90 },
+  { label: '2 hours', value: 120 },
+  { label: '3 hours', value: 180 },
+];
