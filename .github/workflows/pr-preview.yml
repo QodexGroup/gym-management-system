@@ -45,74 +45,37 @@ jobs:
           npm run build
           rm ./service-account-key.json
       
+      - name: Update firebase.json with site ID
+        run: |
+          echo "Updating firebase.json with site ID..."
+          # Use node to update firebase.json (node is always available in GitHub Actions)
+          node -e "
+            const fs = require('fs');
+            const config = JSON.parse(fs.readFileSync('firebase.json', 'utf8'));
+            if (!config.hosting) {
+              console.error('ERROR: hosting not found in firebase.json!');
+              process.exit(1);
+            }
+            if (Array.isArray(config.hosting)) {
+              config.hosting[0].site = 'gymhubtech-67e6f';
+            } else {
+              config.hosting.site = 'gymhubtech-67e6f';
+            }
+            fs.writeFileSync('firebase.json', JSON.stringify(config, null, 2));
+            console.log('✓ Updated firebase.json with site ID');
+          "
+          echo "=== Updated firebase.json ==="
+          cat firebase.json
+      
       - name: Deploy to Firebase Hosting Preview
         id: firebase-deploy
-        env:
-          FIREBASE_ADMIN_CREDENTIALS: ${{ secrets.FIREBASE_ADMIN_CREDENTIALS }}
-        run: |
-          # Install Firebase CLI
-          npm install -g firebase-tools
-          
-          # Authenticate using service account (same as build step)
-          echo "$FIREBASE_ADMIN_CREDENTIALS" > ./service-account-key.json
-          export GOOGLE_APPLICATION_CREDENTIALS="./service-account-key.json"
-          
-          # Initialize Firebase project
-          echo '{"projects":{"default":"gymhubtech-67e6f"}}' > .firebaserc
-          
-          # CRITICAL: Add site ID to firebase.json (required for channel deployments)
-          if [ ! -f "firebase.json" ]; then
-            echo "ERROR: firebase.json not found!"
-            exit 1
-          fi
-          
-          # Always add site ID to hosting config (required for channel deployments)
-          echo "Adding site ID to firebase.json..."
-          # Use jq to add site field to hosting config
-          if command -v jq &> /dev/null; then
-            # Check if hosting is an object (single config)
-            if jq -e '.hosting | type == "object"' firebase.json > /dev/null 2>&1; then
-              jq '.hosting.site = "gymhubtech-67e6f"' firebase.json > firebase.json.tmp && mv firebase.json.tmp firebase.json
-            # Check if hosting is an array (multiple configs)
-            elif jq -e '.hosting | type == "array"' firebase.json > /dev/null 2>&1; then
-              jq '.hosting[0].site = "gymhubtech-67e6f"' firebase.json > firebase.json.tmp && mv firebase.json.tmp firebase.json
-            fi
-            echo "Updated firebase.json with site ID using jq"
-          else
-            # Fallback: use node if jq not available
-            node -e "
-              const fs = require('fs');
-              const config = JSON.parse(fs.readFileSync('firebase.json', 'utf8'));
-              if (Array.isArray(config.hosting)) {
-                config.hosting[0].site = 'gymhubtech-67e6f';
-              } else if (config.hosting) {
-                config.hosting.site = 'gymhubtech-67e6f';
-              }
-              fs.writeFileSync('firebase.json', JSON.stringify(config, null, 2));
-              console.log('Updated firebase.json with site ID using node');
-            "
-          fi
-          
-          # Verify dist folder exists
-          if [ ! -d "dist" ]; then
-            echo "ERROR: dist folder not found!"
-            exit 1
-          fi
-          
-          # Show firebase.json for debugging
-          echo "=== firebase.json ==="
-          cat firebase.json
-          echo ""
-          
-          # Deploy to preview channel using hosting:channel:deploy
-          CHANNEL_ID="pr-${{ github.event.pull_request.number }}"
-          echo "Deploying to channel: $CHANNEL_ID"
-          
-          # Use hosting:channel:deploy with explicit site flag (required for channel deployments)
-          firebase hosting:channel:deploy $CHANNEL_ID --site gymhubtech-67e6f --project gymhubtech-67e6f --non-interactive
-          
-          # Cleanup
-          rm -f ./service-account-key.json
+        continue-on-error: true
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_GYMHUBTECH_67E6F }}
+          channelId: pr-${{ github.event.pull_request.number }}
+          projectId: gymhubtech-67e6f
       
       - name: Construct Preview URL
         id: preview-url
