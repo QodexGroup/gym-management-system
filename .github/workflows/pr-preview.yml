@@ -47,13 +47,39 @@ jobs:
       
       - name: Deploy to Firebase Hosting Preview
         id: firebase-deploy
-        continue-on-error: true
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_GYMHUBTECH_67E6F }}
-          channelId: pr-${{ github.event.pull_request.number }}
-          projectId: gymhubtech-67e6f
+        env:
+          FIREBASE_ADMIN_CREDENTIALS: ${{ secrets.FIREBASE_ADMIN_CREDENTIALS }}
+        run: |
+          # Install Firebase CLI
+          npm install -g firebase-tools
+          
+          # Authenticate using service account (same as build step)
+          echo "$FIREBASE_ADMIN_CREDENTIALS" > ./service-account-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS="./service-account-key.json"
+          
+          # Initialize Firebase project
+          echo '{"projects":{"default":"gymhubtech-67e6f"}}' > .firebaserc
+          
+          # Verify firebase.json exists
+          if [ ! -f "firebase.json" ]; then
+            echo "ERROR: firebase.json not found!"
+            exit 1
+          fi
+          
+          # Verify dist folder exists
+          if [ ! -d "dist" ]; then
+            echo "ERROR: dist folder not found!"
+            exit 1
+          fi
+          
+          # Deploy to preview channel
+          CHANNEL_ID="pr-${{ github.event.pull_request.number }}"
+          echo "Deploying to channel: $CHANNEL_ID"
+          
+          firebase deploy --only hosting --channel $CHANNEL_ID --project gymhubtech-67e6f --non-interactive
+          
+          # Cleanup
+          rm -f ./service-account-key.json
       
       - name: Construct Preview URL
         id: preview-url
