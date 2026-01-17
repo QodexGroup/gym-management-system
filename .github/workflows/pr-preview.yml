@@ -55,34 +55,23 @@ jobs:
           projectId: gymhubtech-67e6f
           channelId: pr-${{ github.event.pull_request.number }}
       
-      - name: Get Preview URL from Firebase
-        id: get-preview-url
+      - name: Construct Preview URL
+        id: preview-url
         if: steps.firebase-deploy.outcome == 'success' || steps.firebase-deploy.outcome == 'failure'
-        env:
-          FIREBASE_ADMIN_CREDENTIALS: ${{ secrets.FIREBASE_ADMIN_CREDENTIALS }}
         run: |
-          npm install -g firebase-tools
-          echo "$FIREBASE_ADMIN_CREDENTIALS" > ./service-account-key.json
-          export GOOGLE_APPLICATION_CREDENTIALS="./service-account-key.json"
-          
+          # Firebase preview URLs follow pattern: https://PROJECT_ID--CHANNEL_ID.web.app
           CHANNEL_ID="pr-${{ github.event.pull_request.number }}"
-          firebase hosting:channel:list --project gymhubtech-67e6f --json > channels.json 2>&1 || true
-          
-          if [ -f channels.json ]; then
-            PREVIEW_URL=$(cat channels.json | jq -r ".[] | select(.channelId == \"$CHANNEL_ID\") | .url" 2>/dev/null || echo "")
-            echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_OUTPUT
-            echo "Preview URL: $PREVIEW_URL"
-          fi
-          
-          rm ./service-account-key.json channels.json || true
+          PREVIEW_URL="https://gymhubtech-67e6f--${CHANNEL_ID}.web.app"
+          echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_OUTPUT
+          echo "Preview URL: $PREVIEW_URL"
       
       - name: Comment PR with Preview URL
         uses: actions/github-script@v7
-        if: steps.firebase-deploy.outputs.PREVIEW_URL != ''
+        if: steps.preview-url.outputs.PREVIEW_URL != ''
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const previewUrl = '${{ steps.firebase-deploy.outputs.PREVIEW_URL }}';
+            const previewUrl = '${{ steps.preview-url.outputs.PREVIEW_URL }}';
             const prNumber = context.payload.pull_request.number;
             
             const comments = await github.rest.issues.listComments({
