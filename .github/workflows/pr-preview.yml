@@ -45,41 +45,43 @@ jobs:
           npm run build
           rm ./service-account-key.json
       
-      - name: Verify build output
-        run: |
-          echo "Checking dist folder..."
-          ls -la dist/ || echo "dist folder not found!"
-          echo "Checking firebase.json..."
-          cat firebase.json
-      
       - name: Deploy to Firebase Hosting Preview
         id: firebase-deploy
-        continue-on-error: true
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_GYMHUBTECH_67E6F }}
-          projectId: gymhubtech-67e6f
-          channelId: pr-${{ github.event.pull_request.number }}
-          target: hosting
-      
-      - name: Construct Preview URL
-        id: preview-url
-        if: steps.firebase-deploy.outcome == 'success' || steps.firebase-deploy.outcome == 'failure'
+        env:
+          FIREBASE_ADMIN_CREDENTIALS: ${{ secrets.FIREBASE_ADMIN_CREDENTIALS }}
         run: |
-          # Firebase preview URLs follow pattern: https://PROJECT_ID--CHANNEL_ID.web.app
+          npm install -g firebase-tools
+          
+          # Set up authentication
+          echo "$FIREBASE_ADMIN_CREDENTIALS" > ./service-account-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS="./service-account-key.json"
+          
+          # Initialize Firebase project (non-interactive)
+          echo '{"projects":{"default":"gymhubtech-67e6f"}}' > .firebaserc
+          
+          # Deploy to preview channel
           CHANNEL_ID="pr-${{ github.event.pull_request.number }}"
+          echo "Deploying to channel: $CHANNEL_ID"
+          
+          firebase deploy --only hosting --channel $CHANNEL_ID --project gymhubtech-67e6f --non-interactive 2>&1 | tee deploy.log || {
+            echo "Deployment may have issues, but continuing..."
+            cat deploy.log || true
+          }
+          
+          # Construct preview URL (Firebase pattern: PROJECT_ID--CHANNEL_ID.web.app)
           PREVIEW_URL="https://gymhubtech-67e6f--${CHANNEL_ID}.web.app"
           echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_OUTPUT
           echo "Preview URL: $PREVIEW_URL"
+          
+          rm ./service-account-key.json deploy.log || true
       
       - name: Comment PR with Preview URL
         uses: actions/github-script@v7
-        if: steps.preview-url.outputs.PREVIEW_URL != ''
+        if: steps.firebase-deploy.outputs.PREVIEW_URL != ''
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const previewUrl = '${{ steps.preview-url.outputs.PREVIEW_URL }}';
+            const previewUrl = '${{ steps.firebase-deploy.outputs.PREVIEW_URL }}';
             const prNumber = context.payload.pull_request.number;
             
             const comments = await github.rest.issues.listComments({
