@@ -4,19 +4,16 @@ import { useAuth } from '../../context/AuthContext';
 import { usePermissions } from '../../hooks/usePermissions';
 import {
   LayoutDashboard,
-  UserCheck,
   Users,
   CreditCard,
   CalendarDays,
   Receipt,
-  FileBarChart,
   UserCog,
-  Wallet,
-  Settings,
   ChevronDown,
   ChevronRight,
   ChevronLeft,
   Dumbbell,
+  ClipboardClock,
 } from 'lucide-react';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
@@ -39,10 +36,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       items: [
         { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard'},
         // { path: '/check-in', icon: UserCheck, label: 'Check-In System', permission: null },
-        { path: '/members', icon: Users, label: 'Members List'},
-        // { path: '/calendar', icon: CalendarDays, label: 'Calendar', permission: null },
-        { path: '/sessions', icon: CalendarDays, label: 'Member Session Scheduling'},
-        { path: '/classes', icon: Users, label: 'Coach Class Schedules'},
+        { path: '/members', icon: Users, label: 'Clients'},
+        { path: '/sessions', icon: CalendarDays, label: 'Calendar'},
+        { path: '/classes', icon: ClipboardClock, label: 'Class Schedules'},
         { path: '/expenses', icon: Receipt, label: 'Expense List'}
       ],
     },

@@ -11,11 +11,25 @@ export const classScheduleKeys = {
 };
 
 export const useClassSchedules = (options = {}) => {
+  const { enabled, ...queryOptions } = options;
   return useQuery({
-    queryKey: classScheduleKeys.list(options),
+    queryKey: classScheduleKeys.list(queryOptions),
     queryFn: async () => {
-      return await classScheduleService.getAll(options);
+      return await classScheduleService.getAll(queryOptions);
     },
+    enabled: enabled !== false, // Default to true if not specified
+    placeholderData: keepPreviousData,
+  });
+};
+
+export const useMyClassSchedules = (options = {}) => {
+  const { enabled, ...queryOptions } = options;
+  return useQuery({
+    queryKey: [...classScheduleKeys.all, 'my-schedules', queryOptions],
+    queryFn: async () => {
+      return await classScheduleService.getMySchedules(queryOptions);
+    },
+    enabled: enabled !== false, // Default to true if not specified
     placeholderData: keepPreviousData,
   });
 };
@@ -29,6 +43,7 @@ export const useCreateClassSchedule = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: classScheduleKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: [...classScheduleKeys.all, 'my-schedules'] });
       Toast.success('Class schedule created successfully');
     },
     onError: (error) => {
@@ -46,6 +61,7 @@ export const useUpdateClassSchedule = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: classScheduleKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: [...classScheduleKeys.all, 'my-schedules'] });
       Toast.success('Class schedule updated successfully');
     },
     onError: (error) => {
@@ -63,6 +79,7 @@ export const useDeleteClassSchedule = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: classScheduleKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: [...classScheduleKeys.all, 'my-schedules'] });
       Toast.success('Class schedule deleted successfully');
     },
     onError: (error) => {

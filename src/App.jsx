@@ -4,7 +4,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import AlertProvider from './components/AlertProvider';
 import { queryClient } from './lib/queryClient';
-import { usePermissions } from './hooks/usePermissions';
 
 // Auth Pages
 import Login from './auth/Login';
@@ -24,7 +23,6 @@ import PtPackageList from './pages/admin/PtPackageList';
 import SessionScheduling from './pages/common/SessionScheduling';
 import ClassScheduleList from './pages/common/ClassScheduleList';
 import Expenses from './pages/common/Expenses';
-import Calendar from './pages/Calendar';
 import CollectionReport from './pages/reports/CollectionReport';
 import ExpenseReport from './pages/reports/ExpenseReport';
 import SummaryReport from './pages/reports/SummaryReport';
@@ -49,31 +47,6 @@ const ProtectedRoute = ({ children }) => {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
-  }
-
-  return children;
-};
-
-// Permission Protected Route Component
-const PermissionProtectedRoute = ({ children, permission }) => {
-  const { isAuthenticated, loading } = useAuth();
-  const { hasPermission } = usePermissions();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // If permission is required, check it
-  if (permission && !hasPermission(permission)) {
-    return <Navigate to="/dashboard" replace />;
   }
 
   return children;

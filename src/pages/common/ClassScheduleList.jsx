@@ -12,16 +12,16 @@ import {
   UserCog,
   ChevronLeft,
   ChevronRight,
-  CheckCircle,
 } from 'lucide-react';
 import { Alert } from '../../utils/alert';
 import {
   useClassSchedules,
+  useMyClassSchedules,
   useDeleteClassSchedule,
 } from '../../hooks/useClassSchedules';
-import { useClassAttendances } from '../../hooks/useClassAttendance';
 import { useCoaches } from '../../hooks/useUsers';
-import { formatDate, formatTimeFromDate } from '../../utils/formatters';
+import { useAuth } from '../../context/AuthContext';
+import { formatTimeFromDate } from '../../utils/formatters';
 import ClassScheduleForm from './forms/ClassScheduleForm';
 import { SCHEDULE_TYPE_LABELS, RECURRING_INTERVAL_LABELS } from '../../constants/classScheduleConstants';
 
@@ -30,12 +30,23 @@ const ClassScheduleList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCoach, setFilterCoach] = useState('all');
   const [showModal, setShowModal] = useState(false);
-  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
-  const [selectedScheduleForAttendance, setSelectedScheduleForAttendance] = useState(null);
 
-  // Build query options
+  // Get current user
+  const { user, isTrainer } = useAuth();
+
+  // Build query options (only for non-coaches)
   const scheduleOptions = useMemo(() => {
+    if (isTrainer) {
+      // For coaches, we'll use my-schedules endpoint which doesn't need filters
+      return {
+        page: currentPage,
+        pagelimit: 10,
+        filters: searchQuery ? { className: searchQuery } : undefined,
+        relations: 'coach',
+      };
+    }
+
     const filters = {};
     if (searchQuery) {
       filters.className = searchQuery;
@@ -50,10 +61,21 @@ const ClassScheduleList = () => {
       filters: Object.keys(filters).length > 0 ? filters : undefined,
       relations: 'coach',
     };
-  }, [currentPage, searchQuery, filterCoach]);
+  }, [currentPage, searchQuery, filterCoach, isTrainer]);
 
-  // Fetch data from backend
-  const { data: schedulesData, isLoading: loading } = useClassSchedules(scheduleOptions);
+  // Fetch data from backend - use different endpoint for coaches
+  const { data: allSchedulesData, isLoading: loadingAll } = useClassSchedules({
+    ...scheduleOptions,
+    enabled: !isTrainer, // Only fetch all schedules if user is not a coach
+  });
+  const { data: mySchedulesData, isLoading: loadingMy } = useMyClassSchedules({
+    ...scheduleOptions,
+    enabled: isTrainer, // Only fetch my schedules if user is a coach
+  });
+  
+  // Use appropriate data based on user role
+  const schedulesData = isTrainer ? mySchedulesData : allSchedulesData;
+  const loading = isTrainer ? loadingMy : loadingAll;
   const { data: coaches = [] } = useCoaches();
   const deleteMutation = useDeleteClassSchedule();
 
@@ -79,16 +101,6 @@ const ClassScheduleList = () => {
 
   const handleFormSubmit = () => {
     handleCloseModal();
-  };
-
-  const handleOpenAttendanceModal = async (schedule) => {
-    setSelectedScheduleForAttendance(schedule);
-    setShowAttendanceModal(true);
-  };
-
-  const handleCloseAttendanceModal = () => {
-    setShowAttendanceModal(false);
-    setSelectedScheduleForAttendance(null);
   };
 
   const handleDeleteSchedule = async (scheduleId) => {
@@ -141,18 +153,21 @@ const ClassScheduleList = () => {
                 className="w-full pl-10 pr-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 placeholder-dark-400 rounded-lg focus:bg-dark-600 focus:border-primary-500 outline-none transition-colors"
               />
             </div>
-            <select
-              value={filterCoach}
-              onChange={(e) => setFilterCoach(e.target.value)}
-              className="px-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 rounded-lg focus:border-primary-500 outline-none"
-            >
-              <option value="all" className="bg-dark-700 text-dark-50">All Coaches</option>
-              {coaches.map((coach) => (
-                <option key={coach.id} value={coach.id} className="bg-dark-700 text-dark-50">
-                  {coach.firstname} {coach.lastname}
-                </option>
-              ))}
-            </select>
+            {/* Only show coach filter if user is not a coach */}
+            {!isTrainer && (
+              <select
+                value={filterCoach}
+                onChange={(e) => setFilterCoach(e.target.value)}
+                className="px-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 rounded-lg focus:border-primary-500 outline-none"
+              >
+                <option value="all" className="bg-dark-700 text-dark-50">All Coaches</option>
+                {coaches.map((coach) => (
+                  <option key={coach.id} value={coach.id} className="bg-dark-700 text-dark-50">
+                    {coach.firstname} {coach.lastname}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
           <button
             onClick={() => handleOpenModal()}
@@ -225,13 +240,6 @@ const ClassScheduleList = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleOpenAttendanceModal(schedule)}
-                        className="btn-secondary flex items-center gap-2 text-sm"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                        Mark Attendance
-                      </button>
-                      <button
                         onClick={() => handleOpenModal(schedule)}
                         className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                         title="Edit class"
@@ -294,55 +302,6 @@ const ClassScheduleList = () => {
           onSubmit={handleFormSubmit}
           onCancel={handleCloseModal}
         />
-      </Modal>
-
-      {/* Mark Attendance Modal */}
-      <Modal
-        isOpen={showAttendanceModal}
-        onClose={handleCloseAttendanceModal}
-        title={`Mark Attendance - ${selectedScheduleForAttendance?.className}`}
-        size="lg"
-      >
-        <div className="space-y-4">
-          <div className="bg-dark-700 rounded-lg p-4">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-dark-300">Enrolled:</span>
-              <span className="text-dark-50 font-semibold">
-                {selectedScheduleForAttendance?.attendanceCount || 0}/
-                {selectedScheduleForAttendance?.capacity || 0}
-              </span>
-            </div>
-          </div>
-
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            <p className="text-sm text-dark-400 text-center py-4">
-              Attendance marking will be implemented with enrolled members list
-            </p>
-          </div>
-
-          <div className="bg-warning-500/10 border border-warning-500/20 rounded-lg p-3">
-            <p className="text-sm text-warning-500">
-              ⚠️ Marking "Attended" will auto-deduct 1 session from member's PT package if applicable
-            </p>
-          </div>
-
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={handleCloseAttendanceModal}
-              className="flex-1 btn-secondary"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="flex-1 btn-primary"
-              disabled
-            >
-              Save Attendance
-            </button>
-          </div>
-        </div>
       </Modal>
     </Layout>
   );
