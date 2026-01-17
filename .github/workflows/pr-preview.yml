@@ -45,6 +45,28 @@ jobs:
           npm run build
           rm ./service-account-key.json
       
+      - name: Update firebase.json with site ID
+        run: |
+          echo "Updating firebase.json with site ID..."
+          # Use node to update firebase.json (node is always available in GitHub Actions)
+          node -e "
+            const fs = require('fs');
+            const config = JSON.parse(fs.readFileSync('firebase.json', 'utf8'));
+            if (!config.hosting) {
+              console.error('ERROR: hosting not found in firebase.json!');
+              process.exit(1);
+            }
+            if (Array.isArray(config.hosting)) {
+              config.hosting[0].site = 'gymhubtech-67e6f';
+            } else {
+              config.hosting.site = 'gymhubtech-67e6f';
+            }
+            fs.writeFileSync('firebase.json', JSON.stringify(config, null, 2));
+            console.log('✓ Updated firebase.json with site ID');
+          "
+          echo "=== Updated firebase.json ==="
+          cat firebase.json
+      
       - name: Deploy to Firebase Hosting Preview
         id: firebase-deploy
         continue-on-error: true
