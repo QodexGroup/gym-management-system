@@ -56,23 +56,44 @@ jobs:
           echo "$FIREBASE_ADMIN_CREDENTIALS" > ./service-account-key.json
           export GOOGLE_APPLICATION_CREDENTIALS="./service-account-key.json"
           
+          # Verify firebase.json exists and dist folder exists
+          echo "Checking firebase.json..."
+          cat firebase.json
+          echo "Checking dist folder..."
+          ls -la dist/ || echo "dist folder not found"
+          
+          # Set Firebase project
+          firebase use gymhubtech-67e6f
+          
           # Deploy to preview channel
           CHANNEL_ID="pr-${{ github.event.pull_request.number }}"
-          firebase hosting:channel:deploy $CHANNEL_ID --project gymhubtech-67e6f --only hosting --json > deploy-result.json || firebase hosting:channel:deploy $CHANNEL_ID --project gymhubtech-67e6f --only hosting
+          echo "Deploying to channel: $CHANNEL_ID"
+          
+          # Use firebase deploy with channel target
+          firebase deploy --only hosting --channel $CHANNEL_ID --project gymhubtech-67e6f --json > deploy-result.json 2>&1 || {
+            echo "Deployment failed, trying alternative method..."
+            firebase deploy --only hosting:channel:$CHANNEL_ID --project gymhubtech-67e6f 2>&1 || true
+          }
           
           # Get preview URL from deployment result or channel list
           if [ -f deploy-result.json ]; then
-            PREVIEW_URL=$(cat deploy-result.json | jq -r '.result.url // empty' || echo "")
+            PREVIEW_URL=$(cat deploy-result.json | jq -r '.result.url // .url // empty' 2>/dev/null || echo "")
+            cat deploy-result.json
           fi
           
           if [ -z "$PREVIEW_URL" ]; then
-            PREVIEW_URL=$(firebase hosting:channel:list --project gymhubtech-67e6f --json | jq -r ".[] | select(.channelId == \"$CHANNEL_ID\") | .url" || echo "")
+            echo "Getting URL from channel list..."
+            firebase hosting:channel:list --project gymhubtech-67e6f --json > channels.json 2>&1 || true
+            if [ -f channels.json ]; then
+              PREVIEW_URL=$(cat channels.json | jq -r ".[] | select(.channelId == \"$CHANNEL_ID\") | .url" 2>/dev/null || echo "")
+              cat channels.json
+            fi
           fi
           
           echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_OUTPUT
           echo "Preview URL: $PREVIEW_URL"
           
-          rm ./service-account-key.json deploy-result.json || true
+          rm ./service-account-key.json deploy-result.json channels.json || true
       
       - name: Comment PR with Preview URL
         uses: actions/github-script@v7
