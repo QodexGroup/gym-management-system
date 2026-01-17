@@ -13,6 +13,10 @@ jobs:
     # Skip deployment if PR is closed
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       
