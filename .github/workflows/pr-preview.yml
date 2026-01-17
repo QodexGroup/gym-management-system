@@ -47,7 +47,7 @@ jobs:
       
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          repoToken: ${{ secrets.FIREBASE_PAT }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_GYMHUBTECH_67E6F }}
           projectId: gymhubtech-67e6f
           # Omit channelId to auto-generate preview channel for PR
