@@ -50,30 +50,44 @@ jobs:
         env:
           FIREBASE_ADMIN_CREDENTIALS: ${{ secrets.FIREBASE_ADMIN_CREDENTIALS }}
         run: |
+          set -e
           npm install -g firebase-tools
+          
+          # Verify dist folder exists
+          if [ ! -d "dist" ]; then
+            echo "ERROR: dist folder does not exist!"
+            exit 1
+          fi
+          
+          # Verify firebase.json exists and is valid
+          if [ ! -f "firebase.json" ]; then
+            echo "ERROR: firebase.json does not exist!"
+            exit 1
+          fi
           
           # Set up authentication
           echo "$FIREBASE_ADMIN_CREDENTIALS" > ./service-account-key.json
           export GOOGLE_APPLICATION_CREDENTIALS="./service-account-key.json"
           
-          # Initialize Firebase project (non-interactive)
+          # Create .firebaserc file
           echo '{"projects":{"default":"gymhubtech-67e6f"}}' > .firebaserc
           
-          # Deploy to preview channel
+          # Verify Firebase can see the project
+          firebase projects:list --json || echo "Project list check completed"
+          
+          # Deploy to preview channel using hosting:channel:deploy command
           CHANNEL_ID="pr-${{ github.event.pull_request.number }}"
           echo "Deploying to channel: $CHANNEL_ID"
           
-          firebase deploy --only hosting --channel $CHANNEL_ID --project gymhubtech-67e6f --non-interactive 2>&1 | tee deploy.log || {
-            echo "Deployment may have issues, but continuing..."
-            cat deploy.log || true
-          }
+          # Use hosting:channel:deploy which is specifically for preview channels
+          firebase hosting:channel:deploy $CHANNEL_ID --project gymhubtech-67e6f --only hosting
           
-          # Construct preview URL (Firebase pattern: PROJECT_ID--CHANNEL_ID.web.app)
+          # Construct preview URL
           PREVIEW_URL="https://gymhubtech-67e6f--${CHANNEL_ID}.web.app"
           echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_OUTPUT
           echo "Preview URL: $PREVIEW_URL"
           
-          rm ./service-account-key.json deploy.log || true
+          rm ./service-account-key.json || true
       
       - name: Comment PR with Preview URL
         uses: actions/github-script@v7
