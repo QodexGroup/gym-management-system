@@ -30,11 +30,16 @@ async function generateConfig() {
         };
 
         // --- Retrieve each individual parameter ---
-        const apiKey = getParamValue('API_KEY');
+        // Use preview API key if provided (for PR preview environments), otherwise use Remote Config
+        const apiKey = process.env.PREVIEW_API_KEY || getParamValue('API_KEY');
         const appId = getParamValue('APP_ID');
         const authDomain = getParamValue('AUTH_DOMAIN');
         const projectId = getParamValue('PROJECT_ID');
         const storageBucket = getParamValue('STORAGE_BUCKET');
+        
+        if (process.env.PREVIEW_API_KEY) {
+            console.log('✅ Using preview API key for Firebase configuration');
+        }
 
 
         // --- Format the config object for the frontend ---

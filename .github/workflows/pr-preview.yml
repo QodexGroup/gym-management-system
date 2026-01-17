@@ -114,6 +114,7 @@ jobs:
         env:
           FIREBASE_ADMIN_CREDENTIALS: ${{ secrets.FIREBASE_ADMIN_CREDENTIALS }}
           VITE_API_BASE_URL: ${{ env.BACKEND_API_URL }}
+          PREVIEW_API_KEY: ${{ secrets.FIREBASE_PREVIEW_API_KEY }}
         run: |
           echo "Building frontend with API URL: $VITE_API_BASE_URL"
           export GOOGLE_APPLICATION_CREDENTIALS="./service-account-key.json"
