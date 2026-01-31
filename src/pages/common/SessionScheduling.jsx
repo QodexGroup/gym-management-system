@@ -5,52 +5,49 @@ import CalendarView from '../../components/common/CalendarView';
 import CalendarListView from '../../components/common/CalendarListView';
 import PtSessionForm from './forms/PtSessionForm';
 import ClassAttendanceForm from './forms/ClassAttendanceForm';
+import GroupClassBookingForm from './forms/GroupClassBookingForm';
+import ClassScheduleSessionForm from './forms/ClassScheduleSessionForm';
 import {
   Plus,
-  Search,
   Calendar,
-  Clock,
   User,
-  Edit,
-  X,
-  CheckCircle,
   List,
   Filter,
-  Users,
 } from 'lucide-react';
 import { Alert, Toast } from '../../utils/alert';
 import { SESSION_STATUS, SESSION_STATUS_LABELS } from '../../constants/ptConstants';
-import { SESSION_TYPES, SESSION_TYPE_LABELS, getFilterButtonColor, getSessionStyle } from '../../constants/sessionSchedulingConstants';
-import { useSessions, useBookSession, useUpdateSession, useCancelSession } from '../../hooks/useSessions';
-import { usePtPackages } from '../../hooks/usePtPackages';
+import { SESSION_TYPES, SESSION_TYPE_LABELS, VIEW_MODE, getFilterButtonColor, getSessionStyle } from '../../constants/sessionSchedulingConstants';
+import { BOOKING_STATUS } from '../../constants/classSessionBookingConstants';
 import { useCoaches } from '../../hooks/useUsers';
 import { useCustomers } from '../../hooks/useCustomers';
-import { useClassScheduleSessions } from '../../hooks/useClassScheduleSessions';
-import { useCustomerPtPackages } from '../../hooks/useCustomerPtPackages';
+import { useClassScheduleSessions, useUpdateClassScheduleSession } from '../../hooks/useClassScheduleSessions';
+import { useBookingSessions, useUpdateAttendanceStatus } from '../../hooks/useClassSessionBookings';
 import { useAuth } from '../../context/AuthContext';
 import { formatDate, formatTime, formatTimeFromDate, formatDateShort } from '../../utils/formatters';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
+import { mapClassScheduleSessionsToComponent } from '../../models/classScheduleSessionModel';
 
 const SessionScheduling = () => {
-  const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDate, setFilterDate] = useState(null); // No date filter by default
   const [showModal, setShowModal] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
-  const [viewMode, setViewMode] = useState('calendar'); // 'list' or 'calendar'
+  const [viewMode, setViewMode] = useState(VIEW_MODE.CALENDAR);
   const [calendarDate, setCalendarDate] = useState(new Date()); // Current month for calendar view
   const [selectedCalendarDate, setSelectedCalendarDate] = useState(new Date()); // Selected date in calendar
   const [showFilters, setShowFilters] = useState(false);
   const [showAttendanceModal, setShowAttendanceModal] = useState(false);
   const [selectedClassSession, setSelectedClassSession] = useState(null);
   const [showGroupClassModal, setShowGroupClassModal] = useState(false);
+  const [showGroupClassEditModal, setShowGroupClassEditModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   // Type filters (checkboxes)
   const [typeFilters, setTypeFilters] = useState({
     [SESSION_TYPES.COACH_GROUP_CLASS]: true,
     [SESSION_TYPES.MEMBER_GROUP_CLASS]: true,
-    [SESSION_TYPES.COACH_PT]: true,
-    [SESSION_TYPES.MEMBER_PT]: true,
+    [SESSION_TYPES.COACH_PT]: false, // Disabled - PT sessions not implemented yet
+    [SESSION_TYPES.MEMBER_PT]: false, // Disabled - PT sessions not implemented yet
   });
 
   // Get current user
@@ -60,23 +57,6 @@ const SessionScheduling = () => {
   const { data: coaches = [] } = useCoaches();
   const [coachFilters, setCoachFilters] = useState({});
 
-  // Build query options
-  const sessionOptions = useMemo(() => {
-    const filters = {};
-    if (searchQuery) {
-      filters.customerName = searchQuery;
-    }
-    if (filterDate) {
-      filters.sessionDate = filterDate.toISOString().split('T')[0];
-    }
-
-    return {
-      page: currentPage,
-      pagelimit: 20,
-      filters: Object.keys(filters).length > 0 ? filters : undefined,
-      relations: 'customer,ptPackage,trainer',
-    };
-  }, [currentPage, searchQuery, filterDate]);
 
   // Initialize coach filters - all selected by default (only for non-coaches)
   useEffect(() => {
@@ -92,54 +72,106 @@ const SessionScheduling = () => {
     }
   }, [coaches, isTrainer, user]);
 
-  // Fetch class schedule sessions directly
+  // Calculate date range for calendar month to fetch sessions
+  const calendarStartDate = useMemo(() => {
+    const monthStart = startOfMonth(calendarDate);
+    const weekStart = startOfWeek(monthStart);
+    return format(weekStart, 'yyyy-MM-dd');
+  }, [calendarDate]);
+
+  const calendarEndDate = useMemo(() => {
+    const monthEnd = endOfMonth(calendarDate);
+    const weekEnd = endOfWeek(monthEnd);
+    return format(weekEnd, 'yyyy-MM-dd');
+  }, [calendarDate]);
+
+  // Fetch class schedule sessions with date range filter (like bookings)
   const { data: sessionsData, isLoading: isLoadingSessions } = useClassScheduleSessions({
     pagelimit: 0,
     relations: 'classSchedule,classSchedule.coach',
+    filters: {
+      startDate: calendarStartDate,
+      endDate: calendarEndDate,
+    },
   });
 
-  // Fetch PT sessions
-  const { data: ptSessionsData, isLoading: isLoadingPtSessions } = useSessions({
-    pagelimit: 0,
-    relations: 'customer,ptPackage,trainer',
-  });
+  // Fetch PT sessions - DISABLED: PT sessions not implemented yet
+  // const { data: ptSessionsData, isLoading: isLoadingPtSessions } = useSessions({
+  //   pagelimit: 0,
+  //   relations: 'customer,ptPackage,trainer',
+  // });
+  const ptSessionsData = null;
+  const isLoadingPtSessions = false;
 
-  // Fetch PT packages
-  const { data: packagesData } = usePtPackages({
-    pagelimit: 0,
-  });
+  // Fetch PT packages - DISABLED: PT sessions not implemented yet
+  // const { data: packagesData } = usePtPackages({
+  //   pagelimit: 0,
+  // });
+  const packagesData = null;
 
   // Fetch customers
   const { data: customersData } = useCustomers(1);
 
-  // Initialize mutations
-  const bookSessionMutation = useBookSession();
-  const updateSessionMutation = useUpdateSession();
-  const cancelSessionMutation = useCancelSession();
+  // Fetch booking sessions for calendar view
+  const { data: bookingsData } = useBookingSessions(calendarStartDate, calendarEndDate);
 
-  // Transform class schedule sessions to match the expected format
+  // Initialize mutations - DISABLED: PT sessions not implemented yet
+  // const bookSessionMutation = useBookSession();
+  // const updateSessionMutation = useUpdateSession();
+  // const cancelSessionMutation = useCancelSession();
+  const bookSessionMutation = { isPending: false, mutateAsync: async () => {} };
+  const updateSessionMutation = { isPending: false, mutateAsync: async () => {} };
+  const cancelSessionMutation = { isPending: false, mutateAsync: async () => {} };
+  
+  // Class schedule session mutations
+  const updateClassScheduleSessionMutation = useUpdateClassScheduleSession();
+  
+  // Booking mutations
+  const updateAttendanceStatusMutation = useUpdateAttendanceStatus();
+
+  // Transform class schedule sessions to match the expected format using model
   const classScheduleSessions = useMemo(() => {
     const sessions = sessionsData?.data || [];
-    return sessions.map(session => {
-      const schedule = session.classSchedule || {};
-      return {
-        id: session.id,
-        type: SESSION_TYPES.COACH_GROUP_CLASS,
-        startTime: session.startTime,
-        endTime: session.endTime,
-        sessionDate: session.startTime ? format(new Date(session.startTime), 'yyyy-MM-dd') : '',
-        sessionTime: session.startTime ? formatTimeFromDate(session.startTime) : '',
-        className: schedule.className,
-        coach: schedule.coach,
-        coachId: schedule.coachId,
-        capacity: schedule.capacity,
-        attendanceCount: session.attendanceCount || 0,
-        scheduleId: schedule.id,
-        sessionId: session.id,
-        status: 'scheduled', // Class sessions are always scheduled
-      };
-    });
+    return mapClassScheduleSessionsToComponent(sessions);
   }, [sessionsData]);
+
+  // Transform booking sessions to member group class sessions
+  const memberGroupClassSessions = useMemo(() => {
+    const bookings = bookingsData || [];
+    return bookings
+      .filter(booking => booking.status !== BOOKING_STATUS.CANCELLED)
+      .map(booking => {
+        const session = booking.classScheduleSession || {};
+        const schedule = session.classSchedule || {};
+        const customer = booking.customer || {};
+        
+        if (!session.startTime) {
+          return null; // Skip if no session data
+    }
+
+    return {
+          id: booking.id,
+          type: SESSION_TYPES.MEMBER_GROUP_CLASS,
+          startTime: session.startTime,
+          endTime: session.endTime,
+          sessionDate: session.startTime ? format(new Date(session.startTime), 'yyyy-MM-dd') : '',
+          sessionTime: session.startTime ? formatTimeFromDate(session.startTime) : '',
+          className: schedule.className || 'Unknown Class',
+          coach: schedule.coach,
+          coachId: schedule.coachId,
+          capacity: schedule.capacity,
+          attendanceCount: session.attendanceCount || 0,
+          scheduleId: schedule.id,
+          sessionId: session.id,
+          bookingId: booking.id,
+          customer: customer,
+          customerId: customer.id,
+          bookingStatus: booking.status,
+          notes: booking.notes || '',
+        };
+      })
+      .filter(session => session !== null);
+  }, [bookingsData]);
 
   // Transform PT sessions data
   const sessionsList = useMemo(() => {
@@ -194,7 +226,7 @@ const SessionScheduling = () => {
     }));
   }, [sessionsList, searchQuery, filterDate, customers, typeFilters, coachFilters, isTrainer, user]);
 
-  // Apply filters to class schedule sessions
+  // Apply filters to class schedule sessions (coach group class)
   const filteredClassSessions = useMemo(() => {
     let filtered = [...classScheduleSessions];
     
@@ -220,82 +252,70 @@ const SessionScheduling = () => {
     return filtered;
   }, [classScheduleSessions, searchQuery, typeFilters, coachFilters, isTrainer, user]);
 
-  // Combine all sessions
-  const filteredSessions = useMemo(() => {
-    return [...filteredPtSessions, ...filteredClassSessions];
-  }, [filteredPtSessions, filteredClassSessions]);
+  // Apply filters to member group class sessions (bookings)
+  const filteredMemberGroupClassSessions = useMemo(() => {
+    let filtered = [...memberGroupClassSessions];
+    
+    // Filter by type
+    if (!typeFilters[SESSION_TYPES.MEMBER_GROUP_CLASS]) {
+      filtered = [];
+    }
+    
+    // Filter by coach
+    filtered = filtered.filter(session => {
+      return coachFilters[session.coachId] !== false;
+    });
+    
+    if (searchQuery) {
+      filtered = filtered.filter(session => {
+        const customerName = session.customer 
+          ? (session.customer.firstName && session.customer.lastName
+            ? `${session.customer.firstName} ${session.customer.lastName}`
+            : session.customer.firstName || '')
+          : '';
+        return session.className?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               customerName.toLowerCase().includes(searchQuery.toLowerCase());
+      });
+    }
+    
+    return filtered;
+  }, [memberGroupClassSessions, searchQuery, typeFilters, coachFilters]);
 
-  const sessions = filteredSessions;
+  // Keep sessions separate - no combination
   const pagination = null;
-  const isSubmitting = bookSessionMutation?.isPending || updateSessionMutation?.isPending || false;
+  const isSubmitting = bookSessionMutation?.isPending || updateSessionMutation?.isPending || updateClassScheduleSessionMutation.isPending || false;
 
-  // Get upcoming sessions (today and future) - combining PT and class sessions
-  const upcomingSessions = useMemo(() => {
+  // Get upcoming group class sessions (today and future) - separate from PT
+  const upcomingGroupClassSessions = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return filteredSessions.filter((session) => {
-      if (session.type === SESSION_TYPES.COACH_GROUP_CLASS) {
-        const sessionDate = new Date(session.startTime);
-        sessionDate.setHours(0, 0, 0, 0);
-        return sessionDate >= today;
-      } else {
-        const sessionDate = new Date(session.sessionDate);
-        sessionDate.setHours(0, 0, 0, 0);
-        return sessionDate >= today && session.status === SESSION_STATUS.SCHEDULED;
-      }
+    const allGroupClassSessions = [...filteredClassSessions, ...filteredMemberGroupClassSessions];
+    return allGroupClassSessions.filter((session) => {
+      const sessionDate = new Date(session.startTime);
+      sessionDate.setHours(0, 0, 0, 0);
+      return sessionDate >= today;
     }).sort((a, b) => {
-      const dateA = a.startTime ? new Date(a.startTime) : new Date(`${a.sessionDate} ${a.sessionTime}`);
-      const dateB = b.startTime ? new Date(b.startTime) : new Date(`${b.sessionDate} ${b.sessionTime}`);
+      const dateA = new Date(a.startTime);
+      const dateB = new Date(b.startTime);
       return dateA - dateB;
     });
-  }, [filteredSessions]);
+  }, [filteredClassSessions, filteredMemberGroupClassSessions]);
 
-  // Calendar view functions
-  const nextMonth = () => setCalendarDate(addMonths(calendarDate, 1));
-  const prevMonth = () => setCalendarDate(subMonths(calendarDate, 1));
-  const goToToday = () => {
-    setCalendarDate(new Date());
-    setSelectedCalendarDate(new Date());
-  };
-
-  // Generate calendar days
-  const generateCalendarDays = () => {
-    const monthStart = startOfMonth(calendarDate);
-    const monthEnd = endOfMonth(monthStart);
-    const startDate = startOfWeek(monthStart);
-    const endDate = endOfWeek(monthEnd);
-
-    const days = [];
-    let day = startDate;
-
-    while (day <= endDate) {
-      days.push(day);
-      day = addDays(day, 1);
-    }
-
-    return days;
-  };
-
-  // Get sessions for a specific date (combining PT and class sessions)
-  const getSessionsForDate = (date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    return filteredSessions.filter((session) => {
-      const matchesDate = session.sessionDate === dateStr || 
-        (session.startTime && format(new Date(session.startTime), 'yyyy-MM-dd') === dateStr);
-      if (searchQuery) {
-        if (session.type === SESSION_TYPES.COACH_GROUP_CLASS) {
-          return matchesDate && session.className?.toLowerCase().includes(searchQuery.toLowerCase());
-        } else {
-          const customer = session.customer || customers.find((c) => c.id === session.customerId);
-          const name = customer?.name || 
-            (customer?.firstName && customer?.lastName ? `${customer.firstName} ${customer.lastName}` : 
-            customer?.firstName || '');
-          return matchesDate && name.toLowerCase().includes(searchQuery.toLowerCase());
-        }
-      }
-      return matchesDate;
+  // Get upcoming PT sessions (today and future) - separate from group class
+  const upcomingPtSessions = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return filteredPtSessions.filter((session) => {
+      const sessionDate = new Date(session.sessionDate);
+      sessionDate.setHours(0, 0, 0, 0);
+      return sessionDate >= today && session.status === SESSION_STATUS.SCHEDULED;
+    }).sort((a, b) => {
+      const dateA = new Date(`${a.sessionDate} ${a.sessionTime}`);
+      const dateB = new Date(`${b.sessionDate} ${b.sessionTime}`);
+      return dateA - dateB;
     });
-  };
+  }, [filteredPtSessions]);
+
 
   // Toggle type filter
   const toggleTypeFilter = (type) => {
@@ -320,7 +340,7 @@ const SessionScheduling = () => {
 
   // Handle session click
   const handleSessionClick = (session) => {
-    if (session.type === SESSION_TYPES.COACH_GROUP_CLASS) {
+    if (session.type === SESSION_TYPES.COACH_GROUP_CLASS || session.type === SESSION_TYPES.MEMBER_GROUP_CLASS) {
       setSelectedClassSession(session);
       setShowAttendanceModal(true);
     } else {
@@ -329,12 +349,34 @@ const SessionScheduling = () => {
     }
   };
 
-  const calendarDays = generateCalendarDays();
-  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const selectedDateSessions = getSessionsForDate(selectedCalendarDate);
+  // Handle edit group class session
+  const handleEditGroupClassSession = (session) => {
+    setSelectedClassSession(session);
+    setShowGroupClassEditModal(true);
+  };
+
+  // Handle update group class session
+  const handleSubmitClassScheduleSession = async (formData) => {
+    if (!selectedClassSession) return;
+    
+    try {
+      await updateClassScheduleSessionMutation.mutateAsync({
+        id: selectedClassSession.sessionId || selectedClassSession.id,
+        data: {
+          startTime: formData.startTime,
+          duration: formData.duration,
+        },
+      });
+      setShowGroupClassEditModal(false);
+      setSelectedClassSession(null);
+    } catch (error) {
+      console.error('Failed to update session:', error);
+    }
+  };
+
 
   const handleOpenModal = (session = null) => {
-    setSelectedSession(session);
+      setSelectedSession(session);
     setShowModal(true);
   };
 
@@ -349,15 +391,15 @@ const SessionScheduling = () => {
         await updateSessionMutation.mutateAsync({
           id: selectedSession.id,
           data: {
-            customerId: parseInt(formData.customerId),
-            ptPackageId: parseInt(formData.ptPackageId),
-            trainerId: parseInt(formData.trainerId),
-            sessionDate: formData.sessionDate,
-            sessionTime: formData.sessionTime,
-            notes: formData.notes,
+      customerId: parseInt(formData.customerId),
+      ptPackageId: parseInt(formData.ptPackageId),
+      trainerId: parseInt(formData.trainerId),
+      sessionDate: formData.sessionDate,
+      sessionTime: formData.sessionTime,
+      notes: formData.notes,
           },
         });
-      } else {
+    } else {
         await bookSessionMutation.mutateAsync({
           customerId: parseInt(formData.customerId),
           ptPackageId: parseInt(formData.ptPackageId),
@@ -366,8 +408,8 @@ const SessionScheduling = () => {
           sessionTime: formData.sessionTime,
           notes: formData.notes,
         });
-      }
-      handleCloseModal();
+    }
+    handleCloseModal();
     } catch (error) {
       // Error handling is done in the mutation hooks
       console.error('Failed to save session:', error);
@@ -380,17 +422,65 @@ const SessionScheduling = () => {
   };
 
   const handleSubmitAttendance = async () => {
-    // TODO: Implement attendance submission
-    Toast.success('Attendance saved successfully');
+    // Attendance is handled directly in ClassAttendanceForm via mutations
+    // This handler is kept for compatibility but doesn't need to do anything
     handleCloseAttendanceModal();
   };
 
   const handleOpenGroupClassModal = () => {
+    setSelectedBooking(null);
     setShowGroupClassModal(true);
   };
 
   const handleCloseGroupClassModal = () => {
     setShowGroupClassModal(false);
+    setSelectedBooking(null);
+  };
+
+  const handleSubmitGroupClassBooking = async (formData) => {
+    // Booking is handled directly in GroupClassBookingForm via mutation
+    // This handler is kept for compatibility but doesn't need to do anything
+    handleCloseGroupClassModal();
+  };
+
+  // Handle cancel booking (for member group class bookings)
+  const handleCancelBooking = async (bookingId) => {
+    const result = await Alert.confirm({
+      title: 'Cancel Booking?',
+      text: 'Are you sure you want to cancel this booking?',
+      icon: 'warning',
+      confirmButtonText: 'Yes, cancel it',
+      cancelButtonText: 'No',
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+    
+    try {
+      await updateAttendanceStatusMutation.mutateAsync({
+        bookingId,
+        status: BOOKING_STATUS.CANCELLED,
+      });
+    } catch (error) {
+      console.error('Failed to cancel booking:', error);
+    }
+  };
+
+  // Handle edit booking (for member group class bookings)
+  const handleEditBooking = (session) => {
+    // Extract booking data from session
+    const bookingData = {
+      id: session.bookingId,
+      customerId: session.customerId,
+      customer: session.customer,
+      sessionId: session.sessionId,
+      classScheduleSessionId: session.sessionId,
+      notes: session.notes || '',
+      status: session.bookingStatus,
+    };
+    setSelectedBooking(bookingData);
+    setShowGroupClassModal(true);
   };
 
   const handleCancelSession = async (sessionId) => {
@@ -465,22 +555,22 @@ const SessionScheduling = () => {
 
               {/* Right: Actions */}
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
-                  className="btn-secondary flex items-center gap-2"
-                >
-                  {viewMode === 'calendar' ? (
-                    <>
-                      <List className="w-4 h-4" />
-                      List View
-                    </>
-                  ) : (
-                    <>
-                      <Calendar className="w-4 h-4" />
-                      Calendar View
-                    </>
-                  )}
-                </button>
+          <button
+            onClick={() => setViewMode(viewMode === VIEW_MODE.LIST ? VIEW_MODE.CALENDAR : VIEW_MODE.LIST)}
+            className="btn-secondary flex items-center gap-2"
+          >
+            {viewMode === VIEW_MODE.CALENDAR ? (
+              <>
+                <List className="w-4 h-4" />
+                List View
+              </>
+            ) : (
+              <>
+                <Calendar className="w-4 h-4" />
+                Calendar View
+              </>
+            )}
+          </button>
                 <button
                   onClick={handleOpenGroupClassModal}
                   className="btn-secondary flex items-center gap-2"
@@ -488,15 +578,15 @@ const SessionScheduling = () => {
                   <Plus className="w-4 h-4" />
                   Book Group Class
                 </button>
-                <button
-                  onClick={() => handleOpenModal()}
-                  className="btn-primary flex items-center gap-2"
-                >
-                  <Plus className="w-4 h-4" />
+          <button
+            onClick={() => handleOpenModal()}
+            className="btn-primary flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
                   Book PT Session
-                </button>
+                  </button>
+                </div>
               </div>
-            </div>
 
             {/* Bottom Row: Coaches - Separate Row (only show if user is not a coach) */}
             {!isTrainer && (
@@ -515,49 +605,65 @@ const SessionScheduling = () => {
                           ? 'bg-primary-500 text-white shadow-md'
                           : 'bg-dark-700 text-dark-400 hover:bg-dark-600'
                       }`}
-                    >
+                            >
                       {coach.firstname} {coach.lastname}
                     </button>
                   ))}
-                </div>
+                            </div>
+                          </div>
+                        )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
 
         {/* Calendar View or List View */}
-        {viewMode === 'calendar' ? (
+        {viewMode === VIEW_MODE.CALENDAR ? (
           <CalendarView
             calendarDate={calendarDate}
             selectedCalendarDate={selectedCalendarDate}
-            calendarDays={calendarDays}
-            weekDays={weekDays}
-            sessions={filteredSessions}
+            onCalendarDateChange={setCalendarDate}
+            groupClassSessions={[...filteredClassSessions, ...filteredMemberGroupClassSessions]}
+            ptSessions={filteredPtSessions}
             customers={customers}
             packages={packages}
             coaches={coaches}
-            onPrevMonth={prevMonth}
-            onNextMonth={nextMonth}
-            onGoToToday={goToToday}
             onSelectDate={setSelectedCalendarDate}
             onSessionClick={handleSessionClick}
-            onEditSession={handleOpenModal}
+            onEditSession={(session) => {
+              if (session.type === SESSION_TYPES.COACH_GROUP_CLASS) {
+                handleEditGroupClassSession(session);
+              } else if (session.type === SESSION_TYPES.MEMBER_GROUP_CLASS) {
+                handleEditBooking(session);
+              } else {
+                handleOpenModal(session);
+              }
+            }}
             onCancelSession={handleCancelSession}
+            onCancelBooking={handleCancelBooking}
             onBookSession={(date) => {
               // Open modal for booking - the form will handle date selection
-              handleOpenModal();
-            }}
+                        handleOpenModal();
+                      }}
             getSessionStyle={getSessionStyleWrapper}
           />
         ) : (
           <CalendarListView
-            sessions={upcomingSessions}
+            groupClassSessions={upcomingGroupClassSessions}
+            ptSessions={upcomingPtSessions}
             customers={customers}
             packages={packages}
             coaches={coaches}
             onSessionClick={handleSessionClick}
-            onEditSession={handleOpenModal}
+            onEditSession={(session) => {
+              if (session.type === SESSION_TYPES.COACH_GROUP_CLASS) {
+                handleEditGroupClassSession(session);
+              } else if (session.type === SESSION_TYPES.MEMBER_GROUP_CLASS) {
+                handleEditBooking(session);
+              } else {
+                handleOpenModal(session);
+              }
+            }}
             onCancelSession={handleCancelSession}
+            onCancelBooking={handleCancelBooking}
           />
         )}
       </div>
@@ -587,7 +693,7 @@ const SessionScheduling = () => {
         onClose={handleCloseAttendanceModal}
         title={`Mark Attendance - ${selectedClassSession?.className || 'Class'}`}
         size="lg"
-      >
+            >
         <ClassAttendanceForm
           classSession={selectedClassSession}
           onCancel={handleCloseAttendanceModal}
@@ -596,35 +702,42 @@ const SessionScheduling = () => {
         />
       </Modal>
 
-      {/* Book Group Class Modal */}
+      {/* Book/Edit Group Class Modal */}
       <Modal
         isOpen={showGroupClassModal}
         onClose={handleCloseGroupClassModal}
-        title="Book Group Class Session"
+        title={selectedBooking ? 'Edit Group Class Booking' : 'Book Group Class Session'}
+        size="lg"
+      >
+        <GroupClassBookingForm
+          booking={selectedBooking}
+          customers={customers}
+          classSessions={classScheduleSessions}
+          onSubmit={handleSubmitGroupClassBooking}
+          onCancel={handleCloseGroupClassModal}
+          isSubmitting={isSubmitting}
+        />
+      </Modal>
+
+      {/* Edit Group Class Session Modal */}
+      <Modal
+        isOpen={showGroupClassEditModal}
+        onClose={() => {
+          setShowGroupClassEditModal(false);
+          setSelectedClassSession(null);
+                }}
+        title={`Edit Session - ${selectedClassSession?.className || 'Class'}`}
         size="md"
       >
-        <div className="space-y-4">
-          <p className="text-sm text-dark-400 text-center py-4">
-            Group class booking functionality will be implemented here.
-            Members can select from available group class sessions.
-          </p>
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={handleCloseGroupClassModal}
-              className="flex-1 btn-secondary"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="flex-1 btn-primary"
-              disabled
-            >
-              Book Class
-            </button>
-          </div>
-        </div>
+        <ClassScheduleSessionForm
+          session={selectedClassSession}
+          onSubmit={handleSubmitClassScheduleSession}
+          onCancel={() => {
+            setShowGroupClassEditModal(false);
+            setSelectedClassSession(null);
+          }}
+          isSubmitting={updateClassScheduleSessionMutation.isPending}
+        />
       </Modal>
     </Layout>
   );

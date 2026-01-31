@@ -1,5 +1,7 @@
-import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { classScheduleSessionService } from '../services/classScheduleSessionService';
+import { Toast } from '../utils/alert';
+import { classSessionBookingKeys } from './useClassSessionBookings';
 
 export const classScheduleSessionKeys = {
   all: ['classScheduleSessions'],
@@ -16,5 +18,28 @@ export const useClassScheduleSessions = (options = {}) => {
       return await classScheduleSessionService.getAll(options);
     },
     placeholderData: keepPreviousData,
+  });
+};
+
+/**
+ * Hook to update a class schedule session
+ */
+export const useUpdateClassScheduleSession = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }) => {
+      return await classScheduleSessionService.update(id, data);
+    },
+    onSuccess: () => {
+      // Invalidate class schedule sessions
+      queryClient.invalidateQueries({ queryKey: classScheduleSessionKeys.all });
+      // Invalidate booking sessions so they refetch with updated session data
+      queryClient.invalidateQueries({ queryKey: classSessionBookingKeys.all });
+      Toast.success('Session updated successfully');
+    },
+    onError: (error) => {
+      Toast.error(error.message || 'Failed to update session');
+    },
   });
 };

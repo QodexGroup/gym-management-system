@@ -8,3 +8,4 @@ export { default as PhotoThumbnail } from './PhotoThumbnail';
 export { default as FileIcon } from './FileIcon';
 export { default as CalendarView } from './CalendarView';
 export { default as CalendarListView } from './CalendarListView';
+export { default as SearchableClientInput } from './SearchableClientInput';
