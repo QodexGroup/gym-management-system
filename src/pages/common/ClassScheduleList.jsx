@@ -21,7 +21,7 @@ import {
 } from '../../hooks/useClassSchedules';
 import { useCoaches } from '../../hooks/useUsers';
 import { useAuth } from '../../context/AuthContext';
-import { formatTimeFromDate } from '../../utils/formatters';
+import { formatDate, formatTimeFromDate } from '../../utils/formatters';
 import ClassScheduleForm from './forms/ClassScheduleForm';
 import { SCHEDULE_TYPE_LABELS, RECURRING_INTERVAL_LABELS } from '../../constants/classScheduleConstants';
 
@@ -219,10 +219,16 @@ const ClassScheduleList = () => {
                           {coach?.firstname} {coach?.lastname}
                         </div>
                         {schedule.startDate && (
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {formatTimeFromDate(schedule.startDate)}
-                          </div>
+                          <>
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              {formatDate(schedule.startDate)}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-4 h-4" />
+                              {formatTimeFromDate(schedule.startDate)}
+                            </div>
+                          </>
                         )}
                         <div className="flex items-center gap-1">
                           <Users className="w-4 h-4" />

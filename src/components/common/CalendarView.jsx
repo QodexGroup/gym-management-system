@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Badge } from './index';
 import {
   Calendar,
@@ -8,44 +9,129 @@ import {
   ChevronRight,
   Users,
   CheckCircle,
+  X,
 } from 'lucide-react';
-import { format, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
+import { format, isSameMonth, isSameDay, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import { formatTime, formatTimeFromDate, formatDate } from '../../utils/formatters';
 import { SESSION_STATUS, SESSION_STATUS_LABELS } from '../../constants/ptConstants';
 import { SESSION_TYPES } from '../../constants/sessionSchedulingConstants';
+import { BOOKING_STATUS, BOOKING_STATUS_VARIANTS } from '../../constants/classSessionBookingConstants';
 
 const CalendarView = ({
-  calendarDate,
-  selectedCalendarDate,
-  calendarDays,
-  weekDays,
-  sessions,
+  calendarDate: initialCalendarDate,
+  selectedCalendarDate: initialSelectedCalendarDate,
+  onCalendarDateChange,
+  groupClassSessions = [],
+  ptSessions = [],
   customers,
   packages,
   coaches,
-  onPrevMonth,
-  onNextMonth,
-  onGoToToday,
   onSelectDate,
   onSessionClick,
   onEditSession,
   onCancelSession,
+  onCancelBooking,
   onBookSession,
   getSessionStyle,
 }) => {
-  const selectedDateSessions = sessions.filter((session) => {
-    const dateStr = format(selectedCalendarDate, 'yyyy-MM-dd');
-    return session.sessionDate === dateStr || 
-      (session.startTime && format(new Date(session.startTime), 'yyyy-MM-dd') === dateStr);
-  });
+  // Internal state for calendar navigation
+  const [calendarDate, setCalendarDate] = useState(initialCalendarDate || new Date());
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(initialSelectedCalendarDate || new Date());
 
-  const getSessionsForDate = (date) => {
+  // Update internal state when props change
+  useEffect(() => {
+    if (initialCalendarDate) {
+      setCalendarDate(initialCalendarDate);
+    }
+  }, [initialCalendarDate]);
+
+  useEffect(() => {
+    if (initialSelectedCalendarDate) {
+      setSelectedCalendarDate(initialSelectedCalendarDate);
+    }
+  }, [initialSelectedCalendarDate]);
+
+  // Calendar view functions
+  const nextMonth = () => {
+    const newDate = addMonths(calendarDate, 1);
+    setCalendarDate(newDate);
+    if (onCalendarDateChange) {
+      onCalendarDateChange(newDate);
+    }
+  };
+  
+  const prevMonth = () => {
+    const newDate = subMonths(calendarDate, 1);
+    setCalendarDate(newDate);
+    if (onCalendarDateChange) {
+      onCalendarDateChange(newDate);
+    }
+  };
+  
+  const goToToday = () => {
+    const today = new Date();
+    setCalendarDate(today);
+    setSelectedCalendarDate(today);
+    if (onCalendarDateChange) {
+      onCalendarDateChange(today);
+    }
+    if (onSelectDate) {
+      onSelectDate(today);
+    }
+  };
+
+  // Generate calendar days
+  const generateCalendarDays = () => {
+    const monthStart = startOfMonth(calendarDate);
+    const monthEnd = endOfMonth(monthStart);
+    const startDate = startOfWeek(monthStart);
+    const endDate = endOfWeek(monthEnd);
+
+    const days = [];
+    let day = startDate;
+
+    while (day <= endDate) {
+      days.push(day);
+      day = addDays(day, 1);
+    }
+
+    return days;
+  };
+
+  const calendarDays = generateCalendarDays();
+  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  // Handle date selection
+  const handleSelectDate = (date) => {
+    setSelectedCalendarDate(date);
+    if (onSelectDate) {
+      onSelectDate(date);
+    }
+  };
+  // Handle group class sessions separately
+  const getGroupClassSessionsForDate = (date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return sessions.filter((session) => {
-      return session.sessionDate === dateStr || 
-        (session.startTime && format(new Date(session.startTime), 'yyyy-MM-dd') === dateStr);
+    return groupClassSessions.filter((session) => {
+      return session.startTime && format(new Date(session.startTime), 'yyyy-MM-dd') === dateStr;
     });
   };
+
+  // Handle PT sessions separately
+  const getPtSessionsForDate = (date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return ptSessions.filter((session) => {
+      return session.sessionDate === dateStr;
+    });
+  };
+
+  // Get all sessions for a date (for display only, but keep logic separate)
+  const getSessionsForDate = (date) => {
+    return [...getGroupClassSessionsForDate(date), ...getPtSessionsForDate(date)];
+  };
+
+  const selectedDateGroupClassSessions = getGroupClassSessionsForDate(selectedCalendarDate);
+  const selectedDatePtSessions = getPtSessionsForDate(selectedCalendarDate);
+  const totalSessionsCount = selectedDateGroupClassSessions.length + selectedDatePtSessions.length;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -55,7 +141,7 @@ const CalendarView = ({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <button
-              onClick={onPrevMonth}
+              onClick={prevMonth}
               className="p-2 hover:bg-dark-700 rounded-lg transition-colors"
             >
               <ChevronLeft className="w-5 h-5 text-dark-300" />
@@ -64,14 +150,14 @@ const CalendarView = ({
               {format(calendarDate, 'MMMM yyyy')}
             </h2>
             <button
-              onClick={onNextMonth}
+              onClick={nextMonth}
               className="p-2 hover:bg-dark-700 rounded-lg transition-colors"
             >
               <ChevronRight className="w-5 h-5 text-dark-300" />
             </button>
           </div>
           <button
-            onClick={onGoToToday}
+            onClick={goToToday}
             className="px-4 py-2 text-sm font-medium text-primary-500 hover:bg-primary-500/10 rounded-lg transition-colors"
           >
             Today
@@ -101,7 +187,7 @@ const CalendarView = ({
             return (
               <div
                 key={idx}
-                onClick={() => onSelectDate(day)}
+                onClick={() => handleSelectDate(day)}
                 className={`min-h-[100px] p-2 border border-dark-700 rounded-lg cursor-pointer transition-all ${
                   !isCurrentMonth ? 'bg-dark-900 opacity-50' : 'bg-dark-800'
                 } ${isSelected ? 'ring-2 ring-primary-500' : ''} ${
@@ -122,18 +208,18 @@ const CalendarView = ({
                 <div className="space-y-1">
                   {daySessions.slice(0, 2).map((session) => {
                     let displayText = '';
-                    if (session.type === SESSION_TYPES.COACH_GROUP_CLASS) {
-                      displayText = `${session.sessionTime || formatTimeFromDate(session.startTime)} ${session.className}`;
+                    if (session.type === SESSION_TYPES.COACH_GROUP_CLASS || session.type === SESSION_TYPES.MEMBER_GROUP_CLASS) {
+                      displayText = `${formatTimeFromDate(session.startTime)} ${session.className || 'Class'}`;
                     } else {
                       const customer = session.customer || customers.find((c) => c.id === session.customerId);
                       const customerName = customer?.name || 
                         (customer?.firstName && customer?.lastName ? `${customer.firstName} ${customer.lastName}` : 
                         customer?.firstName || 'Unknown');
-                      displayText = `${session.sessionTime || formatTime(session.sessionTime)} ${customerName.split(' ')[0]}`;
+                      displayText = `${formatTime(session.sessionTime)} ${customerName.split(' ')[0]}`;
                     }
                     return (
                       <div
-                        key={session.id}
+                        key={`${session.type}-${session.id}-${session.customerId || session.bookingId || ''}`}
                         className={`text-xs px-1.5 py-0.5 rounded truncate cursor-pointer border ${getSessionStyle(session)}`}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -163,22 +249,24 @@ const CalendarView = ({
             <h3 className="text-lg font-semibold text-dark-50">
               {format(selectedCalendarDate, 'EEEE, MMM d')}
             </h3>
-            <Badge variant="default">{selectedDateSessions.length} sessions</Badge>
+            <Badge variant="default">{totalSessionsCount} sessions</Badge>
           </div>
 
-          {selectedDateSessions.length > 0 ? (
+          {totalSessionsCount > 0 ? (
             <div className="space-y-3">
-              {selectedDateSessions
+              {/* Render group class sessions first */}
+              {selectedDateGroupClassSessions
                 .sort((a, b) => {
-                  const timeA = a.startTime ? new Date(a.startTime) : new Date(`${a.sessionDate} ${a.sessionTime}`);
-                  const timeB = b.startTime ? new Date(b.startTime) : new Date(`${b.sessionDate} ${b.sessionTime}`);
+                  const timeA = new Date(a.startTime);
+                  const timeB = new Date(b.startTime);
                   return timeA - timeB;
                 })
                 .map((session) => {
+                  // Coach Group Class Session
                   if (session.type === SESSION_TYPES.COACH_GROUP_CLASS) {
                     return (
                       <div
-                        key={session.id}
+                        key={`coach-${session.id}`}
                         onClick={() => onSessionClick(session)}
                         className="p-4 rounded-xl border-l-4 bg-blue-500/10 border-blue-500 cursor-pointer hover:bg-blue-500/20 transition-colors"
                       >
@@ -187,7 +275,7 @@ const CalendarView = ({
                             {formatTimeFromDate(session.startTime)}
                           </span>
                           <Badge size="sm" variant="primary">
-                            Group Class
+                            Coach Group Class
                           </Badge>
                         </div>
                         <div className="mb-2">
@@ -199,6 +287,18 @@ const CalendarView = ({
                           <span>{session.attendanceCount || 0}/{session.capacity || 0} enrolled</span>
                         </div>
                         <div className="flex items-center gap-2 mt-3">
+                        {session.sessionDate < new Date() && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditSession(session);
+                            }}
+                            className="text-xs px-2 py-1 text-primary-500 hover:bg-primary-500/10 rounded transition-colors"
+                          >
+                            Edit
+                          </button>
+                        )}
+                         {session.sessionDate < new Date() && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -208,12 +308,84 @@ const CalendarView = ({
                           >
                             Mark Attendance
                           </button>
+                        )}
                         </div>
                       </div>
                     );
                   }
 
-                  // PT Session
+                  // Member Group Class Session (Bookings)
+                  if (session.type === SESSION_TYPES.MEMBER_GROUP_CLASS) {
+                    const customer = session.customer || customers.find((c) => c.id === session.customerId);
+                    const customerName = customer?.name || 
+                      (customer?.firstName && customer?.lastName ? `${customer.firstName} ${customer.lastName}` : 
+                      customer?.firstName || 'Unknown');
+                    
+                    return (
+                      <div
+                        key={`member-${session.id}-${session.customerId || session.bookingId || ''}`}
+                        className="p-4 rounded-xl border-l-4 bg-purple-500/10 border-purple-500"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-bold text-purple-500">
+                            {formatTimeFromDate(session.startTime)}
+                          </span>
+                          <Badge size="sm" variant="default">
+                            Member Booking
+                          </Badge>
+                        </div>
+                        <div className="mb-2">
+                          <p className="font-medium text-dark-50">{session.className}</p>
+                          <p className="text-xs text-dark-400">Client: {customerName}</p>
+                          <p className="text-xs text-dark-400">Coach: {session.coach?.firstname} {session.coach?.lastname}</p>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-dark-300 mb-3">
+                          <Badge size="sm" variant={BOOKING_STATUS_VARIANTS[session.bookingStatus] || BOOKING_STATUS_VARIANTS[BOOKING_STATUS.BOOKED]}>
+                            {session.bookingStatus || BOOKING_STATUS.BOOKED}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2">
+                        {session.bookingStatus == BOOKING_STATUS.BOOKED && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditSession(session);
+                            }}
+                            className="text-xs px-2 py-1 text-primary-500 hover:bg-primary-500/10 rounded transition-colors flex items-center gap-1"
+                          >
+                            <Edit className="w-3 h-3" />
+                            Edit
+                          </button>
+                          )}
+                          {session.bookingStatus == BOOKING_STATUS.BOOKED && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (onCancelBooking && session.bookingId) {
+                                  onCancelBooking(session.bookingId);
+                                }
+                              }}
+                              className="text-xs px-2 py-1 text-danger-500 hover:bg-danger-500/10 rounded transition-colors flex items-center gap-1"
+                            >
+                              <X className="w-3 h-3" />
+                              Cancel
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                })}
+              
+              {/* Render PT sessions separately */}
+              {selectedDatePtSessions
+                .sort((a, b) => {
+                  const timeA = new Date(`${a.sessionDate} ${a.sessionTime}`);
+                  const timeB = new Date(`${b.sessionDate} ${b.sessionTime}`);
+                  return timeA - timeB;
+                })
+                .map((session) => {
                   const customer = session.customer || customers.find((c) => c.id === session.customerId);
                   const ptPackage = session.ptPackage || packages.find((p) => p.id === session.ptPackageId);
                   const trainer = session.trainer || coaches.find((c) => c.id === session.trainerId);
@@ -227,7 +399,7 @@ const CalendarView = ({
 
                   return (
                     <div
-                      key={session.id}
+                      key={`pt-${session.id}`}
                       className={`p-4 rounded-xl border-l-4 ${
                         session.status === SESSION_STATUS.SCHEDULED
                           ? 'bg-primary-500/10 border-primary-500'

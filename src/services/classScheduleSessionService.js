@@ -69,4 +69,35 @@ export const classScheduleSessionService = {
       throw error;
     }
   },
+
+  /**
+   * Update a class schedule session
+   * @param {number} id - Session ID
+   * @param {Object} data - Update data (startTime, endTime, duration)
+   * @returns {Promise<Object>}
+   */
+  async update(id, data) {
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/class-schedule-sessions/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('Cannot connect to API. Please check if the server is running and CORS is configured.');
+      }
+      throw error;
+    }
+  },
 };

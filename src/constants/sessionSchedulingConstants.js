@@ -16,6 +16,11 @@ export const SESSION_TYPE_LABELS = {
   [SESSION_TYPES.MEMBER_PT]: 'Member PT Schedule',
 };
 
+export const VIEW_MODE = {
+  CALENDAR: 'calendar',
+  LIST: 'list',
+};
+
 /**
  * Get filter button color classes based on session type and active state
  * @param {string} sessionType - The session type key
