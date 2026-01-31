@@ -17,8 +17,8 @@ import PtMembers from './pages/trainer/PtMembers';
 
 // Shared Pages
 import CheckIn from './pages/CheckIn';
-import CustomerList from './pages/customers/CustomerList';
-import CustomerProfile from './pages/customers/CustomerProfile';
+import CustomerList from './pages/customers/CustomerList.page';
+import CustomerProfile from './pages/customers/CustomerProfile.page';
 import PtPackageList from './pages/admin/PtPackageList';
 import SessionScheduling from './pages/common/SessionScheduling';
 import ClassScheduleList from './pages/common/ClassScheduleList';

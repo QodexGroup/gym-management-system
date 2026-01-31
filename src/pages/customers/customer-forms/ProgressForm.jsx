@@ -1,17 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Camera, Upload } from 'lucide-react';
 import { Modal, ImageLightbox, PhotoThumbnail } from '../../../components/common';
 import { calculateBMI, calculateBodyFatMass, formatDateForInput, formatDate } from '../../../utils/formatters';
-import { useCreateCustomerProgress, useUpdateCustomerProgress } from '../../../hooks/useCustomerProgress';
+import { useCreateCustomerProgress, useUpdateCustomerProgress, customerProgressKeys } from '../../../hooks/useCustomerProgress';
 import { Toast } from '../../../utils/alert';
 import { useQueryClient } from '@tanstack/react-query';
-import { customerProgressKeys } from '../../../hooks/useCustomerProgress';
 import { getInitialProgressFormData, mapProgressToFormData } from '../../../models/progressModel';
 import { customerScanService } from '../../../services/customerScanService';
 import { useFileUpload } from '../../../hooks/useFileUpload';
-import ProgressViewModal from '../customer-tabs/ProgressViewModal';
+import ProgressViewModal from './ProgressViewModal';
 import { getFileUrl } from '../../../services/firebaseUrlService';
 
 const ProgressForm = ({ 
@@ -37,7 +36,6 @@ const ProgressForm = ({
   const createMutation = useCreateCustomerProgress();
   const updateMutation = useUpdateCustomerProgress();
 
-  // File upload hook
   const {
     uploadedFiles,
     uploadingFiles,
@@ -55,7 +53,7 @@ const ProgressForm = ({
     },
   });
 
-  // Handle external view log trigger
+  // Handle external view log
   useEffect(() => {
     if (externalViewLog && !isOpen) {
       setViewLog(externalViewLog);
@@ -63,30 +61,18 @@ const ProgressForm = ({
     }
   }, [externalViewLog, isOpen]);
 
-  // Auto-calculate BMI
-  useEffect(() => {
-    const bmi = calculateBMI(formData.weight, formData.height);
-    setFormData(prev => ({ ...prev, bmi }));
-  }, [formData.weight, formData.height]);
-
-  // Auto-calculate Body Fat Mass
-  useEffect(() => {
-    const bodyFatMass = calculateBodyFatMass(formData.weight, formData.bodyFatPercentage);
-    setFormData(prev => ({ ...prev, bodyFatMass }));
-  }, [formData.weight, formData.bodyFatPercentage]);
-
-  // Load scans when data source is inbody or styku
+  // Load scans
   useEffect(() => {
     const loadScans = async () => {
       if (!member?.id || !isOpen) return;
-      
+
       if (formData.dataSource === 'inbody' || formData.dataSource === 'styku') {
         setLoadingScans(true);
         try {
           const scans = await customerScanService.getByType(member.id, formData.dataSource);
           setAvailableScans(scans);
         } catch (error) {
-          console.error('Error loading scans:', error);
+          console.error(error);
           Toast.error('Failed to load scans');
           setAvailableScans([]);
         } finally {
@@ -97,11 +83,10 @@ const ProgressForm = ({
         setFormData(prev => ({ ...prev, customerScanId: null }));
       }
     };
-
     loadScans();
   }, [formData.dataSource, member?.id, isOpen]);
 
-  // Load selected log data when editing
+  // Load selected log
   useEffect(() => {
     if (selectedLog && isOpen) {
       setFormData(mapProgressToFormData(selectedLog));
@@ -112,41 +97,33 @@ const ProgressForm = ({
       setFormData(getInitialProgressFormData());
       resetFiles();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLog, isOpen]);
 
-  // Handle image click for lightbox
-  const handleImageClick = async (file, index) => {
-    // Use viewLog if available (from view modal), otherwise use selectedLog (from form)
+  // Derived values
+  const bmi = useMemo(() => calculateBMI(formData.weight, formData.height), [formData.weight, formData.height]);
+  const bodyFatMass = useMemo(() => calculateBodyFatMass(formData.weight, formData.bodyFatPercentage), [formData.weight, formData.bodyFatPercentage]);
+
+  const handleImageClick = async (file) => {
     const currentLog = viewLog || selectedLog;
     if (!currentLog) return;
 
-    const progressImages = (currentLog.files || [])
-      .filter(f => f.remarks === 'progress_tracking' && f.mimeType?.startsWith('image/'));
-    const scanImages = (currentLog.scan || [])
-      .filter(f => f.mimeType?.startsWith('image/'));
+    const progressImages = (currentLog.files || []).filter(f => f.remarks === 'progress_tracking' && f.mimeType?.startsWith('image/'));
+    const scanImages = (currentLog.scan || []).filter(f => f.mimeType?.startsWith('image/'));
     const allImageFiles = [...progressImages, ...scanImages];
-    
-    const imageUrls = await Promise.all(
-      allImageFiles.map(async (imgFile) => {
-        try {
-          return await getFileUrl(imgFile.fileUrl);
-        } catch (error) {
-          console.error('Error loading image URL:', error);
-          return null;
-        }
-      })
-    );
-    
-    const validUrls = imageUrls.filter(url => url !== null);
+
+    const imageUrls = await Promise.all(allImageFiles.map(async imgFile => {
+      try { return await getFileUrl(imgFile.fileUrl); } 
+      catch (e) { console.error(e); return null; }
+    }));
+
+    const validUrls = imageUrls.filter(Boolean);
     const currentIndex = allImageFiles.findIndex(f => f.id === file.id);
-    
+
     setLightboxImages(validUrls);
     setLightboxCurrentIndex(currentIndex >= 0 ? currentIndex : 0);
     setLightboxImage(validUrls[currentIndex >= 0 ? currentIndex : 0]);
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!member?.id) return;
@@ -158,9 +135,9 @@ const ProgressForm = ({
       weight: formData.weight || null,
       height: formData.height || null,
       bodyFatPercentage: formData.bodyFatPercentage || null,
-      bmi: formData.bmi || null,
+      bmi: bmi || null,
       skeletalMuscleMass: formData.skeletalMuscleMass || null,
-      bodyFatMass: formData.bodyFatMass || null,
+      bodyFatMass: bodyFatMass || null,
       totalBodyWater: formData.totalBodyWater || null,
       visceralFatLevel: formData.visceralFatLevel || null,
       basalMetabolicRate: formData.basalMetabolicRate || null,
@@ -178,106 +155,52 @@ const ProgressForm = ({
       notes: formData.notes || null,
     };
 
-    const saveFilesAfterProgress = async (progressData) => {
+    const saveFilesAfter = async (progressData) => {
       try {
         await saveFiles(progressData.id, formatDateForInput(formData.recordedDate));
         queryClient.invalidateQueries({ queryKey: customerProgressKeys.lists() });
-      } catch (error) {
-        console.error('Error saving files:', error);
-        Toast.error('Progress saved but some files failed to save');
-      }
+      } catch (e) { Toast.error('Progress saved but some files failed to save'); }
     };
 
     if (selectedLog) {
-      updateMutation.mutate(
-        { id: selectedLog.id, progressData: submitData },
-        {
-          onSuccess: async (progressData) => {
-            await saveFilesAfterProgress(progressData);
-            onSuccess?.();
-            onClose();
-          },
-        }
-      );
+      const submitDataWithCustomer = { ...submitData, customerId: member.id };
+      updateMutation.mutate({ id: selectedLog.id, progressData: submitDataWithCustomer }, {
+        onSuccess: async (data) => { await saveFilesAfter(data); onSuccess?.(); onClose(); }
+      });
     } else {
-      createMutation.mutate(
-        { customerId: member.id, progressData: submitData },
-        {
-          onSuccess: async (progressData) => {
-            await saveFilesAfterProgress(progressData);
-            onSuccess?.();
-            onClose();
-          },
-        }
-      );
+      createMutation.mutate({ customerId: member.id, progressData: submitData }, {
+        onSuccess: async (data) => { await saveFilesAfter(data); onSuccess?.(); onClose(); }
+      });
     }
   };
 
-  const handleEditClick = (log) => {
-    onEdit?.(log);
-  };
-
-  const handleViewModalClose = () => {
-    setShowViewModal(false);
-    setViewLog(null);
-    onViewClose?.();
-  };
-
-  const handleLightboxClose = () => {
-    setLightboxImage(null);
-    setLightboxImages([]);
-    setLightboxCurrentIndex(0);
-  };
-
-  const handleLightboxPrevious = () => {
-    const prevIndex = lightboxCurrentIndex - 1;
-    setLightboxCurrentIndex(prevIndex);
-    setLightboxImage(lightboxImages[prevIndex]);
-  };
-
-  const handleLightboxNext = () => {
-    const nextIndex = lightboxCurrentIndex + 1;
-    setLightboxCurrentIndex(nextIndex);
-    setLightboxImage(lightboxImages[nextIndex]);
-  };
+  const handleViewModalClose = () => { setShowViewModal(false); setViewLog(null); onViewClose?.(); };
+  const handleLightboxClose = () => { setLightboxImage(null); setLightboxImages([]); setLightboxCurrentIndex(0); };
+  const handleLightboxPrevious = () => { const prev = lightboxCurrentIndex - 1; setLightboxCurrentIndex(prev); setLightboxImage(lightboxImages[prev]); };
+  const handleLightboxNext = () => { const next = lightboxCurrentIndex + 1; setLightboxCurrentIndex(next); setLightboxImage(lightboxImages[next]); };
 
   return (
     <>
-      {/* Create/Edit Progress Modal */}
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        title={selectedLog ? "Edit Progress Log" : "Create Progress Tracking"}
-        size="full"
-      >
+      <Modal isOpen={isOpen} onClose={onClose} title={selectedLog ? "Edit Progress Log" : "Create Progress Tracking"} size="full">
         <form className="space-y-6" onSubmit={handleSubmit}>
-          {/* Date, Data Source, and Scan Selection */}
-          <div className={`grid gap-4 ${(formData.dataSource === 'inbody' || formData.dataSource === 'styku') ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          {/* Header Fields */}
+          <div className="grid gap-4 md:grid-cols-3">
             <div>
               <label className="label">Record Date</label>
               <DatePicker
                 selected={formData.recordedDate}
-                onChange={(date) => setFormData(prev => ({ ...prev, recordedDate: date || new Date() }))}
+                onChange={(d) => setFormData(prev => ({ ...prev, recordedDate: d || new Date() }))}
                 dateFormat="yyyy-MM-dd"
                 className="input w-full"
-                showYearDropdown
                 showMonthDropdown
+                showYearDropdown
                 dropdownMode="select"
                 maxDate={new Date()}
-                onKeyDown={(e) => {
-                  if (e && e.key && e.key !== 'Tab' && e.key !== 'Escape') {
-                    e.preventDefault();
-                  }
-                }}
               />
             </div>
             <div>
               <label className="label">Data Source</label>
-              <select 
-                className="input"
-                value={formData.dataSource}
-                onChange={(e) => setFormData(prev => ({ ...prev, dataSource: e.target.value, customerScanId: null }))}
-              >
+              <select className="input" value={formData.dataSource} onChange={(e) => setFormData(prev => ({ ...prev, dataSource: e.target.value, customerScanId: null }))}>
                 <option value="manual">Manual Entry</option>
                 <option value="inbody">InBody Scan</option>
                 <option value="styku">Styku Scan</option>
@@ -285,27 +208,15 @@ const ProgressForm = ({
             </div>
             {(formData.dataSource === 'inbody' || formData.dataSource === 'styku') && (
               <div>
-                <label className="label">
-                  Associate {formData.dataSource === 'inbody' ? 'InBody' : 'Styku'} Scan
-                </label>
+                <label className="label">Associate Scan</label>
                 {loadingScans ? (
                   <div className="input bg-dark-50 text-dark-400">Loading scans...</div>
                 ) : availableScans.length === 0 ? (
-                  <div className="input bg-dark-50 text-dark-400">
-                    No {formData.dataSource === 'inbody' ? 'InBody' : 'Styku'} scans found
-                  </div>
+                  <div className="input bg-dark-50 text-dark-400">No scans found</div>
                 ) : (
-                  <select
-                    className="input"
-                    value={formData.customerScanId || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, customerScanId: e.target.value ? parseInt(e.target.value) : null }))}
-                  >
+                  <select className="input" value={formData.customerScanId || ''} onChange={e => setFormData(prev => ({ ...prev, customerScanId: e.target.value ? parseInt(e.target.value) : null }))}>
                     <option value="">Select a scan (optional)</option>
-                    {availableScans.map((scan) => (
-                      <option key={scan.id} value={scan.id}>
-                        {formatDate(scan.scanDate)} - {scan.scanType || 'N/A'}
-                      </option>
-                    ))}
+                    {availableScans.map(scan => <option key={scan.id} value={scan.id}>{formatDate(scan.scanDate)} - {scan.scanType || 'N/A'}</option>)}
                   </select>
                 )}
               </div>
@@ -313,338 +224,115 @@ const ProgressForm = ({
           </div>
 
           {/* Basic Measurements */}
-          <div>
-            <h4 className="font-semibold text-dark-800 mb-3">Basic Measurements</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <label className="label">Weight (kg)</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input" 
-                  placeholder="82.5"
-                  value={formData.weight}
-                  onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="label">Height (cm)</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input" 
-                  placeholder="175"
-                  value={formData.height}
-                  onChange={(e) => setFormData(prev => ({ ...prev, height: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="label">Body Fat %</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input" 
-                  placeholder="18.5"
-                  value={formData.bodyFatPercentage}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bodyFatPercentage: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="label">BMI <span className="text-xs text-dark-400">(auto-calculated)</span></label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input bg-dark-700 text-dark-50" 
-                  placeholder="--"
-                  value={formData.bmi || ''}
-                  readOnly
-                  disabled
-                />
-              </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label className="label">Weight (kg)</label>
+              <input type="number" step="0.1" className="input" value={formData.weight || ''} onChange={e => setFormData(prev => ({ ...prev, weight: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Height (cm)</label>
+              <input type="number" step="0.1" className="input" value={formData.height || ''} onChange={e => setFormData(prev => ({ ...prev, height: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Body Fat %</label>
+              <input type="number" step="0.1" className="input" value={formData.bodyFatPercentage || ''} onChange={e => setFormData(prev => ({ ...prev, bodyFatPercentage: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">BMI (auto)</label>
+              <input type="number" step="0.1" className="input bg-dark-700 text-dark-50" value={bmi || ''} readOnly disabled />
             </div>
           </div>
 
           {/* Body Composition */}
-          <div>
-            <h4 className="font-semibold text-dark-50 mb-3">Body Composition</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <label className="label">Muscle Mass (kg)</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input" 
-                  placeholder="36.5"
-                  value={formData.skeletalMuscleMass}
-                  onChange={(e) => setFormData(prev => ({ ...prev, skeletalMuscleMass: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="label">Body Fat Mass (kg) <span className="text-xs text-dark-400">(auto-calculated)</span></label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input bg-dark-700 text-dark-50" 
-                  placeholder="--"
-                  value={formData.bodyFatMass || ''}
-                  readOnly
-                  disabled
-                />
-              </div>
-              <div>
-                <label className="label">Body Water (L)</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input" 
-                  placeholder="44.0"
-                  value={formData.totalBodyWater}
-                  onChange={(e) => setFormData(prev => ({ ...prev, totalBodyWater: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="label">Visceral Fat Level</label>
-                <input 
-                  type="number" 
-                  className="input" 
-                  placeholder="10"
-                  value={formData.visceralFatLevel}
-                  onChange={(e) => setFormData(prev => ({ ...prev, visceralFatLevel: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="label">BMR (kcal)</label>
-                <input 
-                  type="number" 
-                  className="input" 
-                  placeholder="1820"
-                  value={formData.basalMetabolicRate}
-                  onChange={(e) => setFormData(prev => ({ ...prev, basalMetabolicRate: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="label">Protein (kg)</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input" 
-                  placeholder="10.5"
-                  value={formData.protein}
-                  onChange={(e) => setFormData(prev => ({ ...prev, protein: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="label">Minerals (kg)</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input" 
-                  placeholder="3.5"
-                  value={formData.minerals}
-                  onChange={(e) => setFormData(prev => ({ ...prev, minerals: e.target.value }))}
-                />
-              </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label className="label">Muscle Mass (kg)</label>
+              <input type="number" step="0.1" className="input" value={formData.skeletalMuscleMass || ''} onChange={e => setFormData(prev => ({ ...prev, skeletalMuscleMass: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Body Fat Mass (kg, auto)</label>
+              <input type="number" step="0.1" className="input bg-dark-700 text-dark-50" value={bodyFatMass || ''} readOnly disabled />
+            </div>
+            <div>
+              <label className="label">Total Body Water (L)</label>
+              <input type="number" step="0.1" className="input" value={formData.totalBodyWater || ''} onChange={e => setFormData(prev => ({ ...prev, totalBodyWater: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Visceral Fat Level</label>
+              <input type="number" className="input" value={formData.visceralFatLevel || ''} onChange={e => setFormData(prev => ({ ...prev, visceralFatLevel: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">BMR (kcal)</label>
+              <input type="number" className="input" value={formData.basalMetabolicRate || ''} onChange={e => setFormData(prev => ({ ...prev, basalMetabolicRate: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Protein (kg)</label>
+              <input type="number" step="0.1" className="input" value={formData.protein || ''} onChange={e => setFormData(prev => ({ ...prev, protein: e.target.value }))} />
+            </div>
+            <div>
+              <label className="label">Minerals (kg)</label>
+              <input type="number" step="0.1" className="input" value={formData.minerals || ''} onChange={e => setFormData(prev => ({ ...prev, minerals: e.target.value }))} />
             </div>
           </div>
 
           {/* Body Measurements */}
-          <div>
-            <h4 className="font-semibold text-dark-800 mb-3">Body Measurements (cm)</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <label className="label">Chest</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input" 
-                  placeholder="104"
-                  value={formData.chest}
-                  onChange={(e) => setFormData(prev => ({ ...prev, chest: e.target.value }))}
-                />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {['chest','waist','hips','leftArm','rightArm','leftThigh','rightThigh','leftCalf','rightCalf'].map(field => (
+              <div key={field}>
+                <label className="label">{field.replace(/([A-Z])/g,' $1')}</label>
+                <input type="number" step="0.1" className="input" value={formData[field] || ''} onChange={e => setFormData(prev => ({ ...prev, [field]: e.target.value }))} />
               </div>
-              <div>
-                <label className="label">Waist</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input" 
-                  placeholder="82"
-                  value={formData.waist}
-                  onChange={(e) => setFormData(prev => ({ ...prev, waist: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="label">Hips</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input" 
-                  placeholder="96"
-                  value={formData.hips}
-                  onChange={(e) => setFormData(prev => ({ ...prev, hips: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="label">Left Arm</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input" 
-                  placeholder="37"
-                  value={formData.leftArm}
-                  onChange={(e) => setFormData(prev => ({ ...prev, leftArm: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="label">Right Arm</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input" 
-                  placeholder="37"
-                  value={formData.rightArm}
-                  onChange={(e) => setFormData(prev => ({ ...prev, rightArm: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="label">Left Thigh</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input" 
-                  placeholder="59"
-                  value={formData.leftThigh}
-                  onChange={(e) => setFormData(prev => ({ ...prev, leftThigh: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="label">Right Thigh</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input" 
-                  placeholder="60"
-                  value={formData.rightThigh}
-                  onChange={(e) => setFormData(prev => ({ ...prev, rightThigh: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="label">Left Calf</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input" 
-                  placeholder="38"
-                  value={formData.leftCalf}
-                  onChange={(e) => setFormData(prev => ({ ...prev, leftCalf: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="label">Right Calf</label>
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  className="input" 
-                  placeholder="38"
-                  value={formData.rightCalf}
-                  onChange={(e) => setFormData(prev => ({ ...prev, rightCalf: e.target.value }))}
-                />
-              </div>
-            </div>
+            ))}
           </div>
 
           {/* Notes */}
           <div>
             <label className="label">Notes</label>
-            <textarea 
-              className="input" 
-              rows={3} 
-              placeholder="Add notes about this progress record..."
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-            />
+            <textarea className="input" rows={3} value={formData.notes || ''} onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))} />
           </div>
 
-          {/* Progress Photos */}
+          {/* Photos */}
           <div>
-            <label className="label">Progress Photos (Optional)</label>
+            <label className="label">Progress Photos</label>
             <div className="border-2 border-dashed border-dark-200 rounded-xl p-6 hover:border-primary-500 transition-colors cursor-pointer">
-              <label htmlFor="progress-photo-upload" className="text-center cursor-pointer block">
+              <label htmlFor="progress-photo-upload" className="cursor-pointer block text-center">
                 {uploadingFiles ? (
                   <>
                     <Upload className="w-10 h-10 text-primary-500 mx-auto mb-3 animate-pulse" />
-                    <p className="text-dark-600 font-medium mb-1">Uploading files...</p>
-                    <p className="text-sm text-dark-400">
-                      {Object.keys(uploadProgress).length > 0 && 
-                        `Progress: ${Math.round(Object.values(uploadProgress)[0] || 0)}%`}
-                    </p>
+                    <p>Uploading files...</p>
                   </>
                 ) : (
                   <>
                     <Camera className="w-10 h-10 text-dark-300 mx-auto mb-3" />
-                    <p className="text-dark-600 font-medium mb-1">Click to upload progress photos</p>
-                    <p className="text-sm text-dark-400">PNG, JPG, WebP up to 2MB each</p>
+                    <p>Click to upload progress photos</p>
                   </>
                 )}
-                <input
-                  id="progress-photo-upload"
-                  type="file"
-                  className="hidden"
-                  accept="image/jpeg,image/jpg,image/png,image/webp"
-                  multiple
-                  onChange={handleFileUpload}
-                  disabled={uploadingFiles}
-                />
+                <input id="progress-photo-upload" type="file" className="hidden" accept="image/*" multiple onChange={handleFileUpload} disabled={uploadingFiles} />
               </label>
             </div>
             {uploadedFiles.length > 0 && (
               <div className="grid grid-cols-4 gap-3 mt-3">
-                {uploadedFiles.map((photo, idx) => (
-                  <PhotoThumbnail
-                    key={photo.id || idx}
-                    photo={photo}
-                    index={idx}
-                    uploadProgress={uploadProgress[idx]}
-                    onRemove={handleRemoveFile}
-                    onView={handleImageClick}
-                  />
+                {uploadedFiles.map((file, idx) => (
+                  <PhotoThumbnail key={file.id || idx} photo={file} index={idx} uploadProgress={uploadProgress[idx]} onRemove={handleRemoveFile} onView={handleImageClick} />
                 ))}
               </div>
             )}
           </div>
 
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 btn-secondary">
-              Cancel
-            </button>
-            <button type="submit" className="flex-1 btn-primary">
-              {selectedLog ? 'Update Progress' : 'Save Progress'}
-            </button>
+            <button type="button" onClick={onClose} className="flex-1 btn-secondary">Cancel</button>
+            <button type="submit" className="flex-1 btn-primary">{selectedLog ? 'Update Progress' : 'Save Progress'}</button>
           </div>
         </form>
       </Modal>
 
-      {/* View Progress Detail Modal */}
-      <ProgressViewModal
-        isOpen={showViewModal}
-        viewLog={viewLog}
-        onClose={handleViewModalClose}
-        onEdit={handleEditClick}
-        onImageClick={handleImageClick}
-      />
+      {/* View Modal */}
+      <ProgressViewModal isOpen={showViewModal} viewLog={viewLog} onClose={handleViewModalClose} onEdit={onEdit} onImageClick={handleImageClick} />
 
-      {/* Lightbox Modal */}
-      <ImageLightbox
-        image={lightboxImage}
-        images={lightboxImages}
-        currentIndex={lightboxCurrentIndex}
-        onClose={handleLightboxClose}
-        onPrevious={handleLightboxPrevious}
-        onNext={handleLightboxNext}
-      />
+      {/* Lightbox */}
+      <ImageLightbox image={lightboxImage} images={lightboxImages} currentIndex={lightboxCurrentIndex} onClose={handleLightboxClose} onPrevious={handleLightboxPrevious} onNext={handleLightboxNext} />
     </>
   );
 };
 
 export default ProgressForm;
-

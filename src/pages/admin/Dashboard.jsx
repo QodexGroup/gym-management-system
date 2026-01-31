@@ -1,19 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
-import { StatCard, Avatar, Badge } from '../../components/common';
+import StatsCards from '../../components/common/StatsCards';
+import { Avatar, Badge } from '../../components/common';
 import {
   Users,
   UserPlus,
-  Clock,
   DollarSign,
-  Calendar,
-  TrendingUp,
-  Activity,
-  CreditCard,
   AlertTriangle,
-  ArrowUpRight,
-  ArrowDownRight,
 } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
 import { dashboardService } from '../../services/dashboardService';
@@ -89,50 +83,53 @@ const AdminDashboard = () => {
     return null;
   }
 
+  // Prepare stats array for StatsCards component
+  const dashboardStats = [
+    {
+      title: 'Total Members',
+      value: stats.totalMembers,
+      icon: Users,
+      trend: 'up',
+      trendValue: '+12%',
+      color: 'primary',
+      subtitle: `${stats.activeMembers} active`,
+    },
+    {
+      title: 'New Registrations',
+      value: stats.newRegistrations,
+      icon: UserPlus,
+      trend: 'up',
+      trendValue: '+8%',
+      color: 'success',
+      subtitle: 'This month',
+    },
+    {
+      title: "Today's Revenue",
+      value: formatCurrency(stats.todayRevenue),
+      icon: DollarSign,
+      color: 'success',
+    },
+    {
+      title: 'Expiring Soon',
+      value: stats.expiringMemberships,
+      icon: AlertTriangle,
+      color: 'warning',
+      subtitle: 'Next 30 days',
+    },
+    // Today's Check-ins - Commented out for future use
+    // {
+    //   title: "Today's Check-ins",
+    //   value: stats.todayCheckIns,
+    //   icon: Clock,
+    //   color: 'accent',
+    //   subtitle: '47 members checked in',
+    // },
+  ];
+
   return (
     <Layout title="Dashboard" subtitle="Welcome back! Here's what's happening today.">
       {/* Stats Grid - First Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard
-          title="Total Members"
-          value={stats.totalMembers}
-          icon={Users}
-          trend="up"
-          trendValue="+12%"
-          color="primary"
-          subtitle={`${stats.activeMembers} active`}
-        />
-        <StatCard
-          title="New Registrations"
-          value={stats.newRegistrations}
-          icon={UserPlus}
-          trend="up"
-          trendValue="+8%"
-          color="success"
-          subtitle="This month"
-        />
-        <StatCard
-          title="Today's Revenue"
-          value={formatCurrency(stats.todayRevenue)}
-          icon={DollarSign}
-          color="success"
-        />
-        <StatCard
-          title="Expiring Soon"
-          value={stats.expiringMemberships}
-          icon={AlertTriangle}
-          color="warning"
-          subtitle="Next 30 days"
-        />
-        {/* Today's Check-ins - Commented out for future use */}
-        {/* <StatCard
-          title="Today's Check-ins"
-          value={stats.todayCheckIns}
-          icon={Clock}
-          color="accent"
-          subtitle="47 members checked in"
-        /> */}
-      </div>
+      <StatsCards stats={dashboardStats} columns={4} />
 
       {/* Revenue Stats - Commented out for future use */}
       {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
