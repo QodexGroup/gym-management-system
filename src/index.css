@@ -432,3 +432,27 @@ html body .swal2-popup .swal2-deny {
   display: none !important;
   content: none !important;
 }
+
+/* Report print: hide filters/buttons; show receipt-style block when printing */
+.report-print-only {
+  display: none;
+}
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .report-print-only {
+    display: block !important;
+  }
+  .report-print-area {
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+    background: white !important;
+  }
+  .report-print-area * {
+    color: #1e293b !important;
+  }
+  body {
+    background: white !important;
+  }
+}

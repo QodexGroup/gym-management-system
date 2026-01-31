@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   Dumbbell,
   ClipboardClock,
+  FileBarChart,
 } from 'lucide-react';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
@@ -46,21 +47,21 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     {
       section: 'ACCOUNT',
       items: [
-        { path: '/membership-plans', icon: CreditCard, label: 'Membership Plans', adminOnly: true }, // Admin only
-        { path: '/pt-packages', icon: Dumbbell, label: 'PT Packages', adminOnly: true }, // Admin only
-        { path: '/users', icon: UserCog, label: 'User Management', adminOnly: true }, // Admin only
-        // {
-        //   label: 'Reports',
-        //   icon: FileBarChart,
-        //   key: 'reports',
-        //   permission: null,
-        //   children: [
-        //     { path: '/reports/summary', label: 'Summary Report', permission: null },
-        //     { path: '/reports/collection', label: 'Collection Report', permission: null },
-        //     { path: '/reports/expense', label: 'Expense Report', permission: null },
-        //   ],
-        // },
-        // { path: '/settings', icon: Settings, label: 'Settings', permission: null },
+        { path: '/membership-plans', icon: CreditCard, label: 'Membership Plans', adminOnly: true },
+        { path: '/pt-packages', icon: Dumbbell, label: 'PT Packages', adminOnly: true },
+        { path: '/users', icon: UserCog, label: 'User Management', adminOnly: true },
+        {
+          label: 'Reports',
+          icon: FileBarChart,
+          key: 'reports',
+          permission: null,
+          children: [
+            { path: '/reports/summary', label: 'Summary Report', permission: null },
+            { path: '/reports/collection', label: 'Collection Report', permission: null },
+            { path: '/reports/expense', label: 'Expense Report', permission: null },
+            { path: '/reports/my-collection', label: 'My Collection', permission: null },
+          ],
+        },
       ],
     },
   ];

@@ -121,10 +121,10 @@ function App() {
                 {/* <Route path="/calendar" element={<Calendar />} /> */}
 
                 {/* Reports */}
-                {/* <Route path="/reports/summary" element={<SummaryReport />} />
-                <Route path="/reports/collection" element={<CollectionReport />} />
-                <Route path="/reports/expense" element={<ExpenseReport />} />
-                <Route path="/reports/my-collection" element={<MyCollection />} /> */}
+                <Route path="/reports/summary" element={<ProtectedRoute><SummaryReport /></ProtectedRoute>} />
+                <Route path="/reports/collection" element={<ProtectedRoute><CollectionReport /></ProtectedRoute>} />
+                <Route path="/reports/expense" element={<ProtectedRoute><ExpenseReport /></ProtectedRoute>} />
+                <Route path="/reports/my-collection" element={<ProtectedRoute><MyCollection /></ProtectedRoute>} />
 
                 {/* User Management (Admin Only) */}
                 <Route path="/users" element={<AdminProtectedRoute><UserManagement /></AdminProtectedRoute>} />
