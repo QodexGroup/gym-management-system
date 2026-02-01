@@ -1,33 +1,36 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useMembershipPlans } from '../../../hooks/useMembershipPlans';
 import { formatCurrency } from '../../../utils/formatters';
+import { Alert } from '../../../utils/alert';
 
 const MembershipPlanForm = ({ customerId, currentMembership, onSubmit, onCancel }) => {
   const { data: membershipPlans = [], isLoading: loadingPlans } = useMembershipPlans();
-  
+
   const [formData, setFormData] = useState({
     membershipPlanId: currentMembership?.membershipPlanId || '',
-    membershipStartDate: currentMembership?.membershipStartDate 
-      ? new Date(currentMembership.membershipStartDate) 
+    membershipStartDate: currentMembership?.membershipStartDate
+      ? new Date(currentMembership.membershipStartDate)
       : new Date(),
   });
 
-  // Get selected plan
-  const selectedPlan = membershipPlans.find(
-    (plan) => plan.id === parseInt(formData.membershipPlanId)
-  );
+  // Get selected plan details
+  const selectedPlan = useMemo(() => {
+    return membershipPlans.find((plan) => plan.id === Number(formData.membershipPlanId));
+  }, [formData.membershipPlanId, membershipPlans]);
 
+  // Handle submit
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!formData.membershipPlanId) {
+      Alert.error('Please select a membership plan');
       return;
     }
 
     const submitData = {
-      membershipPlanId: parseInt(formData.membershipPlanId),
+      membershipPlanId: Number(formData.membershipPlanId),
       membershipStartDate: formData.membershipStartDate.toISOString().split('T')[0],
     };
 
@@ -35,11 +38,16 @@ const MembershipPlanForm = ({ customerId, currentMembership, onSubmit, onCancel 
   };
 
   if (loadingPlans) {
-    return <div className="text-center py-4">Loading membership plans...</div>;
+    return (
+      <div className="text-center py-6 text-dark-400">
+        Loading membership plans...
+      </div>
+    );
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Membership Plan */}
       <div>
         <label className="label">
           Membership Plan <span className="text-danger-500">*</span>
@@ -58,13 +66,15 @@ const MembershipPlanForm = ({ customerId, currentMembership, onSubmit, onCancel 
             </option>
           ))}
         </select>
+
         {selectedPlan && (
-          <p className="text-sm text-dark-500 mt-1">
-            Price: {formatCurrency(selectedPlan.price)} | Duration: {selectedPlan.planPeriod} {selectedPlan.planInterval}
-          </p>
+          <div className="mt-1 text-xs text-dark-400">
+            Price: <strong>{formatCurrency(selectedPlan.price)}</strong> | Duration: <strong>{selectedPlan.planPeriod} {selectedPlan.planInterval}</strong>
+          </div>
         )}
       </div>
 
+      {/* Start Date */}
       <div>
         <label className="label">
           Start Date <span className="text-danger-500">*</span>
@@ -75,28 +85,37 @@ const MembershipPlanForm = ({ customerId, currentMembership, onSubmit, onCancel 
           dateFormat="yyyy-MM-dd"
           className="input w-full"
           required
+          minDate={new Date()}
         />
       </div>
 
+      {/* Warning for replacing current membership */}
       {currentMembership && (
-        <div className="p-4 bg-amber-100 border border-amber-400 rounded-lg">
-          <p className="text-sm text-amber-900 font-medium">
-            <strong>Note:</strong> This will deactivate the current membership plan and create a new one.
-            {currentMembership.membershipPlan && (
-              <>
-                <br />
-                Current Plan: {currentMembership.membershipPlan.planName}
-              </>
-            )}
-          </p>
+        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+          <strong>Note:</strong> This will deactivate the current membership plan and create a new one.
+          {currentMembership.membershipPlan && (
+            <>
+              <br />
+              Current Plan: <strong>{currentMembership.membershipPlan.planName}</strong>
+            </>
+          )}
         </div>
       )}
 
+      {/* Action Buttons */}
       <div className="flex gap-3 pt-4">
-        <button type="button" onClick={onCancel} className="flex-1 btn-secondary">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 btn-secondary"
+        >
           Cancel
         </button>
-        <button type="submit" className="flex-1 btn-success" disabled={!formData.membershipPlanId}>
+        <button
+          type="submit"
+          className={`flex-1 ${currentMembership ? 'btn-primary' : 'btn-success'}`}
+          disabled={!formData.membershipPlanId}
+        >
           {currentMembership ? 'Update Membership Plan' : 'Add Membership Plan'}
         </button>
       </div>
@@ -105,4 +124,3 @@ const MembershipPlanForm = ({ customerId, currentMembership, onSubmit, onCancel 
 };
 
 export default MembershipPlanForm;
-

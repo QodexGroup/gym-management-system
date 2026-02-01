@@ -3,7 +3,7 @@
  * Defines the structure and initial state for customer form data
  */
 
-import { formatDateForInput } from '../utils/formatters';
+import { calculateAge, formatDate, formatDateForInput } from '../utils/formatters';
 
 /**
  * Get initial customer form data
@@ -67,6 +67,35 @@ export const mapCustomerToFormData = (customer) => {
     emergencyContactAddress: customer.emergencyContactAddress || '',
     membershipPlanId: customer.currentMembership?.membershipPlanId || null,
     currentTrainerId: customer.currentTrainer?.id || null,
+  };
+};
+
+export const mapCustomerToUI = (customer) => {
+  if (!customer) return null;
+
+  const fullName = `${customer.firstName || ''} ${customer.lastName || ''}`.trim();
+  const age = calculateAge(customer.dateOfBirth);
+  const membershipExpiry = customer.currentMembership?.membershipEndDate
+    ? formatDate(customer.currentMembership.membershipEndDate)
+    : 'N/A';
+  const membership = customer.currentMembership?.membershipPlan?.planName || 'N/A';
+  const membershipStatus = customer.currentMembership?.status || 'N/A';
+  const birthDate = customer.dateOfBirth ? formatDate(customer.dateOfBirth) : 'N/A';
+
+  return {
+    ...customer,
+    id: customer.id,
+    name: fullName || 'N/A',
+    avatar: customer.photo, 
+    age,
+    membership,
+    membershipExpiry,
+    membershipStatus,
+    balance: customer.balance || 0,
+    trainer: customer.currentTrainer?.name || null,
+    email: customer.email || 'N/A',
+    phone: customer.phoneNumber || 'N/A',
+    birthDate: birthDate,
   };
 };
 

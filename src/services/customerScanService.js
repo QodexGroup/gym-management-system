@@ -21,7 +21,7 @@ export const customerScanService = {
       if (options.pagelimit) params.append('pagelimit', options.pagelimit);
       if (options.sort) params.append('sort', options.sort);
       if (options.filters) params.append('filters', JSON.stringify(options.filters));
-      if (options.relations) params.append('relations', JSON.stringify(options.relations));
+      if (options.relations) params.append('relations', options.relations);
 
       const response = await authenticatedFetch(`${API_BASE_URL}/customers/scans?${params.toString()}`, {
         method: 'GET',

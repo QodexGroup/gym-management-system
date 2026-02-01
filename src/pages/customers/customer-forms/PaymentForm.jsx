@@ -4,6 +4,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { Avatar } from '../../../components/common';
 import { formatCurrency, formatDate } from '../../../utils/formatters';
 import { Banknote, CreditCard, Smartphone } from 'lucide-react';
+import { PAYMENT_METHOD, PAYMENT_METHOD_LABELS } from '../../../constants/paymentConstants';
 
 const PaymentForm = ({ bill, member, onSubmit, onCancel }) => {
   const remainingAmount = useMemo(() => {
@@ -17,7 +18,7 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel }) => {
   const [paymentDate, setPaymentDate] = useState(new Date());
   const [referenceNumber, setReferenceNumber] = useState('');
   const [remarks, setRemarks] = useState('');
-  const [method, setMethod] = useState('cash');
+  const [method, setMethod] = useState(PAYMENT_METHOD.CASH);
 
   const isAmountInvalid = amount <= 0 || amount > remainingAmount;
 
@@ -131,39 +132,39 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel }) => {
         <div className="grid grid-cols-3 gap-3">
           <button
             type="button"
-            onClick={() => setMethod('cash')}
+            onClick={() => setMethod(PAYMENT_METHOD.CASH)}
             className={`flex items-center justify-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all ${
-              method === 'cash'
+              method === PAYMENT_METHOD.CASH
                 ? 'border-primary-500 bg-primary-500 text-white shadow-lg shadow-primary-500/30'
                 : 'border-dark-200 bg-dark-50 text-dark-700 hover:border-primary-400 hover:bg-primary-50'
             }`}
           >
-            <Banknote className={`w-5 h-5 ${method === 'cash' ? 'text-white' : 'text-dark-600'}`} />
-            <span className="font-medium">Cash</span>
+            <Banknote className={`w-5 h-5 ${method === PAYMENT_METHOD.CASH ? 'text-white' : 'text-dark-600'}`} />
+            <span className="font-medium">{PAYMENT_METHOD_LABELS[PAYMENT_METHOD.CASH]}</span>
           </button>
           <button
             type="button"
-            onClick={() => setMethod('card')}
+            onClick={() => setMethod(PAYMENT_METHOD.CARD)}
             className={`flex items-center justify-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all ${
-              method === 'card'
+              method === PAYMENT_METHOD.CARD
                 ? 'border-primary-500 bg-primary-500 text-white shadow-lg shadow-primary-500/30'
                 : 'border-dark-200 bg-dark-50 text-dark-700 hover:border-primary-400 hover:bg-primary-50'
             }`}
           >
-            <CreditCard className={`w-5 h-5 ${method === 'card' ? 'text-white' : 'text-dark-600'}`} />
-            <span className="font-medium">Card</span>
+            <CreditCard className={`w-5 h-5 ${method === PAYMENT_METHOD.CARD ? 'text-white' : 'text-dark-600'}`} />
+            <span className="font-medium">{PAYMENT_METHOD_LABELS[PAYMENT_METHOD.CARD]}</span>
           </button>
           <button
             type="button"
-            onClick={() => setMethod('gcash')}
+            onClick={() => setMethod(PAYMENT_METHOD.GCASH)}
             className={`flex items-center justify-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all ${
-              method === 'gcash'
+              method === PAYMENT_METHOD.GCASH
                 ? 'border-primary-500 bg-primary-500 text-white shadow-lg shadow-primary-500/30'
                 : 'border-dark-200 bg-dark-50 text-dark-700 hover:border-primary-400 hover:bg-primary-50'
             }`}
           >
-            <Smartphone className={`w-5 h-5 ${method === 'gcash' ? 'text-white' : 'text-dark-600'}`} />
-            <span className="font-medium">GCash</span>
+            <Smartphone className={`w-5 h-5 ${method === PAYMENT_METHOD.GCASH ? 'text-white' : 'text-dark-600'}`} />
+            <span className="font-medium">{PAYMENT_METHOD_LABELS[PAYMENT_METHOD.GCASH]}</span>
           </button>
         </div>
       </div>

@@ -1,4 +1,4 @@
-export { default as StatCard } from './StatCard';
+export { default as StatCard } from './StatsCards';
 export { default as DataTable } from './DataTable';
 export { default as Modal } from './Modal';
 export { default as Badge } from './Badge';
@@ -9,3 +9,4 @@ export { default as FileIcon } from './FileIcon';
 export { default as CalendarView } from './CalendarView';
 export { default as CalendarListView } from './CalendarListView';
 export { default as SearchableClientInput } from './SearchableClientInput';
+export { default as Pagination } from './Pagination';
