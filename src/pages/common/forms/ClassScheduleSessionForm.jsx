@@ -7,6 +7,7 @@ import {
   getInitialClassScheduleSessionFormData,
   mapClassScheduleSessionToFormData,
 } from '../../../models/classScheduleSessionFormModel';
+import { useUpdateClassScheduleSession } from '../../../hooks/useClassScheduleSessions';
 
 const ClassScheduleSessionForm = ({
   session = null,
@@ -15,23 +16,39 @@ const ClassScheduleSessionForm = ({
   isSubmitting = false,
 }) => {
   const [formData, setFormData] = useState(getInitialClassScheduleSessionFormData());
+  const updateMutation = useUpdateClassScheduleSession();
 
   useEffect(() => {
     setFormData(mapClassScheduleSessionToFormData(session));
   }, [session]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Format as YYYY-MM-DD HH:mm:ss to avoid timezone conversion issues
-    const startTime = formData.startDate && formData.startTime
-      ? `${formData.startDate} ${formData.startTime}:00`
-      : null;
+    if (!session?.sessionId) {
+      return;
+    }
 
-    onSubmit({
-      startTime,
-      duration: formData.duration ? parseInt(formData.duration) : null,
-    });
+    try {
+      // Format as YYYY-MM-DD HH:mm:ss to avoid timezone conversion issues
+      const startTime = formData.startDate && formData.startTime
+        ? `${formData.startDate} ${formData.startTime}:00`
+        : null;
+
+      await updateMutation.mutateAsync({
+        id: session.sessionId,
+        data: {
+          startTime,
+          duration: formData.duration ? parseInt(formData.duration) : null,
+        },
+      });
+
+      // Call onSubmit to close modal and refresh data
+      onSubmit?.();
+    } catch (error) {
+      // Error is handled by the mutation hook (Toast will show)
+      console.error('Failed to update session:', error);
+    }
   };
 
   const handleDurationChange = (e) => {
@@ -146,9 +163,9 @@ const ClassScheduleSessionForm = ({
         <button
           type="submit"
           className="flex-1 btn-primary"
-          disabled={isSubmitting || !formData.startDate || !formData.startTime || !formData.duration}
+          disabled={isSubmitting || updateMutation.isPending || !formData.startDate || !formData.startTime || !formData.duration}
         >
-          {isSubmitting ? 'Updating...' : 'Update Session'}
+          {isSubmitting || updateMutation.isPending ? 'Updating...' : 'Update Session'}
         </button>
       </div>
     </form>
