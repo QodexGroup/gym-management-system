@@ -31,3 +31,46 @@ export const CLASS_DURATION_OPTIONS = [
   { label: '2 hours', value: 120 },
   { label: '3 hours', value: 180 },
 ];
+
+export const CAPACITY_STATUS = {
+  FULL: 'full',
+  LOW: 'low',
+  AVAILABLE: 'available',
+};
+
+export const CAPACITY_STATUS_CONFIG = {
+  [CAPACITY_STATUS.FULL]: { color: 'danger', text: 'Full' },
+  [CAPACITY_STATUS.LOW]: { color: 'warning', text: null }, // text will be dynamic: `${remaining} spots`
+  [CAPACITY_STATUS.AVAILABLE]: { color: 'success', text: null }, // text will be dynamic: `${remaining} spots`
+};
+
+/**
+ * Get capacity status based on enrolled and capacity
+ * @param {number} enrolled - Number of enrolled members
+ * @param {number} capacity - Total capacity
+ * @returns {Object} - { status, color, text }
+ */
+export const getCapacityStatus = (enrolled = 0, capacity = 0) => {
+  const remaining = capacity - enrolled;
+
+  if (remaining === 0) {
+    return { 
+      status: CAPACITY_STATUS.FULL, 
+      ...CAPACITY_STATUS_CONFIG[CAPACITY_STATUS.FULL] 
+    };
+  }
+  
+  if (remaining <= 3) {
+    return { 
+      status: CAPACITY_STATUS.LOW, 
+      color: CAPACITY_STATUS_CONFIG[CAPACITY_STATUS.LOW].color,
+      text: `${remaining} spots`
+    };
+  }
+  
+  return { 
+    status: CAPACITY_STATUS.AVAILABLE, 
+    color: CAPACITY_STATUS_CONFIG[CAPACITY_STATUS.AVAILABLE].color,
+    text: `${remaining} spots`
+  };
+};

@@ -31,26 +31,26 @@ export const getFilterButtonColor = (sessionType, isActive) => {
   if (isActive) {
     switch (sessionType) {
       case SESSION_TYPES.COACH_GROUP_CLASS:
-        return 'bg-blue-500 text-white shadow-md';
+        return 'bg-blue-300 text-blue-600 shadow-md';
       case SESSION_TYPES.MEMBER_GROUP_CLASS:
-        return 'bg-purple-500 text-white shadow-md';
+        return 'bg-purple-200 text-purple-600 shadow-md';
       case SESSION_TYPES.COACH_PT:
-        return 'bg-primary-500 text-white shadow-md';
+        return 'bg-primary-200 text-primary-600 shadow-md';
       case SESSION_TYPES.MEMBER_PT:
-        return 'bg-orange-500 text-white shadow-md';
+        return 'bg-orange-200 text-orange-600 shadow-md';
       default:
-        return 'bg-primary-500 text-white shadow-md';
+        return 'bg-primary-200 text-white shadow-md';
     }
   } else {
     switch (sessionType) {
       case SESSION_TYPES.COACH_GROUP_CLASS:
-        return 'bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30';
+        return 'bg-blue-500/10 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30';
       case SESSION_TYPES.MEMBER_GROUP_CLASS:
-        return 'bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30';
+        return 'bg-purple-500/10 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30';
       case SESSION_TYPES.COACH_PT:
-        return 'bg-primary-500/20 text-primary-400 border border-primary-500/30 hover:bg-primary-500/30';
+        return 'bg-primary-500/10 text-primary-400 border border-primary-500/30 hover:bg-primary-500/30';
       case SESSION_TYPES.MEMBER_PT:
-        return 'bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30';
+        return 'bg-orange-500/10 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30';
       default:
         return 'bg-dark-700 text-dark-400 hover:bg-dark-600';
     }
@@ -68,19 +68,79 @@ export const getFilterButtonColor = (sessionType, isActive) => {
 export const getSessionStyle = (session, SESSION_STATUS) => {
   switch (session.type) {
     case SESSION_TYPES.COACH_GROUP_CLASS:
-      return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
     case SESSION_TYPES.MEMBER_GROUP_CLASS:
-      return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+      return 'bg-purple-500/10 text-purple-400 border-purple-500/30';
     case SESSION_TYPES.COACH_PT:
       if (session.status === SESSION_STATUS.SCHEDULED) {
-        return 'bg-primary-500/20 text-primary-400';
+        return 'bg-primary-500/10 text-primary-400';
       } else if (session.status === SESSION_STATUS.COMPLETED) {
-        return 'bg-success-500/20 text-success-400';
+        return 'bg-success-500/10 text-success-400';
       }
       return 'bg-dark-700 text-dark-300';
     case SESSION_TYPES.MEMBER_PT:
-      return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+      return 'bg-orange-500/10 text-orange-400 border-orange-500/30';
     default:
       return 'bg-dark-700 text-dark-300';
+  }
+};
+
+/**
+ * Get session color classes for calendar/list views based on session type
+ * @param {string} sessionType - The session type
+ * @returns {Object} - Object with bg, text, border, and badge color classes
+ */
+export const getSessionTypeColors = (sessionType) => {
+  switch (sessionType) {
+    case SESSION_TYPES.COACH_GROUP_CLASS:
+      return {
+        bg: 'bg-blue-500/10',
+        bgSolid: 'bg-blue-500',
+        text: 'text-blue-400',
+        textSolid: 'text-blue-500',
+        border: 'border-blue-500/30',
+        borderSolid: 'border-blue-500',
+        badge: 'bg-blue-500 text-white',
+      };
+    case SESSION_TYPES.MEMBER_GROUP_CLASS:
+      return {
+        bg: 'bg-purple-500/10',
+        bgSolid: 'bg-purple-500',
+        text: 'text-purple-400',
+        textSolid: 'text-purple-500',
+        border: 'border-purple-500/30',
+        borderSolid: 'border-purple-500',
+        badge: 'bg-purple-500 text-white',
+      };
+    case SESSION_TYPES.COACH_PT:
+      return {
+        bg: 'bg-primary-500/10',
+        bgSolid: 'bg-primary-500',
+        text: 'text-primary-400',
+        textSolid: 'text-primary-500',
+        border: 'border-primary-500/30',
+        borderSolid: 'border-primary-500',
+        badge: 'bg-primary-500 text-white',
+      };
+    case SESSION_TYPES.MEMBER_PT:
+      return {
+        bg: 'bg-orange-500/10',
+        bgSolid: 'bg-orange-500',
+        text: 'text-orange-400',
+        textSolid: 'text-orange-500',
+        border: 'border-orange-500/30',
+        borderSolid: 'border-orange-500',
+        badge: 'bg-orange-500 text-white',
+      };
+    default:
+      return {
+        bg: 'bg-dark-700/20',
+        bgSolid: 'bg-dark-700',
+        text: 'text-dark-300',
+        textSolid: 'text-dark-400',
+        border: 'border-dark-700',
+        borderSolid: 'border-dark-700',
+        badge: 'bg-dark-700 text-dark-50',
+      };
   }
 };
