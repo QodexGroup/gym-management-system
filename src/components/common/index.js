@@ -10,3 +10,4 @@ export { default as CalendarView } from './CalendarView';
 export { default as CalendarListView } from './CalendarListView';
 export { default as SearchableClientInput } from './SearchableClientInput';
 export { default as Pagination } from './Pagination';
+export { default as SearchAndFilter } from './SearchAndFilter';
