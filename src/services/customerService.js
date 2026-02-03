@@ -37,11 +37,12 @@ export const customerService = {
   /**
    * Get all customers with pagination
    * @param {number} page - Page number (default: 1)
+   * @param {string} sort - Sort field and direction (default: 'created_at:desc')
    * @returns {Promise<Object>} - Returns paginated data with data array and pagination info
    */
-  async getAll(page = 1) {
+  async getAll(page = 1, sort) {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/customers?page=${page}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers?page=${page}&sort=${sort}`, {
         method: 'GET',
       });
 

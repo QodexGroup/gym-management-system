@@ -16,13 +16,26 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
 
   const activeMembershipPlan = currentMembership?.membershipPlan || null;
 
+  // Filter bill type options - exclude auto-generated types when creating
+  const availableBillTypes = useMemo(() => {
+    if (isEditMode) {
+      // In edit mode, show all types (but they're disabled anyway)
+      return BILL_TYPE_OPTIONS;
+    }
+    // In create mode, exclude membership and PT package subscriptions (auto-generated)
+    return BILL_TYPE_OPTIONS.filter(
+      opt => opt.value !== BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && 
+             opt.value !== BILL_TYPE.PT_PACKAGE_SUBSCRIPTION
+    );
+  }, [isEditMode]);
+
   // Initialize form state
   const [formData, setFormData] = useState({
     billDate: initialData?.billDate ? new Date(initialData.billDate) : new Date(),
-    billType: initialData?.billType || BILL_TYPE.MEMBERSHIP_SUBSCRIPTION,
+    billType: initialData?.billType || BILL_TYPE.CUSTOM_AMOUNT,
     membershipPlanId: initialData?.membershipPlanId || activeMembershipPlan?.id || '',
     customService: initialData?.customService || '',
-    grossAmount: initialData?.grossAmount || activeMembershipPlan?.price || 0,
+    grossAmount: initialData?.grossAmount || 0,
     discountPercentage: initialData?.discountPercentage || 0,
     paidAmount: initialData?.paidAmount || 0,
     billStatus: initialData?.billStatus || 'active',
@@ -52,7 +65,8 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (formData.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && !activeMembershipPlan) return;
+    // Only validate membership plan in edit mode (create mode doesn't allow membership subscription)
+    if (isEditMode && formData.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && !activeMembershipPlan) return;
 
     const formattedDate = formData.billDate instanceof Date
       ? formData.billDate.toISOString().split('T')[0]
@@ -121,7 +135,7 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
             className="input"
             disabled={isEditMode}
           >
-            {BILL_TYPE_OPTIONS.map(opt => (
+            {availableBillTypes.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
@@ -130,7 +144,8 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
       </div>
 
       {/* Conditional Fields by Bill Type */}
-      {formData.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && activeMembershipPlan && (
+      {/* Membership Subscription - only show in edit mode */}
+      {isEditMode && formData.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && activeMembershipPlan && (
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="label">Membership Plan</label>
@@ -154,6 +169,19 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
           </div>
           <div>
             <label className="label">Unit Amount</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-400">₱</span>
+              <input type="number" name="grossAmount" value={formData.grossAmount} onChange={handleChange} className="input pl-8" required step="0.01" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {formData.billType === BILL_TYPE.REACTIVATION_FEE && (
+        <div className="grid grid-cols-2 gap-4">
+          <div></div>
+          <div>
+            <label className="label">Reactivation Fee Amount</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-400">₱</span>
               <input type="number" name="grossAmount" value={formData.grossAmount} onChange={handleChange} className="input pl-8" required step="0.01" />
@@ -195,7 +223,11 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
       {/* Actions */}
       <div className="flex gap-3 pt-4">
         <button type="button" onClick={onCancel} className="flex-1 btn-secondary">Cancel</button>
-        <button type="submit" className="flex-1 btn-primary" disabled={formData.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && !activeMembershipPlan}>
+        <button 
+          type="submit" 
+          className="flex-1 btn-primary" 
+          disabled={isEditMode && formData.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && !activeMembershipPlan}
+        >
           {isEditMode ? 'Update Bill' : 'Generate Bill'}
         </button>
       </div>

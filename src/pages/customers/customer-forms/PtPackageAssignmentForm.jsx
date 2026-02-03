@@ -17,7 +17,6 @@ const PtPackageAssignmentForm = ({ customerId, onSubmit, onCancel }) => {
 
   const ptPackages = ptPackagesData?.data || ptPackagesData || [];
   const trainers = coachesData?.data || coachesData || [];
-  const activePackages = ptPackages.filter((pkg) => pkg.status === 'active');
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -25,10 +24,13 @@ const PtPackageAssignmentForm = ({ customerId, onSubmit, onCancel }) => {
     if (!formData.ptPackageId) {
       return;
     }
+    if (!formData.trainerId) {
+      return;
+    }
 
     const submitData = {
       ptPackageId: parseInt(formData.ptPackageId),
-      trainerId: formData.trainerId ? parseInt(formData.trainerId) : null,
+      coachId: formData.trainerId ? parseInt(formData.trainerId) : null,
       startDate: formData.startDate.toISOString().split('T')[0],
     };
 
@@ -57,7 +59,7 @@ const PtPackageAssignmentForm = ({ customerId, onSubmit, onCancel }) => {
           required
         >
           <option value="">Select PT package</option>
-          {activePackages.map((pkg) => (
+          {ptPackages.map((pkg) => (
             <option key={pkg.id} value={pkg.id}>
               {pkg.packageName} - {formatCurrency(pkg.price)} ({pkg.numberOfSessions} sessions)
             </option>
@@ -65,15 +67,15 @@ const PtPackageAssignmentForm = ({ customerId, onSubmit, onCancel }) => {
         </select>
       </div>
 
-      {/* Trainer */}
+      {/* Coach */}
       <div>
-        <label className="label">Trainer (Optional)</label>
+        <label className="label">Coach <span className="text-danger-500">*</span></label>
         <select
           className="input"
           value={formData.trainerId}
           onChange={(e) => setFormData((prev) => ({ ...prev, trainerId: e.target.value }))}
         >
-          <option value="">No trainer assigned</option>
+          <option value="">Select coach</option>
           {trainers.map((trainer) => (
             <option key={trainer.id} value={trainer.id}>
               {trainer.firstname} {trainer.lastname}

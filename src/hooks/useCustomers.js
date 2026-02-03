@@ -16,11 +16,11 @@ export const customerKeys = {
 /**
  * Hook to fetch customers with pagination
  */
-export const useCustomers = (page = 1) => {
+export const useCustomers = (page = 1, sort) => {
   return useQuery({
     queryKey: customerKeys.list(page),
     queryFn: async () => {
-      const result = await customerService.getAll(page);
+      const result = await customerService.getAll(page, sort);
       return {
         data: result.data || [],
         pagination: result.pagination,
