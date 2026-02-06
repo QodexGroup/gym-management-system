@@ -37,12 +37,16 @@ export const customerService = {
   /**
    * Get all customers with pagination
    * @param {number} page - Page number (default: 1)
-   * @param {string} sort - Sort field and direction (default: 'created_at:desc')
+   * @param {string} sort - null or string
    * @returns {Promise<Object>} - Returns paginated data with data array and pagination info
    */
-  async getAll(page = 1, sort) {
+  async getAll(page = 1, {sort}) {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/customers?page=${page}&sort=${sort}`, {
+      const params = new URLSearchParams();
+      if (sort) params.append('sort', sort);
+      if (page) params.append('page', page);
+
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers?${params.toString()}`, {
         method: 'GET',
       });
 
@@ -142,6 +146,64 @@ export const customerService = {
 
     const data = await response.json();
     return data.success;
+  },
+
+  /**
+   * Search customers by keyword (name, email, phone)
+   * @param {string} keyword - Search keyword
+   * @param {number} page - Page number (default: 1)
+   * @param {number} pagelimit - Number of results per page (default: 10)
+   * @returns {Promise<Object>} - Returns paginated data with data array and pagination info
+   */
+  async searchCustomers(keyword = '', page = 1, pagelimit = 10) {
+    try {
+      const params = new URLSearchParams();
+      params.append('page', page);
+      params.append('pagelimit', pagelimit);
+      
+      // Add search filter if keyword is provided
+      if (keyword && keyword.trim()) {
+        params.append('filters[search]', keyword.trim());
+      }
+
+      const response = await authenticatedFetch(`${API_BASE_URL}/customers?${params.toString()}`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        // Handle paginated response
+        if (data.data && data.data.data) {
+          return {
+            data: data.data.data,
+            pagination: {
+              currentPage: data.data.meta.current_page,
+              lastPage: data.data.meta.last_page,
+              perPage: data.data.meta.per_page,
+              total: data.data.meta.total,
+              from: data.data.meta.from,
+              to: data.data.meta.to,
+            }
+          };
+        }
+        // Fallback for non-paginated response
+        return {
+          data: Array.isArray(data.data) ? data.data : [],
+          pagination: null
+        };
+      }
+      return { data: [], pagination: null };
+    } catch (error) {
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('Cannot connect to API. Please check if the server is running and CORS is configured.');
+      }
+      throw error;
+    }
   },
 
   /**

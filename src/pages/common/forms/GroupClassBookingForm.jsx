@@ -10,6 +10,7 @@ import {
   getInitialGroupClassBookingFormData,
   mapGroupClassBookingToFormData,
 } from '../../../models/groupClassBookingFormModel';
+import { SESSION_TYPES } from '../../../constants/sessionSchedulingConstants';
 
 const GroupClassBookingForm = ({
   booking = null,
@@ -26,12 +27,18 @@ const GroupClassBookingForm = ({
   const sessionDropdownRef = useRef(null);
 
   // Filter available sessions (not full, future dates, or current booking session)
+  // Exclude PT sessions - only show GROUP CLASS sessions
   const availableSessions = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const currentBookingSessionId = booking?.sessionId || booking?.classScheduleSessionId;
     
     return classSessions.filter(session => {
+      // Exclude PT sessions - only show GROUP CLASS sessions
+      if (session.type === SESSION_TYPES.COACH_PT || session.type === SESSION_TYPES.MEMBER_PT) {
+        return false;
+      }
+      
       // Always include the current booking's session
       if (currentBookingSessionId && session.sessionId === currentBookingSessionId) {
         return true;

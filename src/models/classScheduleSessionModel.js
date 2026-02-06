@@ -5,6 +5,7 @@
 
 import { format } from 'date-fns';
 import { SESSION_TYPES } from '../constants/sessionSchedulingConstants';
+import { CLASS_SCHEDULE_TYPE } from '../constants/classScheduleConstants';
 import { formatTimeFromDate } from '../utils/formatters';
 
 /**
@@ -17,9 +18,20 @@ export const mapClassScheduleSessionToComponent = (session) => {
   
   const schedule = session.classSchedule || {};
   
+  // Determine session type based on class_type
+  const classType = schedule.classType || schedule.class_type || '';
+  const sessionType = classType === CLASS_SCHEDULE_TYPE.PERSONAL_TRAINING
+    ? SESSION_TYPES.COACH_PT 
+    : SESSION_TYPES.COACH_GROUP_CLASS;
+  
+  // For PT sessions, use pt_attendance_count; for group classes, use attendance_count
+  const attendanceCount = classType === CLASS_SCHEDULE_TYPE.PERSONAL_TRAINING
+    ? (session.ptAttendanceCount || session.pt_attendance_count || 0)
+    : (session.attendanceCount || session.attendance_count || 0);
+
   return {
     id: session.id,
-    type: SESSION_TYPES.COACH_GROUP_CLASS,
+    type: sessionType,
     startTime: session.startTime,
     endTime: session.endTime,
     sessionDate: session.startTime ? format(new Date(session.startTime), 'yyyy-MM-dd') : '',
@@ -28,9 +40,10 @@ export const mapClassScheduleSessionToComponent = (session) => {
     coach: schedule.coach,
     coachId: schedule.coachId,
     capacity: schedule.capacity,
-    attendanceCount: session.attendanceCount || 0,
+    attendanceCount: attendanceCount,
     scheduleId: schedule.id,
     sessionId: session.id,
+    classType: classType, // Include classType for reference
   };
 };
 
