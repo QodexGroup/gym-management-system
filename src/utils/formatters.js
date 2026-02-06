@@ -255,3 +255,44 @@ export const formatTimeFromDate = (dateString) => {
   return formatTime(timeString);
 };
 
+/**
+ * Normalize phone number by removing spaces, dashes, and other non-digit characters
+ * @param {string} phoneNumber - Phone number to normalize
+ * @returns {string|null} - Normalized phone number or null if empty/invalid
+ */
+export const normalizePhoneNumber = (phoneNumber) => {
+  if (!phoneNumber || typeof phoneNumber !== 'string') return null;
+  
+  // Remove all non-digit characters
+  const normalized = phoneNumber.replace(/\D/g, '');
+  
+  // Return null if empty, otherwise return the cleaned number
+  return normalized.length > 0 ? normalized : null;
+};
+
+/**
+ * Normalize date to YYYY-MM-DD format for API
+ * @param {string|Date} dateValue - Date value to normalize
+ * @returns {string|null} - Normalized date string (YYYY-MM-DD) or null if invalid
+ */
+export const normalizeDate = (dateValue) => {
+  if (!dateValue) return null;
+  
+  // If it's already a string in YYYY-MM-DD format, return it
+  if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    return dateValue;
+  }
+  
+  // Try to parse as Date
+  const date = new Date(dateValue);
+  
+  // Check for invalid date
+  if (isNaN(date.getTime())) return null;
+  
+  // Format as YYYY-MM-DD
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
+};

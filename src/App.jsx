@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { NotificationProvider } from './context/NotificationContext';
 import AlertProvider from './components/AlertProvider';
 import { queryClient } from './lib/queryClient';
 
@@ -17,18 +16,18 @@ import PtMembers from './pages/trainer/PtMembers';
 
 // Shared Pages
 import CheckIn from './pages/CheckIn';
-import CustomerList from './pages/customers/CustomerList';
-import CustomerProfile from './pages/customers/CustomerProfile';
-import PtPackageList from './pages/admin/PtPackageList';
-import SessionScheduling from './pages/common/SessionScheduling';
-import ClassScheduleList from './pages/common/ClassScheduleList';
-import Expenses from './pages/common/Expenses';
+import CustomerList from './pages/customers/CustomerList.page';
+import CustomerProfile from './pages/customers/CustomerProfile.page';
+import PtPackageList from './pages/admin/PtPackageList.page';
+import SessionScheduling from './pages/common/SessionScheduling.page';
+import ClassScheduleList from './pages/common/ClassScheduleList.page';
+import Expenses from './pages/common/Expenses.page';
 import CollectionReport from './pages/reports/CollectionReport';
 import ExpenseReport from './pages/reports/ExpenseReport';
 import SummaryReport from './pages/reports/SummaryReport';
 import MyCollection from './pages/reports/MyCollection';
-import MembershipPlans from './pages/admin/MembershipPlans';
-import UserManagement from './pages/admin/UserManagement';
+import MembershipPlans from './pages/admin/MembershipPlans.page';
+import UserManagement from './pages/admin/UserManagement.page';
 import Notifications from './pages/Notifications';
 import MyAccount from './pages/MyAccount';
 import Settings from './pages/Settings';
@@ -85,8 +84,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <NotificationProvider>
-          <AlertProvider>
+        <AlertProvider>
             <Router>
               <Routes>
                 {/* Auth Routes */}
@@ -143,7 +141,6 @@ function App() {
               </Routes>
             </Router>
           </AlertProvider>
-        </NotificationProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

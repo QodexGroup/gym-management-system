@@ -1,4 +1,4 @@
-export { default as StatCard } from './StatCard';
+export { default as StatCard } from './StatsCards';
 export { default as DataTable } from './DataTable';
 export { default as Modal } from './Modal';
 export { default as Badge } from './Badge';
@@ -6,6 +6,9 @@ export { default as Avatar } from './Avatar';
 export { default as ImageLightbox } from './ImageLightbox';
 export { default as PhotoThumbnail } from './PhotoThumbnail';
 export { default as FileIcon } from './FileIcon';
-export { default as CalendarView } from './CalendarView';
-export { default as CalendarListView } from './CalendarListView';
+export { default as CalendarView } from '../Calendar/CalendarView';
+export { default as CalendarListView } from '../Calendar/CalendarListView';
 export { default as SearchableClientInput } from './SearchableClientInput';
+export { default as Pagination } from './Pagination';
+export { default as SearchAndFilter } from './SearchAndFilter';
+export { default as CardList } from './CardList';

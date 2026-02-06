@@ -20,5 +20,5 @@ export const BOOKING_STATUS_VARIANTS = {
   [BOOKING_STATUS.BOOKED]: 'default',
   [BOOKING_STATUS.ATTENDED]: 'success',
   [BOOKING_STATUS.NO_SHOW]: 'warning',
-  [BOOKING_STATUS.CANCELLED]: 'default',
+  [BOOKING_STATUS.CANCELLED]: 'danger',
 };

@@ -1,35 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import { Badge } from '../components/common';
 import {
   Bell,
   AlertTriangle,
-  CheckCircle,
   Info,
-  X,
-  Check,
   Clock,
   DollarSign,
   User,
-  Calendar,
+  Check,
 } from 'lucide-react';
-import { useNotifications } from '../context/NotificationContext';
-import { notificationService } from '../services/notificationService';
+import {
+  useNotificationsInfinite,
+  useUnreadCount,
+  useMarkNotificationAsRead,
+  useMarkAllNotificationsAsRead,
+} from '../hooks/useNotifications';
+import { notificationService } from '../common/services/notificationService';
+
+const PAGE_LIMIT = 20;
 
 const Notifications = () => {
   const navigate = useNavigate();
-  const {
-    notifications,
-    unreadCount,
-    isLoading,
-    pagination,
-    fetchNotifications,
-    markAsRead,
-    markAllAsRead,
-    loadMore,
-  } = useNotifications();
-
   const [filter, setFilter] = useState('all');
   const [preferences, setPreferences] = useState({
     membership_expiry_enabled: true,
@@ -39,14 +32,19 @@ const Notifications = () => {
   const [loadingPreferences, setLoadingPreferences] = useState(false);
   const [savingPreferences, setSavingPreferences] = useState(false);
 
-  // Fetch notifications on mount
-  useEffect(() => {
-    fetchNotifications(1, 20);
-    loadPreferences();
-  }, [fetchNotifications]);
+  const {
+    notifications,
+    pagination,
+    isLoading,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useNotificationsInfinite(PAGE_LIMIT);
+  const { data: unreadCount = 0 } = useUnreadCount();
+  const markAsRead = useMarkNotificationAsRead();
+  const markAllAsRead = useMarkAllNotificationsAsRead();
 
-  // Load preferences from API
-  const loadPreferences = async () => {
+  const loadPreferences = useCallback(async () => {
     try {
       setLoadingPreferences(true);
       const prefs = await notificationService.getPreferences();
@@ -56,25 +54,20 @@ const Notifications = () => {
     } finally {
       setLoadingPreferences(false);
     }
-  };
+  }, []);
 
-  // Handle toggle change
+  useEffect(() => {
+    loadPreferences();
+  }, [loadPreferences]);
+
   const handleToggleChange = async (key) => {
     try {
       setSavingPreferences(true);
-      const newPreferences = {
-        ...preferences,
-        [key]: !preferences[key],
-      };
-
-      // Optimistically update UI
+      const newPreferences = { ...preferences, [key]: !preferences[key] };
       setPreferences(newPreferences);
-
-      // Save to API
       await notificationService.updatePreferences(newPreferences);
     } catch (error) {
       console.error('Error saving preferences:', error);
-      // Revert on error
       loadPreferences();
     } finally {
       setSavingPreferences(false);
@@ -87,28 +80,11 @@ const Notifications = () => {
     return n.type === filter;
   });
 
-  const handleMarkAsRead = async (id) => {
-    try {
-      await markAsRead(id);
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
-  };
-
-  const handleMarkAllAsRead = async () => {
-    try {
-      await markAllAsRead();
-    } catch (error) {
-      console.error('Error marking all as read:', error);
-    }
-  };
+  const handleMarkAsRead = (id) => markAsRead.mutate(id);
+  const handleMarkAllAsRead = () => markAllAsRead.mutate();
 
   const handleNotificationClick = (notification) => {
-    if (!notification.isRead) {
-      handleMarkAsRead(notification.id);
-    }
-
-    // Navigate based on notification type
+    if (!notification.isRead) handleMarkAsRead(notification.id);
     if (notification.data?.customer_id) {
       navigate(`/members/${notification.data.customer_id}`);
     }
@@ -153,9 +129,12 @@ const Notifications = () => {
     }
   };
 
+  const loadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+  };
+
   return (
     <Layout title="Notifications" subtitle="Stay updated with important alerts and messages">
-      {/* Header Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div className="card bg-gradient-to-br from-primary-500 to-primary-600 text-white">
           <div className="flex items-center justify-between">
@@ -189,16 +168,11 @@ const Notifications = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Notifications List */}
         <div className="lg:col-span-2 card">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
-              <h3 className="text-lg font-semibold text-dark-800">
-                All Notifications
-              </h3>
-              {unreadCount > 0 && (
-                <Badge variant="danger">{unreadCount} new</Badge>
-              )}
+              <h3 className="text-lg font-semibold text-dark-800">All Notifications</h3>
+              {unreadCount > 0 && <Badge variant="danger">{unreadCount} new</Badge>}
             </div>
             <div className="flex items-center gap-2">
               <select
@@ -215,9 +189,10 @@ const Notifications = () => {
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllAsRead}
-                  className="px-3 py-2 text-sm text-primary-600 hover:bg-primary-200 rounded-lg transition-colors"
+                  disabled={markAllAsRead.isPending}
+                  className="px-3 py-2 text-sm text-primary-600 hover:bg-primary-200 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  Mark all read
+                  Read all
                 </button>
               )}
             </div>
@@ -225,7 +200,7 @@ const Notifications = () => {
 
           {isLoading && notifications.length === 0 ? (
             <div className="text-center py-12">
-              <div className="animate-spin w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full mx-auto"></div>
+              <div className="animate-spin w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full mx-auto" />
               <p className="text-dark-400 mt-4">Loading notifications...</p>
             </div>
           ) : filteredNotifications.length > 0 ? (
@@ -235,8 +210,7 @@ const Notifications = () => {
                   <div
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification)}
-                    className={`flex items-start gap-4 p-4 rounded-xl cursor-pointer transition-colors ${!notification.isRead ? 'bg-dark-700 border-l-4 border-primary-500' : 'bg-dark-800'
-                      } hover:bg-dark-600`}
+                    className={`flex items-start gap-4 p-4 rounded-xl cursor-pointer transition-colors ${!notification.isRead ? 'bg-dark-700 border-l-4 border-primary-500' : 'bg-dark-800'} hover:bg-dark-600`}
                   >
                     <div className={`p-2 rounded-lg ${getIconBg(notification.type)}`}>
                       {getIcon(notification.type)}
@@ -253,9 +227,7 @@ const Notifications = () => {
                       <h4 className={`font-medium text-dark-800 ${!notification.isRead ? 'font-semibold' : ''}`}>
                         {notification.title}
                       </h4>
-                      <p className="text-sm text-dark-500 mt-1">
-                        {notification.message}
-                      </p>
+                      <p className="text-sm text-dark-500 mt-1">{notification.message}</p>
                       <div className="flex items-center gap-2 text-xs text-dark-400 mt-2">
                         <Clock className="w-3.5 h-3.5" />
                         {notification.timeAgo}
@@ -268,7 +240,8 @@ const Notifications = () => {
                             e.stopPropagation();
                             handleMarkAsRead(notification.id);
                           }}
-                          className="p-2 text-dark-400 hover:text-success-600 hover:bg-success-50 rounded-lg transition-colors"
+                          disabled={markAsRead.isPending}
+                          className="p-2 text-dark-400 hover:text-success-600 hover:bg-success-50 rounded-lg transition-colors disabled:opacity-50"
                           title="Mark as read"
                         >
                           <Check className="w-4 h-4" />
@@ -279,15 +252,14 @@ const Notifications = () => {
                 ))}
               </div>
 
-              {/* Load More Button */}
-              {pagination && pagination.current_page < pagination.last_page && (
+              {hasNextPage && (
                 <div className="mt-6 text-center">
                   <button
                     onClick={loadMore}
-                    disabled={isLoading}
+                    disabled={isFetchingNextPage}
                     className="px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50"
                   >
-                    {isLoading ? 'Loading...' : 'Load More'}
+                    {isFetchingNextPage ? 'Loading...' : 'Load More'}
                   </button>
                 </div>
               )}
@@ -295,86 +267,41 @@ const Notifications = () => {
           ) : (
             <div className="text-center py-12">
               <Bell className="w-16 h-16 text-dark-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-dark-600">
-                No notifications
-              </h3>
+              <h3 className="text-lg font-semibold text-dark-600">No notifications</h3>
               <p className="text-dark-400 mt-1">You're all caught up!</p>
             </div>
           )}
         </div>
 
-        {/* Settings Panel */}
         <div className="space-y-6">
           <div className="card">
-            <h3 className="text-lg font-semibold text-dark-800 mb-4">
-              Notification Settings
-            </h3>
+            <h3 className="text-lg font-semibold text-dark-800 mb-4">Notification Settings</h3>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-dark-700 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <AlertTriangle className="w-5 h-5 text-warning-500" />
-                  <div>
-                    <p className="font-medium text-dark-800">Membership Expiry</p>
-                    <p className="text-xs text-dark-500">
-                      Alert when memberships are expiring
-                    </p>
+              {[
+                { key: 'membership_expiry_enabled', icon: AlertTriangle, label: 'Membership Expiry', desc: 'Alert when memberships are expiring', color: 'text-warning-500' },
+                { key: 'payment_alerts_enabled', icon: DollarSign, label: 'Payment Alerts', desc: 'Notify on new payments', color: 'text-success-500' },
+                { key: 'new_registrations_enabled', icon: User, label: 'New Registrations', desc: 'Alert on new member sign-ups', color: 'text-accent-500' },
+              ].map(({ key, icon: Icon, label, desc, color }) => (
+                <div key={key} className="flex items-center justify-between p-3 bg-dark-700 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Icon className={`w-5 h-5 ${color}`} />
+                    <div>
+                      <p className="font-medium text-dark-800">{label}</p>
+                      <p className="text-xs text-dark-500">{desc}</p>
+                    </div>
                   </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={preferences[key]}
+                      onChange={() => handleToggleChange(key)}
+                      disabled={savingPreferences}
+                    />
+                    <div className="w-11 h-6 bg-dark-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500" />
+                  </label>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={preferences.membership_expiry_enabled}
-                    onChange={() => handleToggleChange('membership_expiry_enabled')}
-                    disabled={savingPreferences}
-                  />
-                  <div className="w-11 h-6 bg-dark-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-dark-700 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <DollarSign className="w-5 h-5 text-success-500" />
-                  <div>
-                    <p className="font-medium text-dark-800">Payment Alerts</p>
-                    <p className="text-xs text-dark-500">
-                      Notify on new payments
-                    </p>
-                  </div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={preferences.payment_alerts_enabled}
-                    onChange={() => handleToggleChange('payment_alerts_enabled')}
-                    disabled={savingPreferences}
-                  />
-                  <div className="w-11 h-6 bg-dark-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-dark-700 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <User className="w-5 h-5 text-accent-500" />
-                  <div>
-                    <p className="font-medium text-dark-800">New Registrations</p>
-                    <p className="text-xs text-dark-500">
-                      Alert on new member sign-ups
-                    </p>
-                  </div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={preferences.new_registrations_enabled}
-                    onChange={() => handleToggleChange('new_registrations_enabled')}
-                    disabled={savingPreferences}
-                  />
-                  <div className="w-11 h-6 bg-dark-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
-                </label>
-              </div>
+              ))}
             </div>
           </div>
         </div>
