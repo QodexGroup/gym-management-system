@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { CheckCircle, Clock, AlertCircle, Receipt, UserCheck, Plus, Calendar, X } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, Receipt, UserCheck, Plus, Calendar, X, User } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
 import { Pagination, Modal, Badge } from '../../../components/common';
 import StatsCards from '../../../components/common/StatsCards';
@@ -38,7 +38,9 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
   const deleteBillMutation = useDeleteCustomerBill();
   const createPaymentMutation = useCreateCustomerPayment();
   const membershipMutation = useCreateOrUpdateCustomerMembership();
-  const { data: customerPtPackagesData, isLoading: loadingPtPackages } = useCustomerPtPackages(member?.id);
+  const { data: customerPtPackagesData, isLoading: loadingPtPackages } = useCustomerPtPackages(member?.id, {
+    relations: 'ptPackage,coach',
+  });
   const assignPtPackageMutation = useAssignPtPackage();
   const cancelPtPackageMutation = useCancelPtPackage();
 
@@ -47,17 +49,17 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
 
   const currentMembership = member?.currentMembership;
   const hasActiveMembership = currentMembership?.status === CUSTOMER_MEMBERSHIP_STATUS.ACTIVE;
-  const customerPtPackages = customerPtPackagesData?.data || [];
-  const activePtPackages = customerPtPackages.filter(
-    (pkg) => pkg.status === CUSTOMER_PT_PACKAGE_STATUS.ACTIVE
-  );
+  
+  // The service returns data.data directly, so customerPtPackagesData is already the array
+  // Backend already filters for active packages
+  const customerPtPackages = customerPtPackagesData || [];
 
   /* ---------------- Stats ---------------- */
   const stats = useMemo(() => {
     const totalPaid = bills.filter(b => b?.billStatus === BILL_STATUS.PAID)
                       .reduce((sum, b) => sum + (parseFloat(b?.paidAmount) || 0), 0);
     const openBills = bills.filter(b => b?.billStatus === BILL_STATUS.ACTIVE || b?.billStatus === BILL_STATUS.PARTIAL).length;
-    const balanceDue = bills.filter(b => b?.billStatus !== BILL_STATUS.PAID)
+    const balanceDue = bills.filter(b => b?.billStatus !== BILL_STATUS.PAID && b?.billStatus !== BILL_STATUS.VOIDED)
                        .reduce((sum, b) => sum + (parseFloat(b?.netAmount) || 0) - (parseFloat(b?.paidAmount) || 0), 0);
 
     return [
@@ -115,9 +117,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
         customerId: member.id,
         paymentData
       });
-      // Reload the bill data after payment is created
-      await refetchBills();
-      // Also invalidate the specific bill's query if needed
+      // Invalidate queries to trigger automatic refetch (removes duplicate queries)
       queryClient.invalidateQueries({ queryKey: customerBillKeys.byCustomer(member.id) });
       setShowPaymentModal(false);
       setPaymentBill(null);
@@ -125,7 +125,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
     } catch (error) {
       console.error(error);
     }
-  }, [paymentBill, createPaymentMutation, member.id, onCustomerUpdate, refetchBills, queryClient]);
+  }, [paymentBill, createPaymentMutation, member.id, onCustomerUpdate, queryClient]);
 
   const handleBillSubmit = useCallback(async (billData) => {
     try {
@@ -163,16 +163,19 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
         packageData,
       });
       setShowPtPackageModal(false);
+      // Invalidate queries to trigger automatic refetch (removes duplicate queries)
+      queryClient.invalidateQueries({ queryKey: customerBillKeys.byCustomer(member.id) });
       onCustomerUpdate?.();
     } catch (error) {
       console.error(error);
     }
-  }, [assignPtPackageMutation, member.id, onCustomerUpdate]);
+  }, [assignPtPackageMutation, member.id, onCustomerUpdate, queryClient]);
 
   const handleCancelPtPackage = useCallback(async (packageId) => {
     const result = await Alert.confirm({
       title: 'Cancel PT Package?',
       text: 'Are you sure you want to cancel this PT package?',
+      html: `<p>This action will void the bill and the PT package will be removed from the customer.</p>`,
       icon: 'warning',
       confirmButtonText: 'Yes, cancel it',
       cancelButtonText: 'No',
@@ -185,11 +188,13 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
         customerId: member.id,
         packageId,
       });
+      // Invalidate queries to trigger automatic refetch (removes duplicate queries)
+      queryClient.invalidateQueries({ queryKey: customerBillKeys.byCustomer(member.id) });
       onCustomerUpdate?.();
     } catch (error) {
       console.error(error);
     }
-  }, [cancelPtPackageMutation, member.id, onCustomerUpdate]);
+  }, [cancelPtPackageMutation, member.id, onCustomerUpdate, queryClient]);
 
   /* ---------------- Columns ---------------- */
   const columns = useMemo(() => billsTableColumns({
@@ -266,13 +271,13 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
           <div className="bg-dark-700 border border-dark-600 rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-sm font-semibold text-dark-50">PT Packages</h4>
-              {activePtPackages.length > 0 && (
-                <Badge variant="success" size="sm">{activePtPackages.length} Active</Badge>
+              {customerPtPackages.length > 0 && (
+                <Badge variant="success" size="sm">{customerPtPackages.length} Active</Badge>
               )}
             </div>
-            {activePtPackages.length > 0 ? (
+            {customerPtPackages.length > 0 ? (
               <div className="space-y-2">
-                {activePtPackages.slice(0, 2).map((customerPackage) => {
+                {customerPtPackages.slice(0, 2).map((customerPackage) => {
                   const ptPackage = customerPackage.ptPackage;
                   const sessionsRemaining = customerPackage.numberOfSessionsRemaining || customerPackage.classesRemaining || 0;
                   const sessionsTotal = ptPackage?.numberOfSessions || customerPackage.classesTotal || 0;
@@ -294,9 +299,13 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
                       </div>
                       <div className="flex items-center gap-2 text-xs text-dark-400">
                         <span>{sessionsRemaining}/{sessionsTotal} sessions</span>
-                        <span>•</span>
                         <span>{formatCurrency(ptPackage?.price || 0)}</span>
-                      </div>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <User className="w-3 h-3" />
+                          {customerPackage.coach?.firstname} {customerPackage.coach?.lastname}
+                        </span>
+                      </div>  
                       <div className="w-full bg-dark-600 rounded-full h-1.5 mt-1">
                         <div
                           className="bg-primary-500 h-1.5 rounded-full transition-all"
@@ -306,8 +315,8 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
                     </div>
                   );
                 })}
-                {activePtPackages.length > 2 && (
-                  <p className="text-xs text-dark-400 pt-1">+{activePtPackages.length - 2} more package(s)</p>
+                {customerPtPackages.length > 2 && (
+                  <p className="text-xs text-dark-400 pt-1">+{customerPtPackages.length - 2} more package(s)</p>
                 )}
               </div>
             ) : (

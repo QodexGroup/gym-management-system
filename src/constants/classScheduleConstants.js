@@ -74,3 +74,17 @@ export const getCapacityStatus = (enrolled = 0, capacity = 0) => {
     text: `${remaining} spots`
   };
 };
+
+/**
+ * Class Schedule Type Constants
+ * Matches backend ClassTypeScheduleConstant
+ */
+export const CLASS_SCHEDULE_TYPE = {
+  GROUP_CLASS: 'GROUP CLASS',
+  PERSONAL_TRAINING: 'PERSONAL TRAINING',
+};
+
+export const CLASS_SCHEDULE_TYPE_LABELS = {
+  [CLASS_SCHEDULE_TYPE.GROUP_CLASS]: 'Group Class',
+  [CLASS_SCHEDULE_TYPE.PERSONAL_TRAINING]: 'Personal Training',
+};

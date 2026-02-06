@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import NotificationBell from '../NotificationBell';
+import SearchableClientInput from '../common/SearchableClientInput';
 import {
-  Search,
   ChevronDown,
   User,
   LogOut,
@@ -14,7 +14,6 @@ const Header = ({ title, subtitle }) => {
   const { user, logout, isAdmin } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const handleMyProfile = () => {
     setShowUserMenu(false);
@@ -25,6 +24,10 @@ const Header = ({ title, subtitle }) => {
     setShowUserMenu(false);
     await logout();
     navigate('/login');
+  };
+
+  const handleCustomerSelect = (customer) => {
+    navigate(`/members/${customer.id}`);
   };
 
   return (
@@ -39,14 +42,12 @@ const Header = ({ title, subtitle }) => {
         {/* Right Section */}
         <div className="flex items-center gap-4">
           {/* Search */}
-          <div className="relative hidden md:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
-            <input
-              type="text"
-              placeholder="Search members, trainers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-64 pl-10 pr-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 placeholder-dark-400 rounded-xl focus:bg-dark-600 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all outline-none"
+          <div className="hidden md:block">
+            <SearchableClientInput
+              placeholder="Search client by name"
+              className="w-64"
+              onSelect={handleCustomerSelect}
+              label=""
             />
           </div>
 

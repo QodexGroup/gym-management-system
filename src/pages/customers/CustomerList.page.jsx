@@ -29,9 +29,9 @@ const CustomerList = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [formData, setFormData] = useState(getInitialCustomerFormData());
-
+  const sort = 'first_name:desc';
   // Fetch customers
-  const { data, isLoading } = useCustomers(currentPage);
+  const { data, isLoading } = useCustomers(currentPage, sort);
   const deleteCustomerMutation = useDeleteCustomer();
 
   const customers = data?.data || [];

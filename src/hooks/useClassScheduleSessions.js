@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tansta
 import { classScheduleSessionService } from '../services/classScheduleSessionService';
 import { Toast } from '../utils/alert';
 import { classSessionBookingKeys } from './useClassSessionBookings';
+import { ptBookingKeys } from './usePtBookings';
 
 export const classScheduleSessionKeys = {
   all: ['classScheduleSessions'],
@@ -36,6 +37,8 @@ export const useUpdateClassScheduleSession = () => {
       queryClient.invalidateQueries({ queryKey: classScheduleSessionKeys.all });
       // Invalidate booking sessions so they refetch with updated session data
       queryClient.invalidateQueries({ queryKey: classSessionBookingKeys.all });
+      // Invalidate PT bookings in case session update affects PT bookings
+      queryClient.invalidateQueries({ queryKey: ptBookingKeys.all });
       Toast.success('Session updated successfully');
     },
     onError: (error) => {

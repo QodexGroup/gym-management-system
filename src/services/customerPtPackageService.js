@@ -73,15 +73,21 @@ export const customerPtPackageService = {
   /**
    * Cancel customer PT package
    * @param {number} customerId
-   * @param {number} packageId
+   * @param {number} ptPackageId
    * @returns {Promise<boolean>}
    */
-  async cancel(customerId, packageId) {
+  async cancel(customerId, ptPackageId) {
     try {
       const response = await authenticatedFetch(
-        `${API_BASE_URL}/customers/${customerId}/pt-packages/${packageId}`,
+        `${API_BASE_URL}/customers/pt-packages/${ptPackageId}`,
         {
           method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            customerId: customerId,
+          }),
         }
       );
 

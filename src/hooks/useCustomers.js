@@ -9,6 +9,7 @@ export const customerKeys = {
   all: ['customers'],
   lists: () => [...customerKeys.all, 'list'],
   list: (page) => [...customerKeys.lists(), page],
+  allCustomers: () => [...customerKeys.all, 'all-customers'],
   details: () => [...customerKeys.all, 'detail'],
   detail: (id) => [...customerKeys.details(), id],
 };
@@ -16,17 +17,31 @@ export const customerKeys = {
 /**
  * Hook to fetch customers with pagination
  */
-export const useCustomers = (page = 1) => {
+export const useCustomers = (page = 1, options = {}) => {
   return useQuery({
     queryKey: customerKeys.list(page),
     queryFn: async () => {
-      const result = await customerService.getAll(page);
+      const result = await customerService.getAll(page, options);
       return {
         data: result.data || [],
         pagination: result.pagination,
       };
     },
     placeholderData: keepPreviousData, // Keep previous page data while loading new page
+  });
+};
+
+/**
+ * Hook to fetch all customers without pagination (for dropdowns)
+ */
+export const useAllCustomers = () => {
+  return useQuery({
+    queryKey: customerKeys.allCustomers(),
+    queryFn: async () => {
+      const result = await customerService.getAll(1, { pagelimit: 0 });
+      return result.data || [];
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 };
 
@@ -59,6 +74,7 @@ export const useCreateCustomer = () => {
     onSuccess: () => {
       // Invalidate and refetch customers list
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: customerKeys.allCustomers() });
       Toast.success('Customer created successfully');
     },
     onError: (error) => {
@@ -97,6 +113,7 @@ export const useUpdateCustomer = () => {
       
       // Also invalidate the list to keep it in sync
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: customerKeys.allCustomers() });
       Toast.success('Customer updated successfully');
     },
     onError: (error) => {
@@ -118,6 +135,7 @@ export const useDeleteCustomer = () => {
     onSuccess: () => {
       // Invalidate customers list
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: customerKeys.allCustomers() });
     },
     onError: (error) => {
       Toast.error(error.message || 'Failed to delete customer');
@@ -125,3 +143,23 @@ export const useDeleteCustomer = () => {
   });
 };
 
+/**
+ * Hook to search customers with debouncing
+ * @param {string} keyword - Search keyword
+ * @param {number} page - Page number (default: 1)
+ * @param {number} pagelimit - Results per page (default: 10)
+ */
+export const useSearchCustomers = (keyword = '', page = 1, pagelimit = 10) => {
+  return useQuery({
+    queryKey: ['customers', 'search', keyword, page, pagelimit],
+    queryFn: async () => {
+      const result = await customerService.searchCustomers(keyword, page, pagelimit);
+      return {
+        data: result.data || [],
+        pagination: result.pagination,
+      };
+    },
+    enabled: true, // Always enabled, but will use default page when keyword is empty
+    staleTime: 30 * 1000, // Cache for 30 seconds
+  });
+};

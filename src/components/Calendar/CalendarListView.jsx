@@ -1,7 +1,7 @@
 import { Badge } from '../common/index';
 import { Calendar, Clock, User, Edit, X, Users, CheckCircle } from 'lucide-react';
 import { SESSION_TYPES, getSessionTypeColors } from '../../constants/sessionSchedulingConstants';
-import { BOOKING_STATUS_VARIANTS } from '../../constants/classSessionBookingConstants';
+import { BOOKING_STATUS_VARIANTS, BOOKING_STATUS } from '../../constants/classSessionBookingConstants';
 
 const CalendarListView = ({ sessions = [] }) => {
   if (sessions.length === 0) {
@@ -21,12 +21,30 @@ const CalendarListView = ({ sessions = [] }) => {
       <h3 className="text-lg font-semibold text-dark-50 mb-4">Upcoming Sessions</h3>
       <div className="space-y-3">
         {sessions.map((session) => {
-          const { id, type, title, subtitle, startTime, endTime, meta, notes, actions, status } = session;
+          const { id, type, title, subtitle, startTime, endTime, meta, notes, actions, status, sessionDate } = session;
 
           const colors = getSessionTypeColors(type);
           const isGroupClass = type === SESSION_TYPES.COACH_GROUP_CLASS;
-          const isMemberBooking = type === SESSION_TYPES.MEMBER_GROUP_CLASS;
+          const isMemberBooking = type === SESSION_TYPES.MEMBER_GROUP_CLASS || type === SESSION_TYPES.MEMBER_PT;
+          const isCoachSchedule = type === SESSION_TYPES.COACH_GROUP_CLASS || type === SESSION_TYPES.COACH_PT;
           const isPT = type === SESSION_TYPES.COACH_PT || type === SESSION_TYPES.MEMBER_PT;
+
+          // Get session date for comparison
+          const sessionDateObj = startTime ? new Date(startTime) : (sessionDate ? new Date(sessionDate) : null);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const sessionDateOnly = sessionDateObj ? new Date(sessionDateObj) : null;
+          if (sessionDateOnly) {
+            sessionDateOnly.setHours(0, 0, 0, 0);
+          }
+          const isSessionTodayOrPast = sessionDateOnly ? sessionDateOnly <= today : false;
+          
+          // Determine if edit/cancel should be hidden
+          const shouldHideButtons = 
+            // For member bookings: hide if status is ATTENDED or NO_SHOW
+            (isMemberBooking && (status === BOOKING_STATUS.ATTENDED || status === BOOKING_STATUS.NO_SHOW)) ||
+            // For coach schedules: hide if date is today or in the past
+            (isCoachSchedule && isSessionTodayOrPast);
 
           let badgeLabel = '';
           if (type === SESSION_TYPES.COACH_GROUP_CLASS) badgeLabel = 'Coach Group Class';
@@ -102,7 +120,7 @@ const CalendarListView = ({ sessions = [] }) => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {actions?.onEdit && (
+                  {!shouldHideButtons && actions?.onEdit && (
                     <button
                       onClick={actions.onEdit}
                       className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
@@ -111,7 +129,7 @@ const CalendarListView = ({ sessions = [] }) => {
                       <Edit className="w-4 h-4" />
                     </button>
                   )}
-                  {actions?.onCancel && (
+                  {!shouldHideButtons && actions?.onCancel && (
                     <button
                       onClick={actions.onCancel}
                       className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"

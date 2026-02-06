@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Layout from '../../components/layout/Layout';
-import { Badge, Modal } from '../../components/common';
+import { Modal } from '../../components/common';
 import CalendarView from '../../components/Calendar/CalendarView';
 import CalendarListView from '../../components/Calendar/CalendarListView';
 import CalendarToolbar from '../../components/Calendar/CalendarToolbar';
 import PtSessionForm from './forms/PtSessionForm';
+import PtAttendanceForm from './forms/PtAttendanceForm';
 import ClassAttendanceForm from './forms/ClassAttendanceForm';
 import GroupClassBookingForm from './forms/GroupClassBookingForm';
 import ClassScheduleSessionForm from './forms/ClassScheduleSessionForm';
@@ -23,10 +24,12 @@ import { useCoaches } from '../../hooks/useUsers';
 import { useCustomers } from '../../hooks/useCustomers';
 import { useClassScheduleSessions, useUpdateClassScheduleSession } from '../../hooks/useClassScheduleSessions';
 import { useBookingSessions, useUpdateAttendanceStatus } from '../../hooks/useClassSessionBookings';
+import { useCreatePtBooking, useUpdatePtBooking, usePtBookings, usePtBookingsByCoach, useCancelPtBooking } from '../../hooks/usePtBookings';
 import { useAuth } from '../../context/AuthContext';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { mapClassScheduleSessionsToComponent } from '../../models/classScheduleSessionModel';
 import { mapBookingsToMemberGroupClassSessions } from '../../models/classSessionBookingModel';
+import { transformPtBookingToApiFormat, mapPtBookingsToSessions } from '../../models/ptBookingModel';
 import { transformSessionsForCalendar } from './transformers/sessionCalendarTransformer';
 
 const SessionScheduling = () => {
@@ -41,13 +44,15 @@ const SessionScheduling = () => {
   const [showGroupClassModal, setShowGroupClassModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showGroupClassEditModal, setShowGroupClassEditModal] = useState(false);
+  const [showPtAttendanceModal, setShowPtAttendanceModal] = useState(false);
+  const [selectedPtSession, setSelectedPtSession] = useState(null);
 
   /* ------------------------------- filters ------------------------------- */
   const [typeFilters, setTypeFilters] = useState({
     [SESSION_TYPES.COACH_GROUP_CLASS]: true,
     [SESSION_TYPES.MEMBER_GROUP_CLASS]: true,
-    [SESSION_TYPES.COACH_PT]: false,
-    [SESSION_TYPES.MEMBER_PT]: false,
+    [SESSION_TYPES.COACH_PT]: true,
+    [SESSION_TYPES.MEMBER_PT]: true,
   });
 
   /* ------------------------------- hooks ------------------------------- */
@@ -79,15 +84,37 @@ const SessionScheduling = () => {
   const { data: bookingsData } = useBookingSessions(calendarStartDate, calendarEndDate);
   const { data: customersData } = useCustomers(1);
 
+  // Fetch PT bookings based on user role
+  const ptBookingsOptions = {
+    relations: 'ptPackage,customer,coach',
+  };
+  const { data: ptBookingsData } = isTrainer && user?.id
+    ? usePtBookingsByCoach(user.id, calendarStartDate, calendarEndDate, ptBookingsOptions)
+    : usePtBookings(calendarStartDate, calendarEndDate, ptBookingsOptions);
+
   /* ------------------------------- mutations ------------------------------- */
   const updateClassScheduleSessionMutation = useUpdateClassScheduleSession();
   const updateAttendanceStatusMutation = useUpdateAttendanceStatus();
+  const createPtBookingMutation = useCreatePtBooking();
+  const updatePtBookingMutation = useUpdatePtBooking();
+  const cancelPtBookingMutation = useCancelPtBooking();
 
-  const classScheduleSessions = useMemo(() => mapClassScheduleSessionsToComponent(classSessionsData?.data || []), [classSessionsData]);
+  const classScheduleSessions = useMemo(() => {
+    const sessions = mapClassScheduleSessionsToComponent(classSessionsData?.data || []);
+    // Attendance count is now calculated on backend for PT sessions
+    return sessions;
+  }, [classSessionsData]);
 
   const memberGroupClassSessions = useMemo(() => {
     return mapBookingsToMemberGroupClassSessions(bookingsData);
   }, [bookingsData]);
+
+  const ptSessions = useMemo(() => {
+    const bookings = ptBookingsData || [];
+
+    // Always show member PT bookings (booking perspective)
+    return mapPtBookingsToSessions(bookings);
+  }, [ptBookingsData]);
 
   const customers = useMemo(() => customersData?.data || [], [customersData]);
 
@@ -97,14 +124,24 @@ const SessionScheduling = () => {
 
   /* ------------------------------- handlers ------------------------------- */
   const handleSessionClick = useCallback((session) => {
+    if (!isTrainer && [SESSION_TYPES.MEMBER_GROUP_CLASS, SESSION_TYPES.MEMBER_PT].includes(session.type)) {
+      return;
+    }
     if ([SESSION_TYPES.COACH_GROUP_CLASS, SESSION_TYPES.MEMBER_GROUP_CLASS].includes(session.type)) {
       setSelectedClassSession(session);
       setShowAttendanceModal(true);
+    } else if ([SESSION_TYPES.COACH_PT, SESSION_TYPES.MEMBER_PT].includes(session.type)) {
+      if (session.sessionId) {
+        setSelectedPtSession(session);
+      } else {
+        setSelectedPtSession(session);
+      }
+      setShowPtAttendanceModal(true);
     } else {
       setSelectedSession(session);
       setShowModal(true);
     }
-  }, []);
+  }, [isTrainer]);
 
   const handleEditGroupClassSession = useCallback((session) => {
     // If it's a member group class booking, open the booking form instead
@@ -122,6 +159,11 @@ const SessionScheduling = () => {
     setSelectedClassSession(session);
     setShowGroupClassEditModal(true);
   }, [bookingsData]);
+
+  const handleEditPtSession = useCallback((session) => {
+    setSelectedSession(session);
+    setShowModal(true);
+  }, []);
 
   const handleCancelBooking = useCallback(async (bookingId) => {
     const result = await Alert.confirm({
@@ -148,15 +190,67 @@ const SessionScheduling = () => {
       cancelButtonText: 'No',
     });
     if (!result.isConfirmed) return;
-    console.log('Cancel session', sessionId);
-  }, []);
+    
+    try {
+      // Check if it's a PT booking by looking for it in ptBookingsData
+      const ptBookings = ptBookingsData || [];
+      const ptBooking = ptBookings.find(b => b.id === sessionId);
+      
+      if (ptBooking) {
+        // It's a PT booking
+        await cancelPtBookingMutation.mutateAsync(sessionId);
+      } else {
+        // It's a class schedule session (not yet implemented)
+        console.log('Cancel class schedule session', sessionId);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }, [ptBookingsData, cancelPtBookingMutation]);
+
+  const handlePtSessionSubmit = useCallback(async (formData) => {
+    try {
+      // Transform form data to API format (snake_case)
+      const apiData = transformPtBookingToApiFormat(formData);
+
+      if (selectedSession?.id) {
+        // Update existing PT booking
+        await updatePtBookingMutation.mutateAsync({
+          id: selectedSession.id,
+          data: apiData,
+        });
+      } else {
+        // Create new PT booking
+        await createPtBookingMutation.mutateAsync(apiData);
+      }
+
+      setShowModal(false);
+      setSelectedSession(null);
+    } catch (error) {
+      console.error('Failed to save PT booking:', error);
+      // Error is handled by the mutation's onError callback (shows toast)
+    }
+  }, [selectedSession, createPtBookingMutation, updatePtBookingMutation]);
 
   // Combine and filter all sessions into a single array, then transform for calendar/list views
   const sessions = useMemo(() => {
-    const allSessions = [...classScheduleSessions, ...memberGroupClassSessions];
+    const allSessions = [...classScheduleSessions, ...memberGroupClassSessions, ...ptSessions];
 
+    // For PT sessions: if coach PT filter is enabled, show coach PT sessions
+    // If member PT filter is enabled, show member PT sessions
+    // We need to show both perspectives when both filters are enabled
     const filtered = allSessions
-      .filter((session) => typeFilters[session.type])
+      .filter((session) => {
+        // For PT sessions, check if the corresponding filter is enabled
+        if (session.type === SESSION_TYPES.COACH_PT) {
+          return typeFilters[SESSION_TYPES.COACH_PT];
+        }
+        if (session.type === SESSION_TYPES.MEMBER_PT) {
+          return typeFilters[SESSION_TYPES.MEMBER_PT];
+        }
+        // For group class sessions, use normal filter
+        return typeFilters[session.type];
+      })
       .filter((session) => coachFilters[session.coachId] !== false)
       .filter((session) => {
         if (!searchQuery) return true;
@@ -172,12 +266,15 @@ const SessionScheduling = () => {
     return transformSessionsForCalendar(filtered, {
       onSessionClick: handleSessionClick,
       onEditGroupClassSession: handleEditGroupClassSession,
+      onEditPtSession: handleEditPtSession,
       onCancelSession: handleCancelSession,
       onCancelBooking: handleCancelBooking,
+      allowMemberAttendance: isTrainer,
     });
   }, 
   [classScheduleSessions, 
-    memberGroupClassSessions, 
+    memberGroupClassSessions,
+    ptSessions,
     typeFilters, 
     coachFilters, 
     searchQuery, 
@@ -270,14 +367,24 @@ const SessionScheduling = () => {
       </div>
 
       {/* Modals */}
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={selectedSession ? 'Edit Session' : 'Book PT Session'} size="md">
+      <Modal 
+        isOpen={showModal} 
+        onClose={() => {
+          setShowModal(false);
+          setSelectedSession(null);
+        }} 
+        title={selectedSession ? 'Edit PT Session' : 'Book PT Session'} 
+        size="md"
+      >
         <PtSessionForm
           session={selectedSession}
           customers={customers}
-          coaches={coaches}
-          onSubmit={() => setShowModal(false)}
-          onCancel={() => setShowModal(false)}
-          isSubmitting={false}
+          onSubmit={handlePtSessionSubmit}
+          onCancel={() => {
+            setShowModal(false);
+            setSelectedSession(null);
+          }}
+          isSubmitting={createPtBookingMutation.isPending || updatePtBookingMutation.isPending}
         />
       </Modal>
 
@@ -311,6 +418,34 @@ const SessionScheduling = () => {
           onCancel={() => {
             setShowGroupClassEditModal(false);
             setSelectedClassSession(null);
+          }}
+          isSubmitting={false}
+        />
+      </Modal>
+
+      <Modal 
+        isOpen={showPtAttendanceModal} 
+        onClose={() => {
+          setShowPtAttendanceModal(false);
+          setSelectedPtSession(null);
+        }} 
+        title={`Mark Attendance - ${
+          selectedPtSession?.className ||
+          (selectedPtSession?.customer
+            ? `${selectedPtSession.customer.firstName || ''} ${selectedPtSession.customer.lastName || ''}`.trim()
+            : SESSION_TYPE_LABELS[SESSION_TYPES.COACH_PT]?.replace(' Schedule', '') || 'PT Session')
+        }`} 
+        size="lg"
+      >
+        <PtAttendanceForm
+          ptSession={selectedPtSession}
+          onCancel={() => {
+            setShowPtAttendanceModal(false);
+            setSelectedPtSession(null);
+          }}
+          onSubmit={() => {
+            setShowPtAttendanceModal(false);
+            setSelectedPtSession(null);
           }}
           isSubmitting={false}
         />

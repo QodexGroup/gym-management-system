@@ -3,7 +3,7 @@ import { Badge } from '../common/index';
 import { Calendar, Clock, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, isSameMonth, isSameDay, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import { SESSION_TYPES, getSessionTypeColors } from '../../constants/sessionSchedulingConstants';
-import { BOOKING_STATUS_VARIANTS } from '../../constants/classSessionBookingConstants';
+import { BOOKING_STATUS_VARIANTS, BOOKING_STATUS } from '../../constants/classSessionBookingConstants';
 
 const CalendarView = ({
   calendarDate: initialCalendarDate,
@@ -157,6 +157,25 @@ const CalendarView = ({
                 const colors = getSessionTypeColors(s.type);
                 const isGroupClass = s.type === SESSION_TYPES.COACH_GROUP_CLASS || s.type === SESSION_TYPES.MEMBER_GROUP_CLASS;
                 const isPT = s.type === SESSION_TYPES.COACH_PT || s.type === SESSION_TYPES.MEMBER_PT;
+                const isMemberBooking = s.type === SESSION_TYPES.MEMBER_GROUP_CLASS || s.type === SESSION_TYPES.MEMBER_PT;
+                const isCoachSchedule = s.type === SESSION_TYPES.COACH_GROUP_CLASS || s.type === SESSION_TYPES.COACH_PT;
+                
+                // Get session date for comparison
+                const sessionDate = s.startTime ? new Date(s.startTime) : (s.sessionDate ? new Date(s.sessionDate) : null);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const sessionDateOnly = sessionDate ? new Date(sessionDate) : null;
+                if (sessionDateOnly) {
+                  sessionDateOnly.setHours(0, 0, 0, 0);
+                }
+                const isSessionTodayOrPast = sessionDateOnly ? sessionDateOnly <= today : false;
+                
+                // Determine if edit/cancel should be hidden
+                const shouldHideButtons = 
+                  // For member bookings: hide if status is ATTENDED or NO_SHOW
+                  (isMemberBooking && (s.status === BOOKING_STATUS.ATTENDED || s.status === BOOKING_STATUS.NO_SHOW)) ||
+                  // For coach schedules: hide if date is today or in the past
+                  (isCoachSchedule && isSessionTodayOrPast);
                 
                 let badgeLabel = '';
                 if (s.type === SESSION_TYPES.COACH_GROUP_CLASS) badgeLabel = 'Coach Group Class';
@@ -193,14 +212,16 @@ const CalendarView = ({
                         <span>{m.label}</span>
                       </div>
                     ))}
-                    <div className="flex items-center gap-2 mt-3">
-                      {s.actions?.onEdit && (
-                        <button onClick={s.actions.onEdit} className="text-xs px-2 py-1 text-primary-500 hover:bg-primary-500/10 rounded transition-colors">Edit</button>
-                      )}
-                      {s.actions?.onCancel && (
-                        <button onClick={s.actions.onCancel} className="text-xs px-2 py-1 text-danger-500 hover:bg-danger-500/10 rounded transition-colors">Cancel</button>
-                      )}
-                    </div>
+                    {!shouldHideButtons && (
+                      <div className="flex items-center gap-2 mt-3">
+                        {s.actions?.onEdit && (
+                          <button onClick={s.actions.onEdit} className="text-xs px-2 py-1 text-primary-500 hover:bg-primary-500/10 rounded transition-colors">Edit</button>
+                        )}
+                        {s.actions?.onCancel && (
+                          <button onClick={s.actions.onCancel} className="text-xs px-2 py-1 text-danger-500 hover:bg-danger-500/10 rounded transition-colors">Cancel</button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
