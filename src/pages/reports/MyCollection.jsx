@@ -2,12 +2,11 @@ import Layout from '../../components/layout/Layout';
 import { Badge } from '../../components/common';
 import {
   DollarSign,
-  TrendingUp,
   Target,
   Calendar,
-  Users,
   Award,
   ArrowUpRight,
+  Loader2,
 } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
 import {
@@ -24,47 +23,45 @@ import {
   Pie,
   Cell,
 } from 'recharts';
+import { useMyCollection } from '../../hooks/useMyCollection';
 
 const MyCollection = () => {
-  // Mock trainer-specific data
-  const trainerStats = {
-    totalEarnings: 2500,
-    sessionsCompleted: 45,
-    ptPackagesSold: 3,
-    averageSessionRate: 55.56,
-    monthlyTarget: 3000,
-    targetProgress: 83.3,
+  const { data, isLoading, isError, error } = useMyCollection();
+
+  const trainerStats = data?.trainerStats ?? {
+    totalEarnings: 0,
+    sessionsCompleted: 0,
+    ptPackagesSold: 0,
+    averageSessionRate: 0,
+    monthlyTarget: null,
+    targetProgress: 0,
   };
+  const weeklyEarnings = data?.weeklyEarnings ?? [];
+  const earningsBreakdown = data?.earningsBreakdown ?? [{ name: 'PT Package Sales', value: 0, color: '#0ea5e9' }];
+  const monthlyProgress = data?.monthlyProgress ?? [];
+  const recentSessions = data?.recentSessions ?? [];
 
-  const weeklyEarnings = [
-    { week: 'Week 1', sessions: 12, earnings: 580 },
-    { week: 'Week 2', sessions: 14, earnings: 720 },
-    { week: 'Week 3', sessions: 11, earnings: 650 },
-    { week: 'Week 4', sessions: 8, earnings: 550 },
-  ];
+  if (isLoading) {
+    return (
+      <Layout title="My Collection" subtitle="Track your earnings and performance">
+        <div className="flex items-center justify-center min-h-[200px]">
+          <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
+        </div>
+      </Layout>
+    );
+  }
 
-  const earningsBreakdown = [
-    { name: 'PT Sessions', value: 1800, color: '#0ea5e9' },
-    { name: 'Package Sales', value: 500, color: '#22c55e' },
-    { name: 'Assessments', value: 200, color: '#8b5cf6' },
-  ];
+  if (isError) {
+    return (
+      <Layout title="My Collection" subtitle="Track your earnings and performance">
+        <div className="card border-danger-200 bg-danger-50 text-danger-800">
+          {error?.message ?? 'Failed to load My Collection data.'}
+        </div>
+      </Layout>
+    );
+  }
 
-  const monthlyProgress = [
-    { month: 'Jul', earnings: 2200, target: 2500 },
-    { month: 'Aug', earnings: 2400, target: 2500 },
-    { month: 'Sep', earnings: 2800, target: 2800 },
-    { month: 'Oct', earnings: 2600, target: 3000 },
-    { month: 'Nov', earnings: 2900, target: 3000 },
-    { month: 'Dec', earnings: 2500, target: 3000 },
-  ];
-
-  const recentSessions = [
-    { id: 1, member: 'John Smith', type: 'PT Session', date: '2024-12-09', amount: 60 },
-    { id: 2, member: 'Jennifer Martinez', type: 'PT Session', date: '2024-12-08', amount: 60 },
-    { id: 3, member: 'Michael Brown', type: 'Assessment', date: '2024-12-07', amount: 40 },
-    { id: 4, member: 'Emily Davis', type: 'PT Session', date: '2024-12-06', amount: 60 },
-    { id: 5, member: 'Sarah Williams', type: 'PT Session', date: '2024-12-05', amount: 60 },
-  ];
+  const hasMonthlyTarget = trainerStats.monthlyTarget != null && trainerStats.monthlyTarget > 0;
 
   return (
     <Layout title="My Collection" subtitle="Track your earnings and performance">
@@ -79,7 +76,7 @@ const MyCollection = () => {
               </p>
               <p className="text-success-100 text-xs mt-2 flex items-center gap-1">
                 <ArrowUpRight className="w-4 h-4" />
-                +12% vs last month
+                This month
               </p>
             </div>
             <DollarSign className="w-12 h-12 text-success-200" />
@@ -108,42 +105,46 @@ const MyCollection = () => {
           </div>
         </div>
 
-        <div className="card bg-gradient-to-br from-warning-500 to-warning-600 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-warning-100 text-sm">Target Progress</p>
-              <p className="text-3xl font-bold mt-1">{trainerStats.targetProgress}%</p>
-              <p className="text-warning-100 text-xs mt-2">
-                {formatCurrency(trainerStats.monthlyTarget - trainerStats.totalEarnings)} to go
-              </p>
+        {hasMonthlyTarget && (
+          <div className="card bg-gradient-to-br from-warning-500 to-warning-600 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-warning-100 text-sm">Target Progress</p>
+                <p className="text-3xl font-bold mt-1">{trainerStats.targetProgress}%</p>
+                <p className="text-warning-100 text-xs mt-2">
+                  {formatCurrency(trainerStats.monthlyTarget - trainerStats.totalEarnings)} to go
+                </p>
+              </div>
+              <Target className="w-12 h-12 text-warning-200" />
             </div>
-            <Target className="w-12 h-12 text-warning-200" />
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Target Progress Bar */}
-      <div className="card mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-dark-800">Monthly Target Progress</h3>
-          <span className="text-sm text-dark-500">
-            {formatCurrency(trainerStats.totalEarnings)} / {formatCurrency(trainerStats.monthlyTarget)}
-          </span>
+      {/* Target Progress Bar – only when monthly target is set */}
+      {hasMonthlyTarget && (
+        <div className="card mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-dark-800">Monthly Target Progress</h3>
+            <span className="text-sm text-dark-500">
+              {formatCurrency(trainerStats.totalEarnings)} / {formatCurrency(trainerStats.monthlyTarget)}
+            </span>
+          </div>
+          <div className="h-4 bg-dark-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-primary-500 to-success-500 rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(100, trainerStats.targetProgress)}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between mt-2 text-sm text-dark-500">
+            <span>$0</span>
+            <span className="text-success-600 font-medium">
+              {trainerStats.targetProgress}% achieved
+            </span>
+            <span>{formatCurrency(trainerStats.monthlyTarget)}</span>
+          </div>
         </div>
-        <div className="h-4 bg-dark-200 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-primary-500 to-success-500 rounded-full transition-all duration-500"
-            style={{ width: `${trainerStats.targetProgress}%` }}
-          />
-        </div>
-        <div className="flex items-center justify-between mt-2 text-sm text-dark-500">
-          <span>$0</span>
-          <span className="text-success-600 font-medium">
-            {trainerStats.targetProgress}% achieved
-          </span>
-          <span>{formatCurrency(trainerStats.monthlyTarget)}</span>
-        </div>
-      </div>
+      )}
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -283,7 +284,7 @@ const MyCollection = () => {
                     <Badge variant="primary">{session.type}</Badge>
                   </td>
                   <td className="table-cell font-semibold text-success-600">
-                    +{formatCurrency(session.amount)}
+                    {session.amount > 0 ? `+${formatCurrency(session.amount)}` : '—'}
                   </td>
                 </tr>
               ))}
