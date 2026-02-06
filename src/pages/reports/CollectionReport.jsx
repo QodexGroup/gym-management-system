@@ -4,15 +4,17 @@ import { useReactToPrint } from 'react-to-print';
 import Layout from '../../components/layout/Layout';
 import { Badge } from '../../components/common';
 import {
-  Download,
-  Calendar,
+  ReportFilterCard,
+  ReportStatCards,
+  ReportTooLargeCard,
+  ReportTable,
+  ReportPrintArea,
+} from '../../components/reports';
+import {
   DollarSign,
   TrendingUp,
   CreditCard,
   Banknote,
-  Printer,
-  Filter,
-  Mail,
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import {
@@ -23,8 +25,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  AreaChart,
-  Area,
   PieChart,
   Pie,
   Cell,
@@ -235,24 +235,36 @@ const CollectionReport = () => {
     );
   }
 
+  const filterExtra = (
+    <select
+      value={paymentMethod}
+      onChange={(e) => setPaymentMethod(e.target.value)}
+      className="px-4 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
+    >
+      <option value="all">All Payment Methods</option>
+      <option value="card">Credit Card</option>
+      <option value="cash">Cash</option>
+      <option value="transfer">Bank Transfer</option>
+    </select>
+  );
+
+  const stats = [
+    { label: 'Total Collected', value: formatCurrency(totalCollected), icon: DollarSign, gradient: 'from-success-500 to-success-600', textBg: 'text-success-100', iconBg: 'text-success-200' },
+    { label: 'Transactions', value: totalTransactions, icon: CreditCard, gradient: 'from-primary-500 to-primary-600', textBg: 'text-primary-100', iconBg: 'text-primary-200' },
+    { label: 'Average Transaction', value: formatCurrency(averageTransaction), icon: TrendingUp, gradient: 'from-accent-500 to-accent-600', textBg: 'text-accent-100', iconBg: 'text-accent-200' },
+    { label: "Today's Revenue", value: formatCurrency(todayRevenue), icon: Banknote, gradient: 'from-warning-500 to-warning-600', textBg: 'text-warning-100', iconBg: 'text-warning-200' },
+  ];
+
   return (
     <Layout title="Collection Report" subtitle="Comprehensive revenue and payment analytics">
-      {/* Receipt-style content for print only */}
-      <div ref={printRef} className="report-print-only report-print-area p-6">
-        <div className="text-center mb-4">
-          <p className="font-bold text-lg">Kaizen Gym</p>
-          <p className="font-semibold text-base uppercase">Collection Report</p>
-          <p className="text-sm">Period: {periodLabel}</p>
-          <p className="text-sm">Generated: {generatedAt}</p>
-        </div>
-        <div className="mb-4 grid grid-cols-2 gap-2 max-w-md text-sm">
-          {summaryRows.map(([label, value]) => (
-            <div key={label} className="flex justify-between border-b border-slate-200 pb-1">
-              <span className="font-medium">{label}</span>
-              <span>{value}</span>
-            </div>
-          ))}
-        </div>
+      <ReportPrintArea
+        ref={printRef}
+        businessName="Kaizen Gym"
+        title="Collection Report"
+        periodLabel={periodLabel}
+        generatedAt={generatedAt}
+        summaryRows={summaryRows}
+      >
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-slate-100">
@@ -278,138 +290,32 @@ const CollectionReport = () => {
         {filteredTransactions.length === 0 && (
           <p className="text-center py-4 text-slate-500">No transactions in selected period</p>
         )}
-        <p className="text-xs mt-4 text-slate-500">Generated: {generatedAt}</p>
-      </div>
+      </ReportPrintArea>
 
-      <div className="card mb-6 no-print">
-        <form
-          onSubmit={(e) => e.preventDefault()}
-          className="flex flex-wrap items-center justify-between gap-4"
-        >
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-dark-400" />
-                <select
-                  value={dateRange}
-                  onChange={(e) => setDateRange(e.target.value)}
-                  className="px-4 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
-                >
-                  {REPORT_DATE_RANGE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                {dateRange === 'custom' && (
-                  <>
-                    <input
-                      type="date"
-                      value={inputDateFrom}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setInputDateFrom(v);
-                        applyCustomFrom(v);
-                      }}
-                      className="px-3 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
-                      title="From date"
-                    />
-                    <span className="text-dark-400">–</span>
-                    <input
-                      type="date"
-                      value={inputDateTo}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setInputDateTo(v);
-                        applyCustomTo(v);
-                      }}
-                      className="px-3 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
-                      title="To date"
-                    />
-                  </>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Filter className="w-5 h-5 text-dark-400" />
-                <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="px-4 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
-                >
-                  <option value="all">All Payment Methods</option>
-                  <option value="card">Credit Card</option>
-                  <option value="cash">Cash</option>
-                  <option value="transfer">Bank Transfer</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {reportTooLarge ? (
-                <button type="button" onClick={handleEmailReport} className="btn-primary flex items-center gap-2">
-                  <Mail className="w-4 h-4" /> Email Report
-                </button>
-              ) : (
-                <>
-                  <button type="button" onClick={handlePrint} className="btn-secondary flex items-center gap-2">
-                    <Printer className="w-4 h-4" /> Print
-                  </button>
-                  <button type="button" onClick={handleExportPdf} className="btn-primary flex items-center gap-2">
-                    <Download className="w-4 h-4" /> Export PDF
-                  </button>
-<button type="button" onClick={handleExportExcel} className="btn-secondary flex items-center gap-2">
-                  <Download className="w-4 h-4" /> Export Excel
-                  </button>
-                </>
-              )}
-            </div>
-        </form>
-        </div>
+      <ReportFilterCard
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        inputDateFrom={inputDateFrom}
+        inputDateTo={inputDateTo}
+        onCustomDateFromChange={(v) => { setInputDateFrom(v); applyCustomFrom(v); }}
+        onCustomDateToChange={(v) => { setInputDateTo(v); applyCustomTo(v); }}
+        extraFilters={filterExtra}
+        reportTooLarge={reportTooLarge}
+        onEmailReport={handleEmailReport}
+        onPrint={handlePrint}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
+      />
 
-        {reportTooLarge ? (
-          <div className="card no-print text-center py-12">
-            <p className="text-dark-200 text-lg mb-2">This report has more than {MAX_REPORT_ROWS} rows ({totalRows} total).</p>
-            <p className="text-dark-400 mb-4">We will email you the full PDF or Excel report instead.</p>
-            <button type="button" onClick={handleEmailReport} className="btn-primary flex items-center gap-2 mx-auto">
-              <Mail className="w-4 h-4" /> Email Report (PDF / Excel)
-            </button>
-          </div>
-        ) : (
+      {reportTooLarge ? (
+        <ReportTooLargeCard
+          totalRows={totalRows}
+          maxRows={MAX_REPORT_ROWS}
+          onEmailReport={handleEmailReport}
+        />
+      ) : (
           <>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 no-print">
-          <div className="card bg-gradient-to-br from-success-500 to-success-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-success-100 text-sm">Total Collected</p>
-                <p className="text-3xl font-bold mt-1">{formatCurrency(totalCollected)}</p>
-              </div>
-              <DollarSign className="w-12 h-12 text-success-200" />
-            </div>
-          </div>
-          <div className="card bg-gradient-to-br from-primary-500 to-primary-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-primary-100 text-sm">Transactions</p>
-                <p className="text-3xl font-bold mt-1">{totalTransactions}</p>
-              </div>
-              <CreditCard className="w-12 h-12 text-primary-200" />
-            </div>
-          </div>
-          <div className="card bg-gradient-to-br from-accent-500 to-accent-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-accent-100 text-sm">Average Transaction</p>
-                <p className="text-3xl font-bold mt-1">{formatCurrency(averageTransaction)}</p>
-              </div>
-              <TrendingUp className="w-12 h-12 text-accent-200" />
-            </div>
-          </div>
-          <div className="card bg-gradient-to-br from-warning-500 to-warning-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-warning-100 text-sm">Today&apos;s Revenue</p>
-                <p className="text-3xl font-bold mt-1">{formatCurrency(todayRevenue)}</p>
-              </div>
-              <Banknote className="w-12 h-12 text-warning-200" />
-            </div>
-          </div>
-        </div>
+        <ReportStatCards stats={stats} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 no-print">
           <div className="card">
@@ -461,9 +367,9 @@ const CollectionReport = () => {
           </div>
         </div>
 
-        <div className="card no-print">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-dark-800">Transactions</h3>
+        <ReportTable
+          title="Transactions"
+          actionButton={
             <button
               type="button"
               onClick={() => navigate('/members')}
@@ -471,41 +377,21 @@ const CollectionReport = () => {
             >
               View All →
             </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-dark-50">
-                  <th className="table-header">Date</th>
-                  <th className="table-header">Member</th>
-                  <th className="table-header">Type</th>
-                  <th className="table-header">Amount</th>
-                  <th className="table-header">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-dark-100">
-                {filteredTransactions.map((payment) => (
-                  <tr key={payment.id} className="hover:bg-dark-50">
-                    <td className="table-cell">{formatDate(payment.billDate)}</td>
-                    <td className="table-cell font-medium">{payment.customerName}</td>
-                    <td className="table-cell">{payment.billType || 'N/A'}</td>
-                    <td className="table-cell font-semibold text-dark-800">
-                      {formatCurrency(payment.paidAmount)}
-                    </td>
-                    <td className="table-cell">
-                      <Badge variant={BILL_STATUS_VARIANTS[payment.billStatus] || 'success'}>
-                        {BILL_STATUS_LABELS[payment.billStatus] || payment.billStatus}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {filteredTransactions.length === 0 && (
-              <p className="text-dark-400 text-center py-8">No transactions in selected period</p>
-            )}
-          </div>
-        </div>
+          }
+          headers={['Date', 'Member', 'Type', 'Amount', 'Status']}
+          rows={filteredTransactions}
+          keyField="id"
+          emptyMessage="No transactions in selected period"
+          renderRow={(payment) => [
+            formatDate(payment.billDate),
+            <span className="font-medium">{payment.customerName}</span>,
+            payment.billType || 'N/A',
+            <span className="font-semibold text-dark-800">{formatCurrency(payment.paidAmount)}</span>,
+            <Badge variant={BILL_STATUS_VARIANTS[payment.billStatus] || 'success'}>
+              {BILL_STATUS_LABELS[payment.billStatus] || payment.billStatus}
+            </Badge>,
+          ]}
+        />
           </>
         )}
     </Layout>
