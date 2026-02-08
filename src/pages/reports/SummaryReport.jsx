@@ -1,6 +1,7 @@
 import { useRef, useState, useMemo, useCallback, useEffect } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import Layout from '../../components/layout/Layout';
+import { DateRangeExportBar, PrintArea, MessageCard, StatsCards } from '../../components/common';
 import {
   Download,
   Calendar,
@@ -260,23 +261,36 @@ const SummaryReport = () => {
     }
   };
 
+  const summaryStats = [
+    { label: 'Total Revenue', value: formatCurrency(totalRevenue), icon: DollarSign, gradient: 'from-success-500 to-success-600', textBg: 'text-success-100', iconBg: 'text-success-200' },
+    { label: 'Total Expenses', value: formatCurrency(totalExpenses), icon: TrendingUp, gradient: 'from-danger-500 to-danger-600', textBg: 'text-danger-100', iconBg: 'text-danger-200' },
+    { label: 'Net Profit', value: `${formatCurrency(netProfit)} (${profitMargin}% margin)`, icon: BarChart3, gradient: 'from-primary-500 to-primary-600', textBg: 'text-primary-100', iconBg: 'text-primary-200' },
+    { label: "Today's Revenue", value: formatCurrency(todayRevenue), icon: PieChartIcon, gradient: 'from-warning-500 to-warning-600', textBg: 'text-warning-100', iconBg: 'text-warning-200' },
+  ];
+
+  const summaryExtraFilters = (
+    <select
+      value={filterCategory}
+      onChange={(e) => setFilterCategory(e.target.value)}
+      className="px-4 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
+    >
+      <option value="all">All Categories</option>
+      {categories.map((cat) => (
+        <option key={cat.id} value={cat.name}>{cat.name}</option>
+      ))}
+    </select>
+  );
+
   return (
     <Layout title="Summary Report" subtitle="Comprehensive overview of revenue, expenses, and profit">
-      <div ref={printRef} className="report-print-only report-print-area p-6">
-        <div className="text-center mb-4">
-          <p className="font-bold text-lg">Kaizen Gym</p>
-          <p className="font-semibold text-base uppercase">Summary Report</p>
-          <p className="text-sm">Period: {periodLabel}</p>
-          <p className="text-sm">Generated: {generatedAt}</p>
-        </div>
-        <div className="mb-4 grid grid-cols-2 gap-2 max-w-md text-sm">
-          {summaryRows.map(([label, value]) => (
-            <div key={label} className="flex justify-between border-b border-slate-200 pb-1">
-              <span className="font-medium">{label}</span>
-              <span>{value}</span>
-            </div>
-          ))}
-        </div>
+      <PrintArea
+        ref={printRef}
+        businessName="Kaizen Gym"
+        title="Summary Report"
+        periodLabel={periodLabel}
+        generatedAt={generatedAt}
+        summaryRows={summaryRows}
+      >
         <p className="text-sm font-semibold mb-2">Expense by Category</p>
         <table className="w-full text-sm border-collapse">
           <thead>
@@ -297,142 +311,37 @@ const SummaryReport = () => {
         {expenseByCategory.length === 0 && (
           <p className="text-center py-4 text-slate-500">No expense data</p>
         )}
-        <p className="text-xs mt-4 text-slate-500">Generated: {generatedAt}</p>
-      </div>
+      </PrintArea>
 
-      <div className="card mb-6 no-print bg-transparent border-transparent shadow-none">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-dark-400" />
-                <select
-                  value={dateRange}
-                  onChange={(e) => setDateRange(e.target.value)}
-                  className="px-4 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
-                >
-                  {REPORT_DATE_RANGE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                {dateRange === 'custom' && (
-                  <>
-                    <input
-                      type="date"
-                      value={inputDateFrom}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setInputDateFrom(v);
-                        applyCustomFrom(v);
-                      }}
-                      className="px-3 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
-                      title="From date"
-                    />
-                    <span className="text-dark-400">–</span>
-                    <input
-                      type="date"
-                      value={inputDateTo}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setInputDateTo(v);
-                        applyCustomTo(v);
-                      }}
-                      className="px-3 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
-                      title="To date"
-                    />
-                  </>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Filter className="w-5 h-5 text-dark-400" />
-                <select
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  className="px-4 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
-                >
-                  <option value="all">All Categories</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.name}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {reportTooLarge ? (
-                <button type="button" onClick={handleEmailReport} className="btn-primary flex items-center gap-2">
-                  <Mail className="w-4 h-4" /> Email Report
-                </button>
-              ) : (
-                <>
-                  <button type="button" onClick={handlePrint} className="btn-secondary flex items-center gap-2">
-                    <Printer className="w-4 h-4" /> Print
-                  </button>
-                  <button type="button" onClick={handleExportPdf} className="btn-primary flex items-center gap-2">
-                    <Download className="w-4 h-4" /> Export PDF
-                  </button>
-                  <button type="button" onClick={handleExportExcel} className="btn-secondary flex items-center gap-2">
-                    <Download className="w-4 h-4" /> Export Excel
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+      <DateRangeExportBar
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        dateRangeOptions={REPORT_DATE_RANGE_OPTIONS}
+        inputDateFrom={inputDateFrom}
+        inputDateTo={inputDateTo}
+        onCustomDateFromChange={(v) => { setInputDateFrom(v); applyCustomFrom(v); }}
+        onCustomDateToChange={(v) => { setInputDateTo(v); applyCustomTo(v); }}
+        extraFilters={summaryExtraFilters}
+        reportTooLarge={reportTooLarge}
+        onEmailReport={handleEmailReport}
+        onPrint={handlePrint}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
+      />
 
-        {reportTooLarge && (
-          <div className="card mb-6 no-print p-6 text-center">
-            <p className="text-dark-600 mb-2">
-              This report has more than {MAX_REPORT_ROWS} rows ({totalRows} total). We will email you the full PDF or Excel report instead.
-            </p>
-            <button type="button" onClick={handleEmailReport} className="btn-primary inline-flex items-center gap-2">
-              <Mail className="w-4 h-4" /> Email Report
-            </button>
-          </div>
-        )}
+      {reportTooLarge && (
+        <MessageCard
+          message={`This report has more than ${MAX_REPORT_ROWS} rows (${totalRows} total).`}
+          description="We will email you the full PDF or Excel report instead."
+          actionLabel="Email Report"
+          onAction={handleEmailReport}
+          icon={Mail}
+        />
+      )}
 
         {!reportTooLarge && (
         <>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 no-print">
-          <div className="card bg-gradient-to-br from-success-500 to-success-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-success-100 text-sm">Total Revenue</p>
-                <p className="text-3xl font-bold mt-1">{formatCurrency(totalRevenue)}</p>
-              </div>
-              <DollarSign className="w-12 h-12 text-success-200" />
-            </div>
-          </div>
-          <div className="card bg-gradient-to-br from-danger-500 to-danger-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-danger-100 text-sm">Total Expenses</p>
-                <p className="text-3xl font-bold mt-1">{formatCurrency(totalExpenses)}</p>
-              </div>
-              <TrendingUp className="w-12 h-12 text-danger-200" />
-            </div>
-          </div>
-          <div className="card bg-gradient-to-br from-primary-500 to-primary-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-primary-100 text-sm">Net Profit</p>
-                <p className="text-3xl font-bold mt-1">{formatCurrency(netProfit)}</p>
-                <p className="text-primary-100 text-xs mt-2 flex items-center gap-1">
-                  {netProfit >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                  {profitMargin}% margin
-                </p>
-              </div>
-              <BarChart3 className="w-12 h-12 text-primary-200" />
-            </div>
-          </div>
-          <div className="card bg-gradient-to-br from-warning-500 to-warning-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-warning-100 text-sm">Today&apos;s Revenue</p>
-                <p className="text-3xl font-bold mt-1">{formatCurrency(todayRevenue)}</p>
-              </div>
-              <PieChartIcon className="w-12 h-12 text-warning-200" />
-            </div>
-          </div>
-        </div>
+        <StatsCards stats={summaryStats} variant="gradient" />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 no-print">
           <div className="card">

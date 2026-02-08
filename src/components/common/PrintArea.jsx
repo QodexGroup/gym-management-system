@@ -1,10 +1,10 @@
 import { forwardRef } from 'react';
 
 /**
- * Reusable print-only block for reports. Use with useReactToPrint contentRef.
+ * Reusable print-only block. Use with useReactToPrint contentRef.
  * businessName, title, periodLabel, generatedAt, summaryRows (array of [label, value]), then children (e.g. table).
  */
-const ReportPrintArea = forwardRef(
+const PrintArea = forwardRef(
   (
     {
       businessName = 'Kaizen Gym',
@@ -42,6 +42,6 @@ const ReportPrintArea = forwardRef(
   }
 );
 
-ReportPrintArea.displayName = 'ReportPrintArea';
+PrintArea.displayName = 'PrintArea';
 
-export default ReportPrintArea;
+export default PrintArea;

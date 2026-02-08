@@ -1,5 +1,5 @@
-export { default as ReportFilterCard } from './ReportFilterCard';
-export { default as ReportStatCards } from './ReportStatCards';
-export { default as ReportTooLargeCard } from './ReportTooLargeCard';
-export { default as ReportTable } from './ReportTable';
-export { default as ReportPrintArea } from './ReportPrintArea';
+// Re-export report-related components from common. Use these or import from common directly.
+export { default as DateRangeExportBar } from '../common/DateRangeExportBar';
+export { default as PrintArea } from '../common/PrintArea';
+export { default as MessageCard } from '../common/MessageCard';
+export { default as StatsCards } from '../common/StatsCards';

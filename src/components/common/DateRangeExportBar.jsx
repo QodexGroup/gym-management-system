@@ -1,13 +1,13 @@
 import { Calendar, Filter, Download, Printer, Mail } from 'lucide-react';
-import { REPORT_DATE_RANGE_OPTIONS } from '../../constants/reportConstants';
 
 /**
- * Reusable report filter bar: date range, optional custom dates, optional extra filters, and export/print actions.
- * Use in Collection, Expense, Summary reports.
+ * Reusable bar: date range (preset + custom), optional extra filters, and report actions (Print, Export PDF/Excel, Email).
+ * Use on report pages (Collection, Expense, Summary).
  */
-const ReportFilterCard = ({
+const DateRangeExportBar = ({
   dateRange,
   onDateRangeChange,
+  dateRangeOptions = [],
   customDateFrom = '',
   customDateTo = '',
   inputDateFrom = '',
@@ -33,7 +33,7 @@ const ReportFilterCard = ({
               onChange={(e) => onDateRangeChange(e.target.value)}
               className="px-4 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
             >
-              {REPORT_DATE_RANGE_OPTIONS.map((opt) => (
+              {dateRangeOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
@@ -42,10 +42,7 @@ const ReportFilterCard = ({
                 <input
                   type="date"
                   value={inputDateFrom}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    onCustomDateFromChange?.(v);
-                  }}
+                  onChange={(e) => onCustomDateFromChange?.(e.target.value)}
                   className="px-3 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
                   title="From date"
                 />
@@ -53,10 +50,7 @@ const ReportFilterCard = ({
                 <input
                   type="date"
                   value={inputDateTo}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    onCustomDateToChange?.(v);
-                  }}
+                  onChange={(e) => onCustomDateToChange?.(e.target.value)}
                   className="px-3 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
                   title="To date"
                 />
@@ -100,4 +94,4 @@ const ReportFilterCard = ({
   );
 };
 
-export default ReportFilterCard;
+export default DateRangeExportBar;

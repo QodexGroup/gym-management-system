@@ -1,7 +1,8 @@
 import { useRef, useState, useMemo, useCallback, useEffect } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import Layout from '../../components/layout/Layout';
-import { Badge } from '../../components/common';
+import { Badge, DateRangeExportBar, PrintArea, MessageCard, StatsCards } from '../../components/common';
+import DataTable from '../../components/DataTable';
 import {
   Search,
   Download,
@@ -272,23 +273,65 @@ const ExpenseReport = () => {
     );
   }
 
+  const expenseStats = [
+    { label: 'Total Expenses', value: formatCurrency(totalExpenses), icon: DollarSign, gradient: 'from-primary-500 to-primary-600', textBg: 'text-primary-100', iconBg: 'text-primary-200' },
+    { label: 'Posted', value: formatCurrency(paidExpenses), icon: Receipt, gradient: 'from-success-500 to-success-600', textBg: 'text-success-100', iconBg: 'text-success-200' },
+    { label: 'Unposted', value: formatCurrency(pendingExpenses), icon: Calendar, gradient: 'from-warning-500 to-warning-600', textBg: 'text-warning-100', iconBg: 'text-warning-200' },
+    { label: 'Transactions', value: transformedExpenses.length, icon: PieChartIcon, gradient: 'from-accent-500 to-accent-600', textBg: 'text-accent-100', iconBg: 'text-accent-200' },
+  ];
+
+  const expenseColumns = [
+    { key: 'formattedDate', label: 'Date', render: (row) => row.formattedDate },
+    { key: 'category', label: 'Category', render: (row) => <Badge variant="default">{row.category}</Badge> },
+    { key: 'description', label: 'Description', render: (row) => <span className="font-medium">{row.description}</span> },
+    { key: 'amount', label: 'Amount', render: (row) => <span className="font-semibold text-dark-800">{formatCurrency(row.amount)}</span> },
+    { key: 'status', label: 'Status', render: (row) => <Badge variant={EXPENSE_STATUS_VARIANTS[row.status] || 'warning'}>{EXPENSE_STATUS_LABELS[row.status] || row.status}</Badge> },
+  ];
+
+  const expenseExtraFilters = (
+    <>
+      <div className="relative flex-1 max-w-xs">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
+        <input
+          type="text"
+          placeholder="Search expenses..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-4 py-2.5 bg-transparent border border-dark-200 rounded-lg focus:bg-transparent focus:border-primary-500 outline-none"
+        />
+      </div>
+      <select
+        value={filterCategory}
+        onChange={(e) => setFilterCategory(e.target.value)}
+        className="px-4 py-2.5 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
+      >
+        <option value="all">All Categories</option>
+        {categories.map((cat) => (
+          <option key={cat.id} value={cat.id}>{cat.name}</option>
+        ))}
+      </select>
+      <select
+        value={filterStatus}
+        onChange={(e) => setFilterStatus(e.target.value)}
+        className="px-4 py-2.5 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
+      >
+        <option value="all">All Status</option>
+        <option value={EXPENSE_STATUS.POSTED}>{EXPENSE_STATUS_LABELS[EXPENSE_STATUS.POSTED]}</option>
+        <option value={EXPENSE_STATUS.UNPOSTED}>{EXPENSE_STATUS_LABELS[EXPENSE_STATUS.UNPOSTED]}</option>
+      </select>
+    </>
+  );
+
   return (
     <Layout title="Expense Report" subtitle="Track and manage gym expenses">
-      <div ref={printRef} className="report-print-only report-print-area p-6">
-        <div className="text-center mb-4">
-          <p className="font-bold text-lg">Kaizen Gym</p>
-          <p className="font-semibold text-base uppercase">Expense Report</p>
-          <p className="text-sm">Period: {periodLabel}</p>
-          <p className="text-sm">Generated: {generatedAt}</p>
-        </div>
-        <div className="mb-4 grid grid-cols-2 gap-2 max-w-md text-sm">
-          {summaryRows.map(([label, value]) => (
-            <div key={label} className="flex justify-between border-b border-slate-200 pb-1">
-              <span className="font-medium">{label}</span>
-              <span>{value}</span>
-            </div>
-          ))}
-        </div>
+      <PrintArea
+        ref={printRef}
+        businessName="Kaizen Gym"
+        title="Expense Report"
+        periodLabel={periodLabel}
+        generatedAt={generatedAt}
+        summaryRows={summaryRows}
+      >
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-slate-100">
@@ -314,157 +357,37 @@ const ExpenseReport = () => {
         {transformedExpenses.length === 0 && (
           <p className="text-center py-4 text-slate-500">No expenses match filters</p>
         )}
-        <p className="text-xs mt-4 text-slate-500">Generated: {generatedAt}</p>
-      </div>
+      </PrintArea>
 
-      <div className="card mb-6 no-print bg-transparent border-transparent shadow-none">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="relative flex-1 max-w-xs">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
-                <input
-                  type="text"
-                  placeholder="Search expenses..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-transparent border border-dark-200 rounded-lg focus:bg-transparent focus:border-primary-500 outline-none"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-dark-400" />
-                <select
-                  value={dateRange}
-                  onChange={(e) => setDateRange(e.target.value)}
-                  className="px-3 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
-                >
-                  {REPORT_DATE_RANGE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                {dateRange === 'custom' && (
-                  <>
-                    <input
-                      type="date"
-                      value={inputDateFrom}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setInputDateFrom(v);
-                        applyCustomFrom(v);
-                      }}
-                      className="px-3 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
-                      title="From date"
-                    />
-                    <span className="text-dark-400">–</span>
-                    <input
-                      type="date"
-                      value={inputDateTo}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setInputDateTo(v);
-                        applyCustomTo(v);
-                      }}
-                      className="px-3 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
-                      title="To date"
-                    />
-                  </>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Filter className="w-5 h-5 text-dark-400" />
-                <select
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  className="px-4 py-2.5 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
-                >
-                  <option value="all">All Categories</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-4 py-2.5 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
-                >
-                  <option value="all">All Status</option>
-                  <option value={EXPENSE_STATUS.POSTED}>{EXPENSE_STATUS_LABELS[EXPENSE_STATUS.POSTED]}</option>
-                  <option value={EXPENSE_STATUS.UNPOSTED}>{EXPENSE_STATUS_LABELS[EXPENSE_STATUS.UNPOSTED]}</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {reportTooLarge ? (
-                <button type="button" onClick={handleEmailReport} className="btn-primary flex items-center gap-2">
-                  <Mail className="w-4 h-4" /> Email Report
-                </button>
-              ) : (
-                <>
-                  <button type="button" onClick={handlePrint} className="btn-secondary flex items-center gap-2">
-                    <Printer className="w-4 h-4" /> Print
-                  </button>
-                  <button type="button" onClick={handleExportPdf} className="btn-primary flex items-center gap-2">
-                    <Download className="w-4 h-4" /> Export PDF
-                  </button>
-                  <button type="button" onClick={handleExportExcel} className="btn-secondary flex items-center gap-2">
-                    <Download className="w-4 h-4" /> Export Excel
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+      <DateRangeExportBar
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        dateRangeOptions={REPORT_DATE_RANGE_OPTIONS}
+        inputDateFrom={inputDateFrom}
+        inputDateTo={inputDateTo}
+        onCustomDateFromChange={(v) => { setInputDateFrom(v); applyCustomFrom(v); }}
+        onCustomDateToChange={(v) => { setInputDateTo(v); applyCustomTo(v); }}
+        extraFilters={expenseExtraFilters}
+        reportTooLarge={reportTooLarge}
+        onEmailReport={handleEmailReport}
+        onPrint={handlePrint}
+        onExportPdf={handleExportPdf}
+        onExportExcel={handleExportExcel}
+      />
 
-        {reportTooLarge && (
-          <div className="card mb-6 no-print p-6 text-center">
-            <p className="text-dark-600 mb-2">
-              This report has more than {MAX_REPORT_ROWS} rows ({totalRows} total). We will email you the full PDF or Excel report instead.
-            </p>
-            <button type="button" onClick={handleEmailReport} className="btn-primary inline-flex items-center gap-2">
-              <Mail className="w-4 h-4" /> Email Report
-            </button>
-          </div>
-        )}
+      {reportTooLarge && (
+        <MessageCard
+          message={`This report has more than ${MAX_REPORT_ROWS} rows (${totalRows} total).`}
+          description="We will email you the full PDF or Excel report instead."
+          actionLabel="Email Report"
+          onAction={handleEmailReport}
+          icon={Mail}
+        />
+      )}
 
         {!reportTooLarge && (
         <>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 no-print">
-          <div className="card bg-gradient-to-br from-primary-500 to-primary-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-primary-100 text-sm">Total Expenses</p>
-                <p className="text-3xl font-bold mt-1">{formatCurrency(totalExpenses)}</p>
-              </div>
-              <DollarSign className="w-10 h-10 text-primary-200" />
-            </div>
-          </div>
-          <div className="card bg-gradient-to-br from-success-500 to-success-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-success-100 text-sm">Posted</p>
-                <p className="text-3xl font-bold mt-1">{formatCurrency(paidExpenses)}</p>
-              </div>
-              <Receipt className="w-10 h-10 text-success-200" />
-            </div>
-          </div>
-          <div className="card bg-gradient-to-br from-warning-500 to-warning-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-warning-100 text-sm">Unposted</p>
-                <p className="text-3xl font-bold mt-1">{formatCurrency(pendingExpenses)}</p>
-              </div>
-              <Calendar className="w-10 h-10 text-warning-200" />
-            </div>
-          </div>
-          <div className="card bg-gradient-to-br from-accent-500 to-accent-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-accent-100 text-sm">Transactions</p>
-                <p className="text-3xl font-bold mt-1">{transformedExpenses.length}</p>
-              </div>
-              <PieChartIcon className="w-10 h-10 text-accent-200" />
-            </div>
-          </div>
-        </div>
+        <StatsCards stats={expenseStats} variant="gradient" />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 no-print">
           <div className="card">
@@ -526,44 +449,14 @@ const ExpenseReport = () => {
           </div>
         </div>
 
-        <div className="card no-print">
-          <h3 className="text-lg font-semibold text-dark-800 mb-4">Expense List</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-dark-50">
-                  <th className="table-header">Date</th>
-                  <th className="table-header">Category</th>
-                  <th className="table-header">Description</th>
-                  <th className="table-header">Amount</th>
-                  <th className="table-header">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-dark-100">
-                {transformedExpenses.map((expense) => (
-                  <tr key={expense.id} className="hover:bg-dark-50">
-                    <td className="table-cell">{expense.formattedDate}</td>
-                    <td className="table-cell">
-                      <Badge variant="default">{expense.category}</Badge>
-                    </td>
-                    <td className="table-cell font-medium">{expense.description}</td>
-                    <td className="table-cell font-semibold text-dark-800">
-                      {formatCurrency(expense.amount)}
-                    </td>
-                    <td className="table-cell">
-                      <Badge variant={EXPENSE_STATUS_VARIANTS[expense.status] || 'warning'}>
-                        {EXPENSE_STATUS_LABELS[expense.status] || expense.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {transformedExpenses.length === 0 && (
-              <p className="text-dark-400 text-center py-8">No expenses match filters</p>
-            )}
-          </div>
-        </div>
+        <DataTable
+          columns={expenseColumns}
+          data={transformedExpenses}
+          keyField="id"
+          title="Expense List"
+          wrapperClassName="card no-print"
+          emptyMessage="No expenses match filters"
+        />
         </>
         )}
     </Layout>

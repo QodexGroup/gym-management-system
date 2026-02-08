@@ -2,19 +2,14 @@ import { useRef, useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
 import Layout from '../../components/layout/Layout';
-import { Badge } from '../../components/common';
-import {
-  ReportFilterCard,
-  ReportStatCards,
-  ReportTooLargeCard,
-  ReportTable,
-  ReportPrintArea,
-} from '../../components/reports';
+import { Badge, DateRangeExportBar, PrintArea, MessageCard, StatsCards } from '../../components/common';
+import DataTable from '../../components/DataTable';
 import {
   DollarSign,
   TrendingUp,
   CreditCard,
   Banknote,
+  Mail,
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import {
@@ -255,9 +250,17 @@ const CollectionReport = () => {
     { label: "Today's Revenue", value: formatCurrency(todayRevenue), icon: Banknote, gradient: 'from-warning-500 to-warning-600', textBg: 'text-warning-100', iconBg: 'text-warning-200' },
   ];
 
+  const collectionColumns = [
+    { key: 'billDate', label: 'Date', render: (row) => formatDate(row.billDate) },
+    { key: 'customerName', label: 'Member', render: (row) => <span className="font-medium">{row.customerName || 'N/A'}</span> },
+    { key: 'billType', label: 'Type', render: (row) => row.billType || 'N/A' },
+    { key: 'paidAmount', label: 'Amount', render: (row) => <span className="font-semibold text-dark-800">{formatCurrency(row.paidAmount)}</span> },
+    { key: 'billStatus', label: 'Status', render: (row) => <Badge variant={BILL_STATUS_VARIANTS[row.billStatus] || 'success'}>{BILL_STATUS_LABELS[row.billStatus] || row.billStatus}</Badge> },
+  ];
+
   return (
     <Layout title="Collection Report" subtitle="Comprehensive revenue and payment analytics">
-      <ReportPrintArea
+      <PrintArea
         ref={printRef}
         businessName="Kaizen Gym"
         title="Collection Report"
@@ -290,11 +293,12 @@ const CollectionReport = () => {
         {filteredTransactions.length === 0 && (
           <p className="text-center py-4 text-slate-500">No transactions in selected period</p>
         )}
-      </ReportPrintArea>
+      </PrintArea>
 
-      <ReportFilterCard
+      <DateRangeExportBar
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
+        dateRangeOptions={REPORT_DATE_RANGE_OPTIONS}
         inputDateFrom={inputDateFrom}
         inputDateTo={inputDateTo}
         onCustomDateFromChange={(v) => { setInputDateFrom(v); applyCustomFrom(v); }}
@@ -308,14 +312,16 @@ const CollectionReport = () => {
       />
 
       {reportTooLarge ? (
-        <ReportTooLargeCard
-          totalRows={totalRows}
-          maxRows={MAX_REPORT_ROWS}
-          onEmailReport={handleEmailReport}
+        <MessageCard
+          message={`This report has more than ${MAX_REPORT_ROWS} rows (${totalRows} total).`}
+          description="We will email you the full PDF or Excel report instead."
+          actionLabel="Email Report (PDF / Excel)"
+          onAction={handleEmailReport}
+          icon={Mail}
         />
       ) : (
           <>
-        <ReportStatCards stats={stats} />
+        <StatsCards stats={stats} variant="gradient" />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 no-print">
           <div className="card">
@@ -367,7 +373,10 @@ const CollectionReport = () => {
           </div>
         </div>
 
-        <ReportTable
+        <DataTable
+          columns={collectionColumns}
+          data={filteredTransactions}
+          keyField="id"
           title="Transactions"
           actionButton={
             <button
@@ -378,19 +387,8 @@ const CollectionReport = () => {
               View All →
             </button>
           }
-          headers={['Date', 'Member', 'Type', 'Amount', 'Status']}
-          rows={filteredTransactions}
-          keyField="id"
+          wrapperClassName="card no-print"
           emptyMessage="No transactions in selected period"
-          renderRow={(payment) => [
-            formatDate(payment.billDate),
-            <span className="font-medium">{payment.customerName}</span>,
-            payment.billType || 'N/A',
-            <span className="font-semibold text-dark-800">{formatCurrency(payment.paidAmount)}</span>,
-            <Badge variant={BILL_STATUS_VARIANTS[payment.billStatus] || 'success'}>
-              {BILL_STATUS_LABELS[payment.billStatus] || payment.billStatus}
-            </Badge>,
-          ]}
         />
           </>
         )}

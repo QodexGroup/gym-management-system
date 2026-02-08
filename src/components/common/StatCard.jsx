@@ -1,16 +1,23 @@
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 const StatCard = (
-  { title, value, 
-    icon: Icon, 
-    color = 'primary', 
-    subtitle, trend, 
-    trendValue, 
-    dark = false, 
-    size = 'md', 
-    iconPosition = 'right', 
-    iconColor = 'light' 
+  { title,
+    label, // alias for gradient variant
+    value,
+    icon: Icon,
+    color = 'primary',
+    subtitle, trend,
+    trendValue,
+    dark = false,
+    size = 'md',
+    iconPosition = 'right',
+    iconColor = 'light',
+    variant = 'default', // 'default' | 'gradient'
+    gradient = 'from-primary-500 to-primary-600',
+    textBg = 'text-primary-100',
+    iconBg = 'text-primary-200',
   }) => {
+  const displayTitle = title ?? label;
   const sizeClasses = {
     sm: 'p-4',
     md: 'p-6',
@@ -95,18 +102,34 @@ const StatCard = (
         subtitle: 'text-xs text-dark-400 mt-1',
       };
 
-  const iconElement = Icon && (
+  const iconElement = Icon && variant === 'gradient' ? (
+    <Icon className={`w-12 h-12 ${iconBg}`} />
+  ) : Icon ? (
     <div className={`${iconPaddingClasses[size]} rounded-xl ${iconBgClasses[color]} flex-shrink-0`}>
       <Icon className={iconSizeClasses[size]} />
     </div>
-  );
+  ) : null;
+
+  if (variant === 'gradient') {
+    return (
+      <div className={`card bg-gradient-to-br ${gradient} text-white ${sizeClasses[size]} no-print`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className={`${textBg} text-sm`}>{displayTitle}</p>
+            <p className="text-3xl font-bold mt-1">{value}</p>
+          </div>
+          {iconElement}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`stat-card ${colorClasses[color]} ${sizeClasses[size]}`}>
       <div className={`flex items-start ${iconPosition === 'left' ? 'gap-3' : 'justify-between'}`}>
         {iconPosition === 'left' && iconElement}
         <div className="flex-1">
-          <p className={textClasses.title}>{title}</p>
+          <p className={textClasses.title}>{displayTitle}</p>
           <p className={textClasses.value}>{value}</p>
           {subtitle && <p className={textClasses.subtitle}>{subtitle}</p>}
           {trend && (
