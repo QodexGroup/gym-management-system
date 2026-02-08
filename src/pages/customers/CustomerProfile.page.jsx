@@ -13,8 +13,8 @@ import { CUSTOMER_MEMBERSHIP_STATUS } from '../../constants/customerMembership';
 import ProgressTab from './customer-tabs/ProgressTab.page';
 import BillsTab from './customer-tabs/BillsTab.page';
 import ScansTab from './customer-tabs/ScansTab.page';
-import PtSessionsTab from './customer-tabs/PtSessionsTab';
-import ClassAttendanceTab from './customer-tabs/ClassAttendanceTab';
+import PtSessionsTab from './customer-tabs/PtSessionsTab.page';
+import ClassAttendanceTab from './customer-tabs/ClassAttendanceTab.page';
 
 /* --------------------------- Tab Config --------------------------- */
 const customerTabs = [

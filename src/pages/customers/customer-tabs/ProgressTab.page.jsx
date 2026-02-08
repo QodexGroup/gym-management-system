@@ -227,15 +227,17 @@ const ProgressTab = ({ member }) => {
       </div>
 
       {/* Pagination */}
-      <Pagination
-        currentPage={currentPage}
-        lastPage={pagination?.lastPage}
-        from={pagination?.from}
-        to={pagination?.to}
-        total={pagination?.total}
-        onPrev={() => setCurrentPage(p => Math.max(p - 1, 1))}
-        onNext={() => setCurrentPage(p => Math.min(p + 1, pagination?.lastPage))}
-      />
+      {pagination && pagination.lastPage > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          lastPage={pagination.lastPage}
+          from={pagination.from}
+          to={pagination.to}
+          total={pagination.total}
+          onPrev={() => setCurrentPage(p => Math.max(p - 1, 1))}
+          onNext={() => setCurrentPage(p => Math.min(p + 1, pagination.lastPage))}
+        />
+      )}
 
       {/* Edit/Create Modal */}
       <ProgressForm

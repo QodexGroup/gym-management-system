@@ -30,7 +30,7 @@ const FilesTab = ({ member }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
-  const itemsPerPage = 10;
+  const itemsPerPage = 50;
 
   // Filter and sort files
   const filteredFiles = selectedFileType === 'all'

@@ -33,7 +33,7 @@ const ClassScheduleList = () => {
       // For coaches, we'll use my-schedules endpoint which doesn't need filters
       return {
         page: currentPage,
-        pagelimit: 10,
+        pagelimit: 50,
         filters: searchQuery ? { className: searchQuery } : undefined,
         relations: 'coach',
       };
@@ -49,7 +49,7 @@ const ClassScheduleList = () => {
 
     return {
       page: currentPage,
-      pagelimit: 10,
+      pagelimit: 50,
       filters: Object.keys(filters).length > 0 ? filters : undefined,
       relations: 'coach',
     };
@@ -176,16 +176,15 @@ const ClassScheduleList = () => {
               </div>
             );
           }}
-          renderFooter={(schedule) => {
-            if (schedule.scheduleType === 2 && schedule.recurringInterval) {
-              return (
-                <p className="text-xs text-dark-400">
-                  Repeats: {RECURRING_INTERVAL_LABELS[schedule.recurringInterval] || schedule.recurringInterval}
-                  {schedule.numberOfSessions && ` (${schedule.numberOfSessions} sessions)`}
-                </p>
-              );
-            }
-            return null;
+          showFooter={true}
+          footerConfig={{
+            field: 'recurringInterval',
+            condition: (schedule) => schedule.scheduleType === 2 && schedule.recurringInterval,
+            format: (value, schedule) => {
+              const interval = RECURRING_INTERVAL_LABELS[value] || value;
+              const sessions = schedule.numberOfSessions ? ` (${schedule.numberOfSessions} sessions)` : '';
+              return `Repeats: ${interval}${sessions}`;
+            },
           }}
           badges={[
             {

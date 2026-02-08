@@ -1,4 +1,5 @@
 import { authenticatedFetch } from './authService';
+import { normalizePaginatedResponse } from '../models/apiResponseModel';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -221,6 +222,76 @@ export const ptBookingService = {
 
       const data = await response.json();
       return data.success ? data.data : [];
+    } catch (error) {
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('Cannot connect to API. Please check if the server is running and CORS is configured.');
+      }
+      throw error;
+    }
+  },
+
+  /**
+   * Get upcoming PT bookings for a customer
+   * @param {number} customerId - Customer ID
+   * @param {Object} options - Query options (relations, etc.)
+   * @returns {Promise<Array>}
+   */
+  async getCustomerUpcoming(customerId, options = {}) {
+    try {
+      const params = new URLSearchParams();
+      if (options.relations) params.append('relations', options.relations);
+      if (options.filters) params.append('filters', JSON.stringify(options.filters));
+
+      const response = await authenticatedFetch(
+        `${API_BASE_URL}/customers/${customerId}/pt-bookings/upcoming?${params.toString()}`,
+        {
+          method: 'GET',
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.success ? data.data : [];
+    } catch (error) {
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('Cannot connect to API. Please check if the server is running and CORS is configured.');
+      }
+      throw error;
+    }
+  },
+
+  /**
+   * Get paginated PT booking history for a customer
+   * @param {number} customerId - Customer ID
+   * @param {Object} options - Query options (page, pagelimit, relations, etc.)
+   * @returns {Promise<Object>} Object with data and pagination info
+   */
+  async getCustomerHistory(customerId, options = {}) {
+    try {
+      const params = new URLSearchParams();
+      if (options.page) params.append('page', options.page);
+      if (options.pagelimit) params.append('pagelimit', options.pagelimit);
+      if (options.relations) params.append('relations', options.relations);
+      if (options.filters) params.append('filters', JSON.stringify(options.filters));
+
+      const response = await authenticatedFetch(
+        `${API_BASE_URL}/customers/${customerId}/pt-bookings/history?${params.toString()}`,
+        {
+          method: 'GET',
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return normalizePaginatedResponse(data);
     } catch (error) {
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
         throw new Error('Cannot connect to API. Please check if the server is running and CORS is configured.');

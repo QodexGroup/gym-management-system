@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { Loader2 } from 'lucide-react';
 import SearchableClientInput from '../../../components/common/SearchableClientInput';
 import { CLASS_DURATION_OPTIONS } from '../../../constants/classScheduleConstants';
 import { getInitialPtBookingFormData, mapPtBookingToFormData } from '../../../models/ptBookingModel';
@@ -12,11 +13,13 @@ const PtSessionForm = ({
   onSubmit,
   onCancel,
   isSubmitting = false,
+  showMemberSearch = true,
+  customerId = null,
 }) => {
   const [formData, setFormData] = useState(getInitialPtBookingFormData());
 
   // Fetch customer's active PT packages
-  const { data: customerPtPackages = [] } = useCustomerPtPackages(
+  const { data: customerPtPackages = [], isLoading: isLoadingPackages } = useCustomerPtPackages(
     formData.customerId || null,
     {
       relations: 'ptPackage,coach',
@@ -40,9 +43,14 @@ const PtSessionForm = ({
     if (session) {
       setFormData(mapPtBookingToFormData(session));
     } else {
-      setFormData(getInitialPtBookingFormData());
+      const initialData = getInitialPtBookingFormData();
+      // Pre-fill customerId if provided and member search is disabled
+      if (!showMemberSearch && customerId) {
+        initialData.customerId = customerId.toString();
+      }
+      setFormData(initialData);
     }
-  }, [session]);
+  }, [session, showMemberSearch, customerId]);
 
   // Auto-select coach when package is selected
   useEffect(() => {
@@ -71,46 +79,57 @@ const PtSessionForm = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Client Search */}
-      <SearchableClientInput
-        customers={customers}
-        value={formData.customerId}
-        onChange={handleCustomerChange}
-        label="Member"
-        required
-        placeholder="Search member by name, email, or phone"
-      />
+      {showMemberSearch && (
+        <SearchableClientInput
+          customers={customers}
+          value={formData.customerId}
+          onChange={handleCustomerChange}
+          label="Member"
+          required
+          placeholder="Search member by name, email, or phone"
+        />
+      )}
 
       {/* PT Package Selection */}
       <div>
         <label className="label">PT Package *</label>
-        <select
-          className="input"
-          value={formData.customerPtPackageId}
-          onChange={(e) =>
-            setFormData({ ...formData, customerPtPackageId: e.target.value })
-          }
-          required
-          disabled={!formData.customerId}
-        >
-          <option value="">
-            {!formData.customerId
-              ? 'Select a member first'
-              : customerPtPackages.length === 0
-              ? 'No active PT packages'
-              : 'Select PT package'}
-          </option>
-          {formData.customerId &&
-            customerPtPackages.map((pkg) => {
-              const sessionsRemaining = pkg.numberOfSessionsRemaining || 0;
-              const packageName = pkg.ptPackage?.packageName || 'Unknown Package';
-              return (
-                <option key={pkg.id} value={pkg.id}>
-                  {packageName} ({sessionsRemaining} sessions remaining)
-                </option>
-              );
-            })}
-        </select>
-        {formData.customerId && customerPtPackages.length === 0 && (
+        <div className="relative">
+          <select
+            className="input"
+            value={formData.customerPtPackageId}
+            onChange={(e) =>
+              setFormData({ ...formData, customerPtPackageId: e.target.value })
+            }
+            required
+            disabled={!formData.customerId || isLoadingPackages}
+          >
+            <option value="">
+              {!formData.customerId
+                ? showMemberSearch ? 'Select a member first' : 'Loading packages...'
+                : isLoadingPackages
+                ? 'Loading packages...'
+                : customerPtPackages.length === 0
+                ? 'No active PT packages'
+                : 'Select PT package'}
+            </option>
+            {formData.customerId && !isLoadingPackages &&
+              customerPtPackages.map((pkg) => {
+                const sessionsRemaining = pkg.numberOfSessionsRemaining || 0;
+                const packageName = pkg.ptPackage?.packageName || 'Unknown Package';
+                return (
+                  <option key={pkg.id} value={pkg.id}>
+                    {packageName} ({sessionsRemaining} sessions remaining)
+                  </option>
+                );
+              })}
+          </select>
+          {isLoadingPackages && formData.customerId && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+              <Loader2 className="w-4 h-4 text-dark-400 animate-spin" />
+            </div>
+          )}
+        </div>
+        {formData.customerId && !isLoadingPackages && customerPtPackages.length === 0 && (
           <p className="text-xs text-warning-600 mt-1">
             This member has no active PT packages. Please assign one first.
           </p>

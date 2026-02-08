@@ -7,7 +7,7 @@ const DataTable = ({
   searchable = true,
   filterable = true,
   exportable = true,
-  pageSize = 10,
+  pageSize = 50,
   onRowClick,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);

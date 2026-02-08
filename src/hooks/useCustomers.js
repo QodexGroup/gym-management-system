@@ -19,7 +19,7 @@ export const customerKeys = {
  */
 export const useCustomers = (page = 1, options = {}) => {
   return useQuery({
-    queryKey: customerKeys.list(page),
+    queryKey: [...customerKeys.list(page), options],
     queryFn: async () => {
       const result = await customerService.getAll(page, options);
       return {
@@ -147,9 +147,9 @@ export const useDeleteCustomer = () => {
  * Hook to search customers with debouncing
  * @param {string} keyword - Search keyword
  * @param {number} page - Page number (default: 1)
- * @param {number} pagelimit - Results per page (default: 10)
+ * @param {number} pagelimit - Results per page (default: 50)
  */
-export const useSearchCustomers = (keyword = '', page = 1, pagelimit = 10) => {
+export const useSearchCustomers = (keyword = '', page = 1, pagelimit = 50) => {
   return useQuery({
     queryKey: ['customers', 'search', keyword, page, pagelimit],
     queryFn: async () => {
