@@ -1,4 +1,5 @@
 import { authenticatedFetch } from './authService';
+import { normalizePaginatedResponse } from '../models/apiResponseModel';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -33,37 +34,7 @@ export const ptProgressService = {
       }
 
       const data = await response.json();
-      if (data.success) {
-        if (data.data && data.data.data) {
-          return {
-            data: data.data.data,
-            current_page: data.data.current_page,
-            last_page: data.data.last_page,
-            per_page: data.data.per_page,
-            total: data.data.total,
-            from: data.data.from,
-            to: data.data.to,
-          };
-        }
-        return {
-          data: Array.isArray(data.data) ? data.data : [],
-          current_page: 1,
-          last_page: 1,
-          per_page: data.data?.length || 0,
-          total: data.data?.length || 0,
-          from: 1,
-          to: data.data?.length || 0,
-        };
-      }
-      return {
-        data: [],
-        current_page: 1,
-        last_page: 1,
-        per_page: 0,
-        total: 0,
-        from: 0,
-        to: 0,
-      };
+      return normalizePaginatedResponse(data);
     } catch (error) {
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
         throw new Error('Cannot connect to API. Please check if the server is running and CORS is configured.');

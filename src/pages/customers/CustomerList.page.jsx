@@ -23,18 +23,23 @@ const CustomerList = () => {
 
   // Pagination state
   const { currentPage, setCurrentPage, goToPrev, goToNext } = usePagination(1);
+  const pageSize = 50;
 
   // Search & modal state
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [formData, setFormData] = useState(getInitialCustomerFormData());
-  const sort = 'first_name:desc';
+
   // Fetch customers
-  const { data, isLoading } = useCustomers(currentPage, sort);
+  const { data, isLoading } = useCustomers(currentPage, {
+    pagelimit: pageSize,
+    sorts: [{ field: 'first_name', direction: 'asc' }],
+  });
   const deleteCustomerMutation = useDeleteCustomer();
 
-  const customers = data?.data || [];
+  // Ensure customers is always an array
+  const customers = Array.isArray(data?.data) ? data.data : [];
   const pagination = data?.pagination;
 
   // Filter customers using custom hook
@@ -169,15 +174,15 @@ const CustomerList = () => {
       )}
 
       {/* Pagination */}
-      {pagination?.lastPage > 1 && (
+      {pagination && pagination.lastPage > 1 && (
         <Pagination
           currentPage={currentPage}
-          lastPage={pagination?.lastPage}
-          from={pagination?.from}
-          to={pagination?.to}
-          total={pagination?.total}
+          lastPage={pagination.lastPage}
+          from={pagination.from}
+          to={pagination.to}
+          total={pagination.total}
           onPrev={goToPrev}
-          onNext={() => goToNext(pagination?.lastPage)}
+          onNext={() => goToNext(pagination.lastPage)}
         />
       )}
 

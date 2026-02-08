@@ -10,6 +10,7 @@ export const classSessionBookingKeys = {
   bySession: (sessionId) => [...classSessionBookingKeys.all, 'session', sessionId],
   details: () => [...classSessionBookingKeys.all, 'detail'],
   detail: (id) => [...classSessionBookingKeys.details(), id],
+  customerHistory: (customerId, options) => [...classSessionBookingKeys.all, 'customer', customerId, 'history', options],
 };
 
 /**
@@ -137,5 +138,19 @@ export const useClassSessionBookingById = (bookingId) => {
       return await classSessionBookingService.getBookingById(bookingId);
     },
     enabled: !!bookingId,
+  });
+};
+
+/**
+ * Hook to fetch customer's class session booking history
+ */
+export const useCustomerClassSessionBookingHistory = (customerId, options = {}, queryOptions = {}) => {
+  return useQuery({
+    queryKey: classSessionBookingKeys.customerHistory(customerId, options),
+    queryFn: async () => {
+      return await classSessionBookingService.getCustomerHistory(customerId, options);
+    },
+    enabled: !!customerId && (queryOptions.enabled !== false),
+    ...queryOptions,
   });
 };

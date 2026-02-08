@@ -6,15 +6,18 @@
  * @param {Function} renderTitle - Function to render card title: (card) => ReactNode
  * @param {Function} renderSubtitle - Function to render card subtitle: (card) => ReactNode (optional)
  * @param {Function} renderContent - Function to render card content/metadata: (card) => ReactNode
- * @param {Function} renderFooter - Function to render card footer: (card) => ReactNode (optional)
+ * @param {Boolean} showFooter - Whether to show footer (default: false)
+ * @param {String|Object} footerConfig - Footer configuration: 
+ *   - String: Field name to display (auto-detect if null)
+ *   - Object: { field, condition: (card) => boolean, format: (value, card) => string, prefix, suffix }
  * @param {Array} badges - Array of badge configs: [{ variant, label, getValue: (card) => value }] (optional)
- * @param {Object} actions - Object containing action handlers: { onEdit, onDelete, onView, etc. }
- * @param {Function} renderActions - Custom function to render action buttons: (card, actions) => ReactNode (optional)
+ * @param {Object} actions - Object containing action handlers: { onEdit, onDelete, onView, onCancel, etc. }
+ * @param {Boolean} showActions - Whether to show action buttons (default: true if actions provided)
  * @param {ReactNode} emptyState - Custom empty state component
  * @param {string} emptyStateMessage - Message to show when no cards
  * @param {ReactNode} emptyStateIcon - Icon to show in empty state
  */
-import { Edit, Trash, Eye } from 'lucide-react';
+import { Edit, Trash, Eye, X } from 'lucide-react';
 import Badge from './Badge';
 
 const CardList = ({ 
@@ -22,10 +25,11 @@ const CardList = ({
   renderTitle,
   renderSubtitle,
   renderContent,
-  renderFooter,
+  showFooter = false,
+  footerConfig = null,
   badges = [],
   actions = {},
-  renderActions,
+  showActions = true,
   emptyState,
   emptyStateMessage = 'No items found',
   emptyStateIcon: EmptyStateIcon = null,
@@ -50,6 +54,10 @@ const CardList = ({
 
   // Default action buttons renderer
   const defaultRenderActions = (card) => {
+    if (!showActions || !actions || Object.keys(actions).length === 0) {
+      return null;
+    }
+
     const actionButtons = [];
     
     if (actions.onView) {
@@ -87,6 +95,19 @@ const CardList = ({
           title="Delete"
         >
           <Trash className="w-4 h-4" />
+        </button>
+      );
+    }
+
+    if (actions.onCancel) {
+      actionButtons.push(
+        <button
+          key="cancel"
+          onClick={() => actions.onCancel(card.id || card.key)}
+          className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+          title="Cancel"
+        >
+          <X className="w-4 h-4" />
         </button>
       );
     }
@@ -140,15 +161,61 @@ const CardList = ({
                 )}
                 
                 {/* Footer */}
-                {renderFooter && (
-                  <div className="mt-2">
-                    {renderFooter(card)}
-                  </div>
-                )}
+                {showFooter && (() => {
+                  if (!footerConfig) {
+                    // Auto-detect footer field
+                    const field = card.bookingNotes ? 'bookingNotes' : 
+                                 card.notes ? 'notes' : 
+                                 card.description ? 'description' : null;
+                    const footerValue = field ? card[field] : null;
+                    return footerValue ? (
+                      <div className="mt-2">
+                        <p className="text-sm text-dark-400">{footerValue}</p>
+                      </div>
+                    ) : null;
+                  }
+
+                  // Handle string config (simple field name)
+                  if (typeof footerConfig === 'string') {
+                    const footerValue = card[footerConfig];
+                    return footerValue ? (
+                      <div className="mt-2">
+                        <p className="text-sm text-dark-400">{footerValue}</p>
+                      </div>
+                    ) : null;
+                  }
+
+                  // Handle object config (complex footer with conditions)
+                  if (typeof footerConfig === 'object') {
+                    const { field, condition, format, prefix = '', suffix = '' } = footerConfig;
+                    
+                    // Check condition if provided
+                    if (condition && !condition(card)) {
+                      return null;
+                    }
+
+                    const fieldValue = field ? card[field] : null;
+                    if (!fieldValue && fieldValue !== 0) {
+                      return null;
+                    }
+
+                    // Format the value if formatter provided
+                    const displayValue = format ? format(fieldValue, card) : fieldValue;
+                    const footerText = `${prefix}${displayValue}${suffix}`;
+
+                    return (
+                      <div className="mt-2">
+                        <p className="text-sm text-dark-400">{footerText}</p>
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })()}
               </div>
               
               {/* Actions */}
-              {renderActions ? renderActions(card, actions) : defaultRenderActions(card)}
+              {defaultRenderActions(card)}
             </div>
           </div>
         );

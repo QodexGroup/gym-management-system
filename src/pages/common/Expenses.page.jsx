@@ -41,7 +41,7 @@ const Expenses = () => {
     
     return {
       page: currentPage,
-      pagelimit: 10,
+      pagelimit: 50,
       relations: 'category',
       filters: Object.keys(filters).length > 0 ? filters : undefined,
     };

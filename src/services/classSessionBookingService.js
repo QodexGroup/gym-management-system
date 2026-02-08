@@ -1,4 +1,5 @@
 import { authenticatedFetch } from './authService';
+import { normalizePaginatedResponse } from '../models/apiResponseModel';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -206,6 +207,41 @@ export const classSessionBookingService = {
 
       const data = await response.json();
       return data.success ? data.data : null;
+    } catch (error) {
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('Cannot connect to API. Please check if the server is running and CORS is configured.');
+      }
+      throw error;
+    }
+  },
+
+  /**
+   * Get customer's class session booking history
+   * @param {number} customerId - Customer ID
+   * @param {Object} options - Query options (page, pagelimit, relations, etc.)
+   * @returns {Promise<Object>}
+   */
+  async getCustomerHistory(customerId, options = {}) {
+    try {
+      const params = new URLSearchParams();
+      if (options.page) params.append('page', options.page);
+      if (options.pagelimit) params.append('pagelimit', options.pagelimit);
+      if (options.relations) params.append('relations', options.relations);
+
+      const response = await authenticatedFetch(
+        `${API_BASE_URL}/customers/${customerId}/class-session-bookings/history?${params.toString()}`,
+        {
+          method: 'GET',
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return normalizePaginatedResponse(data);
     } catch (error) {
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
         throw new Error('Cannot connect to API. Please check if the server is running and CORS is configured.');

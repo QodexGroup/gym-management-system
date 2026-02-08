@@ -1,4 +1,5 @@
 import { authenticatedFetch } from './authService';
+import { normalizePaginatedResponse } from '../models/apiResponseModel';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -62,21 +63,7 @@ export const customerPaymentService = {
       }
 
       const data = await response.json();
-      if (!data.success) {
-        return [];
-      }
-
-      // Handle paginated response - extract the data array from pagination object
-      if (data.data && Array.isArray(data.data.data)) {
-        return data.data; // Return full pagination object: { data: [...], current_page, total, etc. }
-      }
-      
-      // Handle non-paginated response (fallback)
-      if (Array.isArray(data.data)) {
-        return data.data;
-      }
-
-      return [];
+      return normalizePaginatedResponse(data);
     } catch (error) {
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
         throw new Error('Cannot connect to API. Please check if the server is running and CORS is configured.');

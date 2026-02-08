@@ -11,6 +11,8 @@ export const ptBookingKeys = {
   byDateRange: (startDate, endDate, options) => [...ptBookingKeys.lists(), { startDate, endDate, ...options }],
   byCoachId: (coachId, startDate, endDate, options) => [...ptBookingKeys.lists(), 'coach', coachId, { startDate, endDate, ...options }],
   bySessionId: (sessionId) => [...ptBookingKeys.lists(), 'session', sessionId],
+  customerUpcoming: (customerId, options) => [...ptBookingKeys.lists(), 'customer', customerId, 'upcoming', options],
+  customerHistory: (customerId, options) => [...ptBookingKeys.lists(), 'customer', customerId, 'history', options],
 };
 
 /**
@@ -176,6 +178,41 @@ export const usePtBookingsBySessionId = (sessionId, queryOptions = {}) => {
       return await ptBookingService.getBySessionId(sessionId);
     },
     enabled: !!sessionId,
+    ...queryOptions,
+  });
+};
+
+/**
+ * Hook to fetch upcoming PT bookings for a customer
+ * @param {number} customerId - Customer ID
+ * @param {Object} options - Query options (relations, etc.)
+ * @param {Object} queryOptions - React Query options
+ */
+export const useCustomerUpcomingPtBookings = (customerId, options = {}, queryOptions = {}) => {
+  return useQuery({
+    queryKey: ptBookingKeys.customerUpcoming(customerId, options),
+    queryFn: async () => {
+      return await ptBookingService.getCustomerUpcoming(customerId, options);
+    },
+    enabled: !!customerId,
+    ...queryOptions,
+  });
+};
+
+/**
+ * Hook to fetch paginated PT booking history for a customer
+ * @param {number} customerId - Customer ID
+ * @param {Object} options - Query options (page, pagelimit, relations, etc.)
+ * @param {Object} queryOptions - React Query options
+ */
+export const useCustomerPtBookingHistory = (customerId, options = {}, queryOptions = {}) => {
+  return useQuery({
+    queryKey: ptBookingKeys.customerHistory(customerId, options),
+    queryFn: async () => {
+      return await ptBookingService.getCustomerHistory(customerId, options);
+    },
+    enabled: !!customerId,
+    placeholderData: keepPreviousData,
     ...queryOptions,
   });
 };
