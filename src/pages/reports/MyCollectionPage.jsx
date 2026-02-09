@@ -24,8 +24,9 @@ import {
   Cell,
 } from 'recharts';
 import { useMyCollection } from '../../hooks/useMyCollection';
+import { CHART_TOOLTIP_STYLE, CHART_CURSOR, CHART_PIE_ACTIVE } from '../../constants/reportConstants';
 
-const MyCollection = () => {
+const MyCollectionPage = () => {
   const { data, isLoading, isError, error } = useMyCollection();
 
   const trainerStats = data?.trainerStats ?? {
@@ -158,19 +159,14 @@ const MyCollection = () => {
                 <XAxis dataKey="week" stroke="#64748b" fontSize={12} />
                 <YAxis yAxisId="left" stroke="#64748b" fontSize={12} />
                 <YAxis yAxisId="right" orientation="right" stroke="#64748b" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    background: '#fff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                  }}
-                />
+                <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
                 <Bar
                   yAxisId="left"
                   dataKey="earnings"
                   name="Earnings ($)"
                   fill="#0ea5e9"
                   radius={[4, 4, 0, 0]}
+                  cursor={CHART_CURSOR}
                 />
                 <Bar
                   yAxisId="right"
@@ -178,6 +174,7 @@ const MyCollection = () => {
                   name="Sessions"
                   fill="#22c55e"
                   radius={[4, 4, 0, 0]}
+                  cursor={CHART_CURSOR}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -198,12 +195,13 @@ const MyCollection = () => {
                   outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
+                  activeShape={CHART_PIE_ACTIVE}
                 >
                   {earningsBreakdown.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => formatCurrency(value)} />
+                <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={CHART_TOOLTIP_STYLE} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -233,14 +231,7 @@ const MyCollection = () => {
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
               <YAxis stroke="#64748b" fontSize={12} />
-              <Tooltip
-                formatter={(value) => formatCurrency(value)}
-                contentStyle={{
-                  background: '#fff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                }}
-              />
+              <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={CHART_TOOLTIP_STYLE} />
               <Line
                 type="monotone"
                 dataKey="earnings"
@@ -296,4 +287,4 @@ const MyCollection = () => {
   );
 };
 
-export default MyCollection;
+export default MyCollectionPage;

@@ -1,4 +1,4 @@
-import { Calendar, Filter, Download, Printer, Mail } from 'lucide-react';
+import { Calendar, Filter, Download, Printer, Mail, Check } from 'lucide-react';
 
 /**
  * Reusable bar: date range (preset + custom), optional extra filters, and report actions (Print, Export PDF/Excel, Email).
@@ -14,6 +14,7 @@ const DateRangeExportBar = ({
   inputDateTo = '',
   onCustomDateFromChange,
   onCustomDateToChange,
+  onApply,
   extraFilters = null,
   reportTooLarge = false,
   onEmailReport,
@@ -24,7 +25,7 @@ const DateRangeExportBar = ({
 }) => {
   return (
     <div className={`card mb-6 no-print ${className}`}>
-      <form onSubmit={(e) => e.preventDefault()} className="flex flex-wrap items-center justify-between gap-4">
+      <form onSubmit={(e) => { e.preventDefault(); onApply?.(); }} className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-dark-400" />
@@ -62,6 +63,11 @@ const DateRangeExportBar = ({
               <Filter className="w-5 h-5 text-dark-400" />
               {extraFilters}
             </div>
+          )}
+          {onApply && (
+            <button type="submit" className="btn-primary flex items-center gap-2">
+              <Check className="w-4 h-4" /> Apply
+            </button>
           )}
         </div>
         <div className="flex items-center gap-2">

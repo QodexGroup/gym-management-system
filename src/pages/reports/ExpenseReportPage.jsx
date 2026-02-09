@@ -31,48 +31,49 @@ import { useExpenses, useExpenseCategories } from '../../hooks/useExpenses';
 import { EXPENSE_STATUS, EXPENSE_STATUS_LABELS, EXPENSE_STATUS_VARIANTS } from '../../constants/expenseConstants';
 import { reportService } from '../../services/reportService';
 import { exportReportToPdf, exportReportToExcel } from '../../utils/reportPrintExport';
-import { REPORT_DATE_RANGE_OPTIONS, getReportDateRange, MAX_REPORT_ROWS } from '../../constants/reportConstants';
+import { REPORT_DATE_RANGE_OPTIONS, getReportDateRange, MAX_REPORT_ROWS, CHART_TOOLTIP_STYLE, CHART_CURSOR, CHART_PIE_ACTIVE } from '../../constants/reportConstants';
 import { Alert, Toast } from '../../utils/alert';
 
 const categoryColors = [
   '#0ea5e9', '#8b5cf6', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16', '#6366f1',
 ];
-const CUSTOM_DATE_DEBOUNCE_MS = 2000;
 
-const ExpenseReport = () => {
+const ExpenseReportPage = () => {
   const printRef = useRef(null);
   const [dateRange, setDateRange] = useState('this_month');
   const [customDateFrom, setCustomDateFrom] = useState('');
   const [customDateTo, setCustomDateTo] = useState('');
   const [inputDateFrom, setInputDateFrom] = useState('');
   const [inputDateTo, setInputDateTo] = useState('');
+  const [appliedDateRange, setAppliedDateRange] = useState('this_month');
+  const [appliedCustomFrom, setAppliedCustomFrom] = useState('');
+  const [appliedCustomTo, setAppliedCustomTo] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [appliedSearchQuery, setAppliedSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [appliedFilterCategory, setAppliedFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const debounceFromRef = useRef(null);
-  const debounceToRef = useRef(null);
 
-  const { start: dateFrom, end: dateTo } = getReportDateRange(dateRange, customDateFrom, customDateTo);
+  const { start: dateFrom, end: dateTo } = getReportDateRange(appliedDateRange, appliedCustomFrom, appliedCustomTo);
   const expenseOptions = useMemo(() => {
     const filters = { dateFrom, dateTo };
-    if (searchQuery) filters.description = searchQuery;
-    if (filterCategory !== 'all') filters.category_id = filterCategory;
+    if (appliedSearchQuery) filters.description = appliedSearchQuery;
+    if (appliedFilterCategory !== 'all') filters.category_id = appliedFilterCategory;
     return {
       page: 1,
       pagelimit: MAX_REPORT_ROWS,
       relations: 'category',
       filters,
     };
-  }, [dateRange, dateFrom, dateTo, searchQuery, filterCategory]);
+  }, [dateFrom, dateTo, appliedSearchQuery, appliedFilterCategory]);
 
-  const applyCustomFrom = useCallback((value) => {
-    if (debounceFromRef.current) clearTimeout(debounceFromRef.current);
-    debounceFromRef.current = setTimeout(() => setCustomDateFrom(value), CUSTOM_DATE_DEBOUNCE_MS);
-  }, []);
-  const applyCustomTo = useCallback((value) => {
-    if (debounceToRef.current) clearTimeout(debounceToRef.current);
-    debounceToRef.current = setTimeout(() => setCustomDateTo(value), CUSTOM_DATE_DEBOUNCE_MS);
-  }, []);
+  const handleApply = useCallback(() => {
+    setAppliedDateRange(dateRange);
+    setAppliedCustomFrom(dateRange === 'custom' ? customDateFrom : '');
+    setAppliedCustomTo(dateRange === 'custom' ? customDateTo : '');
+    setAppliedSearchQuery(searchQuery);
+    setAppliedFilterCategory(filterCategory);
+  }, [dateRange, customDateFrom, customDateTo, searchQuery, filterCategory]);
 
   useEffect(() => {
     if (dateRange === 'custom') {
@@ -80,13 +81,6 @@ const ExpenseReport = () => {
       setInputDateTo(customDateTo);
     }
   }, [dateRange]);
-
-  useEffect(() => {
-    return () => {
-      if (debounceFromRef.current) clearTimeout(debounceFromRef.current);
-      if (debounceToRef.current) clearTimeout(debounceToRef.current);
-    };
-  }, []);
 
   const { data: expensesData, isLoading, isError, error } = useExpenses(expenseOptions);
   const { data: categoriesData } = useExpenseCategories({});
@@ -147,14 +141,14 @@ const ExpenseReport = () => {
   }, [transformedExpenses]);
 
   const periodLabel =
-    dateRange === 'custom' && customDateFrom && customDateTo
-      ? `${customDateFrom} – ${customDateTo}`
-      : REPORT_DATE_RANGE_OPTIONS.find((o) => o.value === dateRange)?.label || dateRange;
+    appliedDateRange === 'custom' && appliedCustomFrom && appliedCustomTo
+      ? `${appliedCustomFrom} – ${appliedCustomTo}`
+      : REPORT_DATE_RANGE_OPTIONS.find((o) => o.value === appliedDateRange)?.label || appliedDateRange;
   const handleEmailReport = async () => {
     try {
       const res = await reportService.emailReport({
         reportType: 'expense',
-        dateRange,
+        dateRange: appliedDateRange,
         dateFrom,
         dateTo,
       });
@@ -226,7 +220,7 @@ const ExpenseReport = () => {
           'We will send the report to your email (PDF). The full report will be delivered via email.',
           { confirmButtonText: 'OK' }
         );
-        await reportService.emailReport({ reportType: 'expense', dateRange, dateFrom, dateTo, format: 'pdf' });
+        await reportService.emailReport({ reportType: 'expense', dateRange: appliedDateRange, dateFrom, dateTo, format: 'pdf' });
         Toast.success('Report request submitted. You will receive it by email.');
       } else {
         doExportPdf();
@@ -245,7 +239,7 @@ const ExpenseReport = () => {
           'We will send the report to your email (Excel). The full report will be delivered via email.',
           { confirmButtonText: 'OK' }
         );
-        await reportService.emailReport({ reportType: 'expense', dateRange, dateFrom, dateTo, format: 'excel' });
+        await reportService.emailReport({ reportType: 'expense', dateRange: appliedDateRange, dateFrom, dateTo, format: 'excel' });
         Toast.success('Report request submitted. You will receive it by email.');
       } else {
         doExportExcel();
@@ -365,8 +359,9 @@ const ExpenseReport = () => {
         dateRangeOptions={REPORT_DATE_RANGE_OPTIONS}
         inputDateFrom={inputDateFrom}
         inputDateTo={inputDateTo}
-        onCustomDateFromChange={(v) => { setInputDateFrom(v); applyCustomFrom(v); }}
-        onCustomDateToChange={(v) => { setInputDateTo(v); applyCustomTo(v); }}
+        onCustomDateFromChange={(v) => { setInputDateFrom(v); setCustomDateFrom(v); }}
+        onCustomDateToChange={(v) => { setInputDateTo(v); setCustomDateTo(v); }}
+        onApply={handleApply}
         extraFilters={expenseExtraFilters}
         reportTooLarge={reportTooLarge}
         onEmailReport={handleEmailReport}
@@ -404,12 +399,13 @@ const ExpenseReport = () => {
                       outerRadius={80}
                       paddingAngle={5}
                       dataKey="value"
+                      activeShape={CHART_PIE_ACTIVE}
                     >
                       {expenseByCategory.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={categoryColors[index % categoryColors.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => formatCurrency(value)} />
+                    <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={CHART_TOOLTIP_STYLE} />
                   </RechartPie>
                 </ResponsiveContainer>
               ) : (
@@ -438,8 +434,8 @@ const ExpenseReport = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
                     <YAxis stroke="#64748b" fontSize={12} />
-                    <Tooltip formatter={(value) => formatCurrency(value)} />
-                    <Bar dataKey="amount" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                    <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={CHART_TOOLTIP_STYLE} />
+                    <Bar dataKey="amount" fill="#0ea5e9" radius={[4, 4, 0, 0]} cursor={CHART_CURSOR} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -463,4 +459,4 @@ const ExpenseReport = () => {
   );
 };
 
-export default ExpenseReport;
+export default ExpenseReportPage;

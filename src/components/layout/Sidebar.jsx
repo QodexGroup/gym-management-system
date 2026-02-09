@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -21,7 +21,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const { isAdmin } = useAuth();
   const { hasPermission } = usePermissions();
   const location = useLocation();
-  const [expandedMenus, setExpandedMenus] = useState(['reports']);
+  const [expandedMenus, setExpandedMenus] = useState([]);
+
+  // Keep Reports open when on any report route (so it doesn't close when switching between report pages)
+  useEffect(() => {
+    if (location.pathname.startsWith('/reports')) {
+      setExpandedMenus((prev) => (prev.includes('reports') ? prev : [...prev, 'reports']));
+    }
+  }, [location.pathname]);
 
   const toggleMenu = (menu) => {
     setExpandedMenus((prev) =>
@@ -54,7 +61,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           label: 'Reports',
           icon: FileBarChart,
           key: 'reports',
-          permission: null,
+          adminOnly: true,
           children: [
             { path: '/reports/summary', label: 'Summary Report', permission: null },
             { path: '/reports/collection', label: 'Collection Report', permission: null },

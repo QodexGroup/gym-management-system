@@ -2,6 +2,16 @@
  * Report limits and date range options (max 3 months: current + previous 2)
  */
 export const MAX_REPORT_ROWS = 200;
+
+/** Chart hover and tooltip: bar hover transparent, tooltip opaque so text is readable */
+export const CHART_TOOLTIP_STYLE = {
+  background: 'rgba(30, 41, 59, 0.98)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: '8px',
+  color: '#f1f5f9',
+};
+export const CHART_CURSOR = { fill: 'transparent' };
+export const CHART_PIE_ACTIVE = { opacity: 0.85 };
 export const MAX_REPORT_MONTHS = 3;
 
 export const REPORT_DATE_RANGE_OPTIONS = [

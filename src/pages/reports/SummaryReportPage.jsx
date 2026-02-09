@@ -37,46 +37,43 @@ import { useExpenses, useExpenseCategories } from '../../hooks/useExpenses';
 import { useReportCollection } from '../../hooks/useReportCollection';
 import { reportService } from '../../services/reportService';
 import { exportReportToPdf, exportReportToExcel } from '../../utils/reportPrintExport';
-import { REPORT_DATE_RANGE_OPTIONS, getReportDateRange, MAX_REPORT_ROWS } from '../../constants/reportConstants';
+import { REPORT_DATE_RANGE_OPTIONS, getReportDateRange, MAX_REPORT_ROWS, CHART_TOOLTIP_STYLE, CHART_CURSOR, CHART_PIE_ACTIVE } from '../../constants/reportConstants';
 import { Alert, Toast } from '../../utils/alert';
 
 const categoryColors = [
   '#ef4444', '#f59e0b', '#22c55e', '#0ea5e9', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#6366f1',
 ];
-const CUSTOM_DATE_DEBOUNCE_MS = 2000;
 
-const SummaryReport = () => {
+const SummaryReportPage = () => {
   const printRef = useRef(null);
   const [dateRange, setDateRange] = useState('this_month');
   const [customDateFrom, setCustomDateFrom] = useState('');
   const [customDateTo, setCustomDateTo] = useState('');
   const [inputDateFrom, setInputDateFrom] = useState('');
   const [inputDateTo, setInputDateTo] = useState('');
+  const [appliedDateRange, setAppliedDateRange] = useState('this_month');
+  const [appliedCustomFrom, setAppliedCustomFrom] = useState('');
+  const [appliedCustomTo, setAppliedCustomTo] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
-  const debounceFromRef = useRef(null);
-  const debounceToRef = useRef(null);
 
-  const { start: dateFrom, end: dateTo } = getReportDateRange(dateRange, customDateFrom, customDateTo);
+  const { start: dateFrom, end: dateTo } = getReportDateRange(appliedDateRange, appliedCustomFrom, appliedCustomTo);
   const { data: dashboardStats } = useReportCollection({
-    dateRange,
-    customDateFrom: dateRange === 'custom' ? customDateFrom : undefined,
-    customDateTo: dateRange === 'custom' ? customDateTo : undefined,
+    dateRange: appliedDateRange,
+    customDateFrom: appliedDateRange === 'custom' ? appliedCustomFrom : undefined,
+    customDateTo: appliedDateRange === 'custom' ? appliedCustomTo : undefined,
   });
   const expenseOptions = useMemo(() => ({
     page: 1,
     pagelimit: MAX_REPORT_ROWS,
     relations: 'category',
     filters: { dateFrom, dateTo },
-  }), [dateRange, dateFrom, dateTo]);
+  }), [dateFrom, dateTo]);
 
-  const applyCustomFrom = useCallback((value) => {
-    if (debounceFromRef.current) clearTimeout(debounceFromRef.current);
-    debounceFromRef.current = setTimeout(() => setCustomDateFrom(value), CUSTOM_DATE_DEBOUNCE_MS);
-  }, []);
-  const applyCustomTo = useCallback((value) => {
-    if (debounceToRef.current) clearTimeout(debounceToRef.current);
-    debounceToRef.current = setTimeout(() => setCustomDateTo(value), CUSTOM_DATE_DEBOUNCE_MS);
-  }, []);
+  const handleApply = useCallback(() => {
+    setAppliedDateRange(dateRange);
+    setAppliedCustomFrom(dateRange === 'custom' ? customDateFrom : '');
+    setAppliedCustomTo(dateRange === 'custom' ? customDateTo : '');
+  }, [dateRange, customDateFrom, customDateTo]);
 
   useEffect(() => {
     if (dateRange === 'custom') {
@@ -84,13 +81,6 @@ const SummaryReport = () => {
       setInputDateTo(customDateTo);
     }
   }, [dateRange]);
-
-  useEffect(() => {
-    return () => {
-      if (debounceFromRef.current) clearTimeout(debounceFromRef.current);
-      if (debounceToRef.current) clearTimeout(debounceToRef.current);
-    };
-  }, []);
 
   const { data: expensesData } = useExpenses(expenseOptions);
   const { data: categoriesData } = useExpenseCategories({});
@@ -164,14 +154,14 @@ const SummaryReport = () => {
   }, [transformedExpenses, totalCollectedFromBills]);
 
   const periodLabel =
-    dateRange === 'custom' && customDateFrom && customDateTo
-      ? `${customDateFrom} – ${customDateTo}`
-      : REPORT_DATE_RANGE_OPTIONS.find((o) => o.value === dateRange)?.label || dateRange;
+    appliedDateRange === 'custom' && appliedCustomFrom && appliedCustomTo
+      ? `${appliedCustomFrom} – ${appliedCustomTo}`
+      : REPORT_DATE_RANGE_OPTIONS.find((o) => o.value === appliedDateRange)?.label || appliedDateRange;
   const handleEmailReport = async () => {
     try {
       const res = await reportService.emailReport({
         reportType: 'summary',
-        dateRange,
+        dateRange: appliedDateRange,
         dateFrom,
         dateTo,
       });
@@ -232,7 +222,7 @@ const SummaryReport = () => {
           'We will send the report to your email (PDF). The full report will be delivered via email.',
           { confirmButtonText: 'OK' }
         );
-        await reportService.emailReport({ reportType: 'summary', dateRange, dateFrom, dateTo, format: 'pdf' });
+        await reportService.emailReport({ reportType: 'summary', dateRange: appliedDateRange, dateFrom, dateTo, format: 'pdf' });
         Toast.success('Report request submitted. You will receive it by email.');
       } else {
         doExportPdf();
@@ -251,7 +241,7 @@ const SummaryReport = () => {
           'We will send the report to your email (Excel). The full report will be delivered via email.',
           { confirmButtonText: 'OK' }
         );
-        await reportService.emailReport({ reportType: 'summary', dateRange, dateFrom, dateTo, format: 'excel' });
+        await reportService.emailReport({ reportType: 'summary', dateRange: appliedDateRange, dateFrom, dateTo, format: 'excel' });
         Toast.success('Report request submitted. You will receive it by email.');
       } else {
         doExportExcel();
@@ -319,8 +309,9 @@ const SummaryReport = () => {
         dateRangeOptions={REPORT_DATE_RANGE_OPTIONS}
         inputDateFrom={inputDateFrom}
         inputDateTo={inputDateTo}
-        onCustomDateFromChange={(v) => { setInputDateFrom(v); applyCustomFrom(v); }}
-        onCustomDateToChange={(v) => { setInputDateTo(v); applyCustomTo(v); }}
+        onCustomDateFromChange={(v) => { setInputDateFrom(v); setCustomDateFrom(v); }}
+        onCustomDateToChange={(v) => { setInputDateTo(v); setCustomDateTo(v); }}
+        onApply={handleApply}
         extraFilters={summaryExtraFilters}
         reportTooLarge={reportTooLarge}
         onEmailReport={handleEmailReport}
@@ -353,10 +344,10 @@ const SummaryReport = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
                     <YAxis stroke="#64748b" fontSize={12} />
-                    <Tooltip formatter={(value) => formatCurrency(value)} />
+                    <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={CHART_TOOLTIP_STYLE} />
                     <Legend />
-                    <Bar dataKey="revenue" name="Revenue" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="expenses" name="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="revenue" name="Revenue" fill="#22c55e" radius={[4, 4, 0, 0]} cursor={CHART_CURSOR} />
+                    <Bar dataKey="expenses" name="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]} cursor={CHART_CURSOR} />
                     <Line type="monotone" dataKey="profit" name="Profit" stroke="#0ea5e9" strokeWidth={2} dot={{ fill: '#0ea5e9' }} />
                   </ComposedChart>
                 </ResponsiveContainer>
@@ -381,12 +372,13 @@ const SummaryReport = () => {
                       dataKey="value"
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       labelLine={false}
+                      activeShape={CHART_PIE_ACTIVE}
                     >
                       {expenseByCategory.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={categoryColors[index % categoryColors.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => formatCurrency(value)} />
+                    <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={CHART_TOOLTIP_STYLE} />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
@@ -406,7 +398,7 @@ const SummaryReport = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
                     <YAxis stroke="#64748b" fontSize={12} />
-                    <Tooltip formatter={(value) => formatCurrency(value)} />
+                    <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={CHART_TOOLTIP_STYLE} />
                     <Legend />
                     <Line type="monotone" dataKey="expenses" name="Actual" stroke="#ef4444" strokeWidth={2} dot={{ fill: '#ef4444' }} />
                     <Line type="monotone" dataKey="budget" name="Budget" stroke="#8b5cf6" strokeDasharray="5 5" strokeWidth={2} />
@@ -425,17 +417,17 @@ const SummaryReport = () => {
                 return (
                   <div
                     key={cat.name}
-                    className="p-4 bg-dark-50 rounded-xl border-l-4"
-                    style={{ borderColor: categoryColors[index % categoryColors.length] }}
+                    className="p-4 bg-dark-200/80 rounded-xl border-l-4 border-dark-600"
+                    style={{ borderLeftColor: categoryColors[index % categoryColors.length] }}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-dark-800">{cat.name}</span>
-                      <span className="text-sm text-dark-500">{percentage}%</span>
+                      <span className="font-medium text-dark-200">{cat.name}</span>
+                      <span className="text-sm text-dark-400">{percentage}%</span>
                     </div>
-                    <p className="text-2xl font-bold text-dark-800">{formatCurrency(cat.value)}</p>
-                    <div className="mt-2 bg-dark-200 rounded-full h-2 overflow-hidden">
+                    <p className="text-2xl font-bold text-dark-100">{formatCurrency(cat.value)}</p>
+                    <div className="mt-2 bg-dark-600 rounded-full h-2 overflow-hidden">
                       <div
-                        className="h-full rounded-full"
+                        className="h-full rounded-full opacity-90"
                         style={{
                           width: `${percentage}%`,
                           backgroundColor: categoryColors[index % categoryColors.length],
@@ -457,4 +449,4 @@ const SummaryReport = () => {
   );
 };
 
-export default SummaryReport;
+export default SummaryReportPage;

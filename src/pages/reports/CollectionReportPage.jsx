@@ -28,13 +28,12 @@ import { useReportCollection } from '../../hooks/useReportCollection';
 import { reportService } from '../../services/reportService';
 import { exportReportToPdf, exportReportToExcel } from '../../utils/reportPrintExport';
 import { BILL_STATUS_LABELS, BILL_STATUS_VARIANTS } from '../../constants/billConstants';
-import { REPORT_DATE_RANGE_OPTIONS, getReportDateRange, MAX_REPORT_ROWS } from '../../constants/reportConstants';
+import { REPORT_DATE_RANGE_OPTIONS, getReportDateRange, MAX_REPORT_ROWS, CHART_TOOLTIP_STYLE, CHART_CURSOR, CHART_PIE_ACTIVE } from '../../constants/reportConstants';
 import { Alert, Toast } from '../../utils/alert';
 
 const PAYMENT_METHOD_OPTIONS = ['all', 'cash', 'card', 'transfer'];
-const CUSTOM_DATE_DEBOUNCE_MS = 5000;
 
-const CollectionReport = () => {
+const CollectionReportPage = () => {
   const navigate = useNavigate();
   const printRef = useRef(null);
   const [dateRange, setDateRange] = useState('this_month');
@@ -42,24 +41,22 @@ const CollectionReport = () => {
   const [customDateTo, setCustomDateTo] = useState('');
   const [inputDateFrom, setInputDateFrom] = useState('');
   const [inputDateTo, setInputDateTo] = useState('');
+  const [appliedDateRange, setAppliedDateRange] = useState('this_month');
+  const [appliedCustomFrom, setAppliedCustomFrom] = useState('');
+  const [appliedCustomTo, setAppliedCustomTo] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('all');
-  const debounceFromRef = useRef(null);
-  const debounceToRef = useRef(null);
 
   const { data: reportData, isLoading, isError, error } = useReportCollection({
-    dateRange,
-    customDateFrom: dateRange === 'custom' ? customDateFrom : undefined,
-    customDateTo: dateRange === 'custom' ? customDateTo : undefined,
+    dateRange: appliedDateRange,
+    customDateFrom: appliedDateRange === 'custom' ? appliedCustomFrom : undefined,
+    customDateTo: appliedDateRange === 'custom' ? appliedCustomTo : undefined,
   });
 
-  const applyCustomFrom = useCallback((value) => {
-    if (debounceFromRef.current) clearTimeout(debounceFromRef.current);
-    debounceFromRef.current = setTimeout(() => setCustomDateFrom(value), CUSTOM_DATE_DEBOUNCE_MS);
-  }, []);
-  const applyCustomTo = useCallback((value) => {
-    if (debounceToRef.current) clearTimeout(debounceToRef.current);
-    debounceToRef.current = setTimeout(() => setCustomDateTo(value), CUSTOM_DATE_DEBOUNCE_MS);
-  }, []);
+  const handleApply = useCallback(() => {
+    setAppliedDateRange(dateRange);
+    setAppliedCustomFrom(dateRange === 'custom' ? customDateFrom : '');
+    setAppliedCustomTo(dateRange === 'custom' ? customDateTo : '');
+  }, [dateRange, customDateFrom, customDateTo]);
 
   useEffect(() => {
     if (dateRange === 'custom') {
@@ -67,13 +64,6 @@ const CollectionReport = () => {
       setInputDateTo(customDateTo);
     }
   }, [dateRange]);
-
-  useEffect(() => {
-    return () => {
-      if (debounceFromRef.current) clearTimeout(debounceFromRef.current);
-      if (debounceToRef.current) clearTimeout(debounceToRef.current);
-    };
-  }, []);
 
   const todayRevenue = reportData?.todayRevenue ?? 0;
   const membershipDistribution = reportData?.membershipDistribution ?? [];
@@ -108,16 +98,16 @@ const CollectionReport = () => {
     documentTitle: 'Collection Report',
   });
 
-  const resolvedDates = getReportDateRange(dateRange, customDateFrom, customDateTo);
+  const resolvedDates = getReportDateRange(appliedDateRange, appliedCustomFrom, appliedCustomTo);
   const periodLabel =
-    dateRange === 'custom' && customDateFrom && customDateTo
-      ? `${customDateFrom} – ${customDateTo}`
-      : REPORT_DATE_RANGE_OPTIONS.find((o) => o.value === dateRange)?.label || dateRange;
+    appliedDateRange === 'custom' && appliedCustomFrom && appliedCustomTo
+      ? `${appliedCustomFrom} – ${appliedCustomTo}`
+      : REPORT_DATE_RANGE_OPTIONS.find((o) => o.value === appliedDateRange)?.label || appliedDateRange;
 
   const handleEmailReport = async () => {
     try {
       const { start: dateFrom, end: dateTo } = resolvedDates;
-      const res = await reportService.emailReport({ reportType: 'collection', dateRange, dateFrom, dateTo });
+      const res = await reportService.emailReport({ reportType: 'collection', dateRange: appliedDateRange, dateFrom, dateTo });
       Toast.success(res.message || 'Report request submitted. You will receive it by email.');
     } catch (err) {
       Toast.error(err.message || 'Failed to request report');
@@ -147,7 +137,7 @@ const CollectionReport = () => {
       summaryRows,
       headers,
       rows,
-      filename: `collection-report-${dateRange}.pdf`,
+      filename: `collection-report-${appliedDateRange}.pdf`,
     });
   };
 
@@ -168,7 +158,7 @@ const CollectionReport = () => {
       summaryRows,
       headers,
       rows,
-      filename: `collection-report-${dateRange}.xlsx`,
+      filename: `collection-report-${appliedDateRange}.xlsx`,
     });
   };
 
@@ -182,7 +172,7 @@ const CollectionReport = () => {
           'We will send the report to your email (PDF). The full report will be delivered via email.',
           { confirmButtonText: 'OK' }
         );
-        await reportService.emailReport({ reportType: 'collection', dateRange, dateFrom, dateTo, format: 'pdf' });
+        await reportService.emailReport({ reportType: 'collection', dateRange: appliedDateRange, dateFrom, dateTo, format: 'pdf' });
         Toast.success('Report request submitted. You will receive it by email.');
       } else {
         doExportPdf();
@@ -202,7 +192,7 @@ const CollectionReport = () => {
           'We will send the report to your email (Excel). The full report will be delivered via email.',
           { confirmButtonText: 'OK' }
         );
-        await reportService.emailReport({ reportType: 'collection', dateRange, dateFrom, dateTo, format: 'excel' });
+        await reportService.emailReport({ reportType: 'collection', dateRange: appliedDateRange, dateFrom, dateTo, format: 'excel' });
         Toast.success('Report request submitted. You will receive it by email.');
       } else {
         doExportExcel();
@@ -301,8 +291,9 @@ const CollectionReport = () => {
         dateRangeOptions={REPORT_DATE_RANGE_OPTIONS}
         inputDateFrom={inputDateFrom}
         inputDateTo={inputDateTo}
-        onCustomDateFromChange={(v) => { setInputDateFrom(v); applyCustomFrom(v); }}
-        onCustomDateToChange={(v) => { setInputDateTo(v); applyCustomTo(v); }}
+        onCustomDateFromChange={(v) => { setInputDateFrom(v); setCustomDateFrom(v); }}
+        onCustomDateToChange={(v) => { setInputDateTo(v); setCustomDateTo(v); }}
+        onApply={handleApply}
         extraFilters={filterExtra}
         reportTooLarge={reportTooLarge}
         onEmailReport={handleEmailReport}
@@ -340,12 +331,13 @@ const CollectionReport = () => {
                       dataKey="value"
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       labelLine={false}
+                      activeShape={CHART_PIE_ACTIVE}
                     >
                       {paymentMethodData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => formatCurrency(value)} />
+                    <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={CHART_TOOLTIP_STYLE} />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
@@ -362,8 +354,8 @@ const CollectionReport = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis type="number" stroke="#64748b" fontSize={12} />
                     <YAxis dataKey="name" type="category" stroke="#64748b" fontSize={11} width={100} />
-                    <Tooltip formatter={(value) => formatCurrency(value)} />
-                    <Bar dataKey="revenue" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
+                    <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={CHART_TOOLTIP_STYLE} />
+                    <Bar dataKey="revenue" fill="#8b5cf6" radius={[0, 4, 4, 0]} cursor={CHART_CURSOR} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -396,4 +388,4 @@ const CollectionReport = () => {
   );
 };
 
-export default CollectionReport;
+export default CollectionReportPage;
