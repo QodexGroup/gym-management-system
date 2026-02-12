@@ -1,6 +1,6 @@
 import StatCard from './StatCard';
 
-const StatsCards = ({ stats = [], dark = false, size = 'md', iconPosition = 'right', iconColor = 'light', columns = 4 }) => {
+const StatsCards = ({ stats = [], dark = false, size = 'md', iconPosition = 'right', iconColor = 'light', columns = 4, variant = 'default' }) => {
   if (!Array.isArray(stats) || stats.length === 0) return null;
 
   const gridColsClass = {
@@ -11,13 +11,29 @@ const StatsCards = ({ stats = [], dark = false, size = 'md', iconPosition = 'rig
   }[columns] || 'md:grid-cols-4';
 
   return (
-    <div className={`grid grid-cols-1 ${gridColsClass} gap-6 mb-6`}>
+    <div className={`grid grid-cols-1 ${gridColsClass} gap-6 mb-6 ${variant === 'gradient' ? 'no-print' : ''}`}>
       {stats.map((stat) => {
         if (!stat) return null;
         const Icon = stat.icon || null;
+        const key = stat.title ?? stat.label ?? stat.value;
+        if (variant === 'gradient' || stat.variant === 'gradient') {
+          return (
+            <StatCard
+              key={key}
+              variant="gradient"
+              label={stat.label ?? stat.title}
+              value={stat.value}
+              icon={Icon}
+              gradient={stat.gradient || 'from-primary-500 to-primary-600'}
+              textBg={stat.textBg || 'text-primary-100'}
+              iconBg={stat.iconBg || 'text-primary-200'}
+              size={stat.size || size}
+            />
+          );
+        }
         return (
           <StatCard
-            key={stat.title}
+            key={key}
             title={stat.title}
             value={stat.value}
             color={stat.color}

@@ -9,6 +9,44 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
  */
 export const customerBillService = {
   /**
+   * Get all bills for the account (no customerId). Single request for reports.
+   * @param {Object} options - page, pagelimit, sort, filters
+   * @returns {Promise<Object>} - { data: [], current_page, last_page, total }
+   */
+  async getAllBills(options = {}) {
+    try {
+      const queryParams = new URLSearchParams();
+      if (options.page) queryParams.append('page', options.page);
+      if (options.pagelimit) queryParams.append('pagelimit', options.pagelimit);
+      if (options.sort) queryParams.append('sort', options.sort);
+      if (options.filters) {
+        Object.entries(options.filters).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) {
+            queryParams.append(`filters[${key}]`, value);
+          }
+        });
+      }
+      const queryString = queryParams.toString();
+      const url = `${API_BASE_URL}/customers/bills${queryString ? `?${queryString}` : ''}`;
+      const response = await authenticatedFetch(url, { method: 'GET' });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (!data.success) return { data: [], current_page: 1, last_page: 1, total: 0 };
+      if (data.data && Array.isArray(data.data.data)) return data.data;
+      if (Array.isArray(data.data)) return { data: data.data, current_page: 1, last_page: 1, total: data.data.length };
+      return { data: [], current_page: 1, last_page: 1, total: 0 };
+    } catch (error) {
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('Cannot connect to API. Please check if the server is running and CORS is configured.');
+      }
+      throw error;
+    }
+  },
+
+  /**
    * Get all bills for a customer
    * @param {number} customerId
    * @param {Object} options - Optional query parameters (page, pagelimit, sort, filters, etc.)

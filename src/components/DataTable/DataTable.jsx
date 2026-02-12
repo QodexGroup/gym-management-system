@@ -6,16 +6,30 @@ const DataTable = ({
   emptyMessage = 'No records found',
   onRowClick,
   renderActions,
+  title,
+  actionButton,
+  wrapperClassName = '',
 }) => {
   if (loading && (!data || data.length === 0)) {
     return <div className="text-center py-12 text-dark-400">Loading...</div>;
   }
 
   if (!loading && data.length === 0) {
-    return <div className="text-center py-12 text-dark-400">{emptyMessage}</div>;
+    const emptyContent = (
+      <>
+        {(title || actionButton) && (
+          <div className="flex items-center justify-between mb-4">
+            {title && <h3 className="text-lg font-semibold text-dark-800">{title}</h3>}
+            {actionButton}
+          </div>
+        )}
+        <div className="text-center py-12 text-dark-400">{emptyMessage}</div>
+      </>
+    );
+    return wrapperClassName ? <div className={wrapperClassName}>{emptyContent}</div> : emptyContent;
   }
 
-  return (
+  const tableContent = (
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
@@ -63,6 +77,23 @@ const DataTable = ({
       </table>
     </div>
   );
+
+  const content = (
+    <>
+      {(title || actionButton) && (
+        <div className="flex items-center justify-between mb-4">
+          {title && <h3 className="text-lg font-semibold text-dark-800">{title}</h3>}
+          {actionButton}
+        </div>
+      )}
+      {tableContent}
+    </>
+  );
+
+  if (wrapperClassName) {
+    return <div className={wrapperClassName}>{content}</div>;
+  }
+  return content;
 };
 
 export default DataTable;

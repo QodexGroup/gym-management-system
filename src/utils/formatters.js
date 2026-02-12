@@ -131,10 +131,10 @@ export const formatCurrency = (amount, options = {}) => {
   
   const mergedOptions = { ...defaultOptions, ...options };
   
-  // Format number with Philippine locale
-  const formattedNumber = numAmount.toLocaleString(PH_LOCALE, mergedOptions);
+  // Use en-US so we get plain digits only (no ± or + from fil-PH)
+  const formattedNumber = Math.abs(numAmount).toLocaleString('en-US', mergedOptions);
   
-  return `₱${formattedNumber}`;
+  return numAmount < 0 ? `-₱${formattedNumber}` : `₱${formattedNumber}`;
 };
 
 /**

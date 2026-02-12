@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -14,13 +14,21 @@ import {
   ChevronLeft,
   Dumbbell,
   ClipboardClock,
+  FileBarChart,
 } from 'lucide-react';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const { isAdmin } = useAuth();
   const { hasPermission } = usePermissions();
   const location = useLocation();
-  const [expandedMenus, setExpandedMenus] = useState(['reports']);
+  const [expandedMenus, setExpandedMenus] = useState([]);
+
+  // Keep Reports open when on any report route (so it doesn't close when switching between report pages)
+  useEffect(() => {
+    if (location.pathname.startsWith('/reports')) {
+      setExpandedMenus((prev) => (prev.includes('reports') ? prev : [...prev, 'reports']));
+    }
+  }, [location.pathname]);
 
   const toggleMenu = (menu) => {
     setExpandedMenus((prev) =>
@@ -46,21 +54,21 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     {
       section: 'ACCOUNT',
       items: [
-        { path: '/membership-plans', icon: CreditCard, label: 'Membership Plans', adminOnly: true }, // Admin only
-        { path: '/pt-packages', icon: Dumbbell, label: 'PT Packages', adminOnly: true }, // Admin only
-        { path: '/users', icon: UserCog, label: 'User Management', adminOnly: true }, // Admin only
-        // {
-        //   label: 'Reports',
-        //   icon: FileBarChart,
-        //   key: 'reports',
-        //   permission: null,
-        //   children: [
-        //     { path: '/reports/summary', label: 'Summary Report', permission: null },
-        //     { path: '/reports/collection', label: 'Collection Report', permission: null },
-        //     { path: '/reports/expense', label: 'Expense Report', permission: null },
-        //   ],
-        // },
-        // { path: '/settings', icon: Settings, label: 'Settings', permission: null },
+        { path: '/membership-plans', icon: CreditCard, label: 'Membership Plans', adminOnly: true },
+        { path: '/pt-packages', icon: Dumbbell, label: 'PT Packages', adminOnly: true },
+        { path: '/users', icon: UserCog, label: 'User Management', adminOnly: true },
+        {
+          label: 'Reports',
+          icon: FileBarChart,
+          key: 'reports',
+          adminOnly: true,
+          children: [
+            { path: '/reports/summary', label: 'Summary Report', permission: null },
+            { path: '/reports/collection', label: 'Collection Report', permission: null },
+            { path: '/reports/expense', label: 'Expense Report', permission: null },
+            { path: '/reports/my-collection', label: 'My Collection', permission: null },
+          ],
+        },
       ],
     },
   ];

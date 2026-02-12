@@ -22,10 +22,10 @@ import PtPackageList from './pages/admin/PtPackageList.page';
 import SessionScheduling from './pages/common/SessionScheduling.page';
 import ClassScheduleList from './pages/common/ClassScheduleList.page';
 import Expenses from './pages/common/Expenses.page';
-import CollectionReport from './pages/reports/CollectionReport';
-import ExpenseReport from './pages/reports/ExpenseReport';
-import SummaryReport from './pages/reports/SummaryReport';
-import MyCollection from './pages/reports/MyCollection';
+import SummaryReportPage from './pages/reports/SummaryReportPage';
+import CollectionReportPage from './pages/reports/CollectionReportPage';
+import ExpenseReportPage from './pages/reports/ExpenseReportPage';
+import MyCollectionPage from './pages/reports/MyCollectionPage';
 import MembershipPlans from './pages/admin/MembershipPlans.page';
 import UserManagement from './pages/admin/UserManagement.page';
 import Notifications from './pages/Notifications';
@@ -119,10 +119,10 @@ function App() {
                 {/* <Route path="/calendar" element={<Calendar />} /> */}
 
                 {/* Reports */}
-                {/* <Route path="/reports/summary" element={<SummaryReport />} />
-                <Route path="/reports/collection" element={<CollectionReport />} />
-                <Route path="/reports/expense" element={<ExpenseReport />} />
-                <Route path="/reports/my-collection" element={<MyCollection />} /> */}
+                <Route path="/reports/summary" element={<ProtectedRoute><SummaryReportPage /></ProtectedRoute>} />
+                <Route path="/reports/collection" element={<ProtectedRoute><CollectionReportPage /></ProtectedRoute>} />
+                <Route path="/reports/expense" element={<ProtectedRoute><ExpenseReportPage /></ProtectedRoute>} />
+                <Route path="/reports/my-collection" element={<ProtectedRoute><MyCollectionPage /></ProtectedRoute>} />
 
                 {/* User Management (Admin Only) */}
                 <Route path="/users" element={<AdminProtectedRoute><UserManagement /></AdminProtectedRoute>} />
