@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Layout from '../../components/layout/Layout';
 import { Modal } from '../../components/common';
 import CalendarView from '../../components/Calendar/CalendarView';
@@ -47,6 +47,10 @@ const SessionScheduling = () => {
   const [showPtAttendanceModal, setShowPtAttendanceModal] = useState(false);
   const [selectedPtSession, setSelectedPtSession] = useState(null);
 
+  /* ------------------------------- hooks ------------------------------- */
+  const { user, isTrainer } = useAuth();
+  const { data: coaches = [] } = useCoaches();
+
   /* ------------------------------- filters ------------------------------- */
   const [typeFilters, setTypeFilters] = useState({
     [SESSION_TYPES.COACH_GROUP_CLASS]: true,
@@ -55,10 +59,47 @@ const SessionScheduling = () => {
     [SESSION_TYPES.MEMBER_PT]: true,
   });
 
-  /* ------------------------------- hooks ------------------------------- */
-  const { user, isTrainer } = useAuth();
-  const { data: coaches = [] } = useCoaches();
   const [coachFilters, setCoachFilters] = useState({});
+  const prevIsTrainerRef = useRef(isTrainer);
+
+  // Update type filters when trainer status changes - remove coach filters for trainers
+  useEffect(() => {
+    // Only update if isTrainer status actually changed
+    if (prevIsTrainerRef.current === isTrainer) {
+      return;
+    }
+    
+    const prevIsTrainer = prevIsTrainerRef.current;
+    prevIsTrainerRef.current = isTrainer;
+
+    if (isTrainer && !prevIsTrainer) {
+      // Changed from non-trainer to trainer - remove coach filters
+      setTypeFilters(prev => {
+        // Only update if coach filters are still present
+        if (SESSION_TYPES.COACH_GROUP_CLASS in prev || SESSION_TYPES.COACH_PT in prev) {
+          const updated = { ...prev };
+          // Remove coach-specific filters for trainers
+          delete updated[SESSION_TYPES.COACH_GROUP_CLASS];
+          delete updated[SESSION_TYPES.COACH_PT];
+          return updated;
+        }
+        return prev;
+      });
+    } else if (!isTrainer && prevIsTrainer) {
+      // Changed from trainer to non-trainer - add coach filters
+      setTypeFilters(prev => {
+        // Only update if coach filters are missing
+        if (!(SESSION_TYPES.COACH_GROUP_CLASS in prev) || !(SESSION_TYPES.COACH_PT in prev)) {
+          return {
+            ...prev,
+            [SESSION_TYPES.COACH_GROUP_CLASS]: true,
+            [SESSION_TYPES.COACH_PT]: true,
+          };
+        }
+        return prev;
+      });
+    }
+  }, [isTrainer]);
 
   useEffect(() => {
     if (!isTrainer && coaches.length > 0) {
@@ -75,10 +116,20 @@ const SessionScheduling = () => {
   const calendarEndDate = useMemo(() => format(endOfWeek(endOfMonth(calendarDate)), 'yyyy-MM-dd'), [calendarDate]);
 
   /* ------------------------------- data ------------------------------- */
+  // Build filters for class schedule sessions
+  const classScheduleFilters = useMemo(() => {
+    const filters = { startDate: calendarStartDate, endDate: calendarEndDate };
+    // If user is a trainer, only show their own sessions
+    if (isTrainer && user?.id) {
+      filters.coachId = user.id;
+    }
+    return filters;
+  }, [calendarStartDate, calendarEndDate, isTrainer, user?.id]);
+
   const { data: classSessionsData, isLoading: isLoadingSessions } = useClassScheduleSessions({
     pagelimit: 0,
     relations: 'classSchedule,classSchedule.coach',
-    filters: { startDate: calendarStartDate, endDate: calendarEndDate },
+    filters: classScheduleFilters,
   });
 
   const { data: bookingsData } = useBookingSessions(calendarStartDate, calendarEndDate);
@@ -101,9 +152,12 @@ const SessionScheduling = () => {
 
   const classScheduleSessions = useMemo(() => {
     const sessions = mapClassScheduleSessionsToComponent(classSessionsData?.data || []);
-    // Attendance count is now calculated on backend for PT sessions
+    // If user is a trainer, filter to only show their own sessions
+    if (isTrainer && user?.id) {
+      return sessions.filter(session => session.coachId === user.id);
+    }
     return sessions;
-  }, [classSessionsData]);
+  }, [classSessionsData, isTrainer, user?.id]);
 
   const memberGroupClassSessions = useMemo(() => {
     return mapBookingsToMemberGroupClassSessions(bookingsData);
@@ -236,22 +290,32 @@ const SessionScheduling = () => {
   const sessions = useMemo(() => {
     const allSessions = [...classScheduleSessions, ...memberGroupClassSessions, ...ptSessions];
 
+    // For trainers, filter to only show their own sessions
+    let filtered = allSessions;
+    if (isTrainer && user?.id) {
+      filtered = filtered.filter(session => session.coachId === user.id);
+    }
+
     // For PT sessions: if coach PT filter is enabled, show coach PT sessions
     // If member PT filter is enabled, show member PT sessions
     // We need to show both perspectives when both filters are enabled
-    const filtered = allSessions
+    filtered = filtered
       .filter((session) => {
         // For PT sessions, check if the corresponding filter is enabled
         if (session.type === SESSION_TYPES.COACH_PT) {
-          return typeFilters[SESSION_TYPES.COACH_PT];
+          return typeFilters[SESSION_TYPES.COACH_PT] !== false;
         }
         if (session.type === SESSION_TYPES.MEMBER_PT) {
-          return typeFilters[SESSION_TYPES.MEMBER_PT];
+          return typeFilters[SESSION_TYPES.MEMBER_PT] !== false;
         }
         // For group class sessions, use normal filter
-        return typeFilters[session.type];
+        return typeFilters[session.type] !== false;
       })
-      .filter((session) => coachFilters[session.coachId] !== false)
+      .filter((session) => {
+        // Only apply coach filters if user is not a trainer
+        if (isTrainer) return true;
+        return coachFilters[session.coachId] !== false;
+      })
       .filter((session) => {
         if (!searchQuery) return true;
         const customerName = session.customer
@@ -281,18 +345,29 @@ const SessionScheduling = () => {
     handleSessionClick, 
     handleEditGroupClassSession, 
     handleCancelSession, 
-    handleCancelBooking
+    handleCancelBooking,
+    isTrainer,
+    user?.id
   ]);
 
   // Prepare type filters for CalendarToolbar
+  // For trainers, exclude COACH_GROUP_CLASS and COACH_PT filters since they only see their own schedule
   const typeFiltersArray = useMemo(() => {
-    return Object.entries(SESSION_TYPE_LABELS).map(([key, label]) => ({
-      key,
-      label,
-      isActive: typeFilters[key],
-      getColorClass: getFilterButtonColor,
-    }));
-  }, [typeFilters]);
+    return Object.entries(SESSION_TYPE_LABELS)
+      .filter(([key]) => {
+        // For trainers, exclude coach-specific filters
+        if (isTrainer) {
+          return key !== SESSION_TYPES.COACH_GROUP_CLASS && key !== SESSION_TYPES.COACH_PT;
+        }
+        return true;
+      })
+      .map(([key, label]) => ({
+        key,
+        label,
+        isActive: typeFilters[key] !== false,
+        getColorClass: getFilterButtonColor,
+      }));
+  }, [typeFilters, isTrainer]);
 
   // Prepare action buttons for CalendarToolbar
   const actionButtons = useMemo(() => [

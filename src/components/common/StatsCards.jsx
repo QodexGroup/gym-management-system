@@ -28,6 +28,7 @@ const StatsCards = ({ stats = [], dark = false, size = 'md', iconPosition = 'rig
               textBg={stat.textBg || 'text-primary-100'}
               iconBg={stat.iconBg || 'text-primary-200'}
               size={stat.size || size}
+              subtitle={stat.subtitle}
             />
           );
         }
