@@ -15,7 +15,7 @@ import TrainerDashboard from './pages/trainer/Dashboard';
 import PtMembers from './pages/trainer/PtMembers';
 
 // Shared Pages
-import CheckIn from './pages/CheckIn';
+import CheckIn from './pages/common/CheckIn.page';
 import CustomerList from './pages/customers/CustomerList.page';
 import CustomerProfile from './pages/customers/CustomerProfile.page';
 import PtPackageList from './pages/admin/PtPackageList.page';
@@ -95,7 +95,7 @@ function App() {
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 
                 {/* Check-In System */}
-                {/* <Route path="/check-in" element={<CheckIn />} /> */}
+                <Route path="/check-in" element={<CheckIn />} />
 
                 {/* Customer Management */}
                 <Route path="/members" element={<ProtectedRoute><CustomerList /></ProtectedRoute>} />

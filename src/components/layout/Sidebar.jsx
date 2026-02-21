@@ -43,7 +43,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       section: 'MAIN',
       items: [
         { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard'},
-        // { path: '/check-in', icon: UserCheck, label: 'Check-In System', permission: null },
+        { path: '/check-in', icon: ClipboardClock, label: 'Walkin'},
         { path: '/members', icon: Users, label: 'Clients'},
         { path: '/sessions', icon: CalendarDays, label: 'Calendar'},
         { path: '/classes', icon: ClipboardClock, label: 'Class Schedules'},
@@ -56,19 +56,19 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       items: [
         { path: '/membership-plans', icon: CreditCard, label: 'Membership Plans', adminOnly: true },
         { path: '/pt-packages', icon: Dumbbell, label: 'PT Packages', adminOnly: true },
-        { path: '/users', icon: UserCog, label: 'User Management', adminOnly: true },
         {
           label: 'Reports',
           icon: FileBarChart,
           key: 'reports',
           adminOnly: true,
           children: [
-            { path: '/reports/summary', label: 'Summary Report', permission: null },
-            { path: '/reports/collection', label: 'Collection Report', permission: null },
-            { path: '/reports/expense', label: 'Expense Report', permission: null },
-            { path: '/reports/my-collection', label: 'My Collection', permission: null },
+            { path: '/reports/summary', label: 'Summary Report', adminOnly: true },
+            { path: '/reports/collection', label: 'Collection Report', adminOnly: true },
+            { path: '/reports/expense', label: 'Expense Report', adminOnly: true },
+            { path: '/reports/my-collection', label: 'My Collection', adminOnly: true },
           ],
         },
+        { path: '/users', icon: UserCog, label: 'User Management', adminOnly: true },
       ],
     },
   ];

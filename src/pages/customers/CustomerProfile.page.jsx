@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 import { Avatar, Badge } from '../../components/common';
-import { ArrowLeft, Activity, FileText, CreditCard, CalendarDays, UserCheck } from 'lucide-react';
+import { ArrowLeft, Activity, FileText, CreditCard, CalendarDays, UserCheck, ClipboardClock } from 'lucide-react';
 
 import CustomerForm from './customer-forms/CustomerForm';
 import { useCustomer } from '../../hooks/useCustomers';
@@ -15,6 +15,7 @@ import BillsTab from './customer-tabs/BillsTab.page';
 import ScansTab from './customer-tabs/ScansTab.page';
 import PtSessionsTab from './customer-tabs/PtSessionsTab.page';
 import ClassAttendanceTab from './customer-tabs/ClassAttendanceTab.page';
+import WalkinCustomerTab from './customer-tabs/WalkinCustomerTab.page';
 
 /* --------------------------- Tab Config --------------------------- */
 const customerTabs = [
@@ -22,7 +23,8 @@ const customerTabs = [
   { key: 'scans', label: 'Scans', icon: FileText, component: ScansTab },
   { key: 'bills', label: 'Plans & Billing', icon: CreditCard, component: BillsTab },
   { key: 'pt-sessions', label: 'PT Sessions', icon: CalendarDays, component: PtSessionsTab },
-  { key: 'class-attendance', label: 'Class Attendance', icon: UserCheck, component: ClassAttendanceTab },
+  { key: 'class-attendance', label: 'Group Class Attendance', icon: UserCheck, component: ClassAttendanceTab },
+  { key: 'walkins', label: 'Walkin History', icon: ClipboardClock, component: WalkinCustomerTab },
 ];
 
 /* --------------------------- Profile Header --------------------------- */
