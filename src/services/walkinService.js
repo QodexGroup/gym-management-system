@@ -291,4 +291,44 @@ export const walkinService = {
       throw error;
     }
   },
+
+  /**
+   * QR Code Check-in (convenience method for kiosk)
+   * @param {string} uuid - Customer QR code UUID
+   * @returns {Promise<Object>}
+   */
+  async qrCheckIn(uuid) {
+    const response = await authenticatedFetch(`${API_BASE_URL}/walkins/qr-checkin`, {
+      method: 'POST',
+      body: JSON.stringify({ uuid }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to check in customer');
+    }
+
+    const data = await response.json();
+    return data.success ? data.data : null;
+  },
+
+  /**
+   * QR Code Check-out (convenience method for kiosk)
+   * @param {string} uuid - Customer QR code UUID
+   * @returns {Promise<Object>}
+   */
+  async qrCheckOut(uuid) {
+    const response = await authenticatedFetch(`${API_BASE_URL}/walkins/qr-checkout`, {
+      method: 'PUT',
+      body: JSON.stringify({ uuid }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to check out customer');
+    }
+
+    const data = await response.json();
+    return data.success ? data.data : null;
+  },
 };
