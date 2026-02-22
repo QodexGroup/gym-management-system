@@ -1,5 +1,6 @@
 export { default as StatCard } from './StatsCards';
 export { default as StatsCards } from './StatsCards';
+export { default as StatsList } from './StatsList';
 export { default as DataTable } from './DataTable';
 export { default as Modal } from './Modal';
 export { default as Badge } from './Badge';

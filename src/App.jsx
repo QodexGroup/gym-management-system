@@ -1,8 +1,10 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AlertProvider from './components/AlertProvider';
 import { queryClient } from './lib/queryClient';
+import { isKioskLocked } from './constants/kiosk';
 
 // Auth Pages
 import Login from './auth/Login';
@@ -15,7 +17,8 @@ import TrainerDashboard from './pages/trainer/Dashboard';
 import PtMembers from './pages/trainer/PtMembers';
 
 // Shared Pages
-import CheckIn from './pages/CheckIn';
+import CheckIn from './pages/common/CheckIn.page';
+import QrScannerKiosk from './pages/common/QrScannerKiosk.page';
 import CustomerList from './pages/customers/CustomerList.page';
 import CustomerProfile from './pages/customers/CustomerProfile.page';
 import PtPackageList from './pages/admin/PtPackageList.page';
@@ -80,22 +83,37 @@ const Dashboard = () => {
   return isAdmin ? <AdminDashboard /> : <TrainerDashboard />;
 };
 
+const KioskLockGuard = ({ children }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isKioskLocked() && location.pathname !== '/kiosk/qr-scanner') {
+      navigate('/kiosk/qr-scanner', { replace: true });
+    }
+  }, [location.pathname, navigate]);
+
+  return children;
+};
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <AlertProvider>
             <Router>
-              <Routes>
-                {/* Auth Routes */}
-                <Route path="/login" element={<Login />} />
+              <KioskLockGuard>
+                <Routes>
+                  {/* Auth Routes */}
+                  <Route path="/login" element={<Login />} />
 
                 {/* Protected Routes */}
                 <Route path="/" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 
                 {/* Check-In System */}
-                {/* <Route path="/check-in" element={<CheckIn />} /> */}
+                <Route path="/check-in" element={<CheckIn />} />
+                <Route path="/kiosk/qr-scanner" element={<QrScannerKiosk />} />
 
                 {/* Customer Management */}
                 <Route path="/members" element={<ProtectedRoute><CustomerList /></ProtectedRoute>} />
@@ -137,8 +155,9 @@ function App() {
                 {/* <Route path="/settings" element={<Settings />} /> */}
 
                 {/* Catch all - redirect to dashboard or login */}
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Routes>
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+              </KioskLockGuard>
             </Router>
           </AlertProvider>
       </AuthProvider>
