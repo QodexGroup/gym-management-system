@@ -117,6 +117,7 @@ const StatCard = (
           <div>
             <p className={`${textBg} text-sm`}>{displayTitle}</p>
             <p className="text-3xl font-bold mt-1">{value}</p>
+            {subtitle && <p className={`${textBg} text-xs mt-2`}>{subtitle}</p>}
           </div>
           {iconElement}
         </div>

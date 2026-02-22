@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import Layout from '../../components/layout/Layout';
@@ -35,11 +35,14 @@ const CustomerList = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [formData, setFormData] = useState(getInitialCustomerFormData());
 
-  // Fetch customers
-  const { data, isLoading } = useCustomers(currentPage, {
+  // Memoize customer query options to prevent unnecessary refetches
+  const customerQueryOptions = useMemo(() => ({
     pagelimit: pageSize,
     sorts: [{ field: 'first_name', direction: 'asc' }],
-  });
+  }), [pageSize]);
+
+  // Fetch customers
+  const { data, isLoading } = useCustomers(currentPage, customerQueryOptions);
   const deleteCustomerMutation = useDeleteCustomer();
 
   // Ensure customers is always an array

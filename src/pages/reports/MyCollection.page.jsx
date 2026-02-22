@@ -1,11 +1,10 @@
 import Layout from '../../components/layout/Layout';
-import { Badge } from '../../components/common';
+import { Badge, StatsCards } from '../../components/common';
 import {
   DollarSign,
   Target,
   Calendar,
   Award,
-  ArrowUpRight,
   Loader2,
 } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
@@ -64,63 +63,58 @@ const MyCollectionPage = () => {
 
   const hasMonthlyTarget = trainerStats.monthlyTarget != null && trainerStats.monthlyTarget > 0;
 
+  // Prepare stats array for StatsCards component
+  const stats = [
+    {
+      label: 'Total Earnings',
+      value: formatCurrency(trainerStats.totalEarnings),
+      icon: DollarSign,
+      gradient: 'from-success-500 to-success-600',
+      textBg: 'text-success-100',
+      iconBg: 'text-success-200',
+      subtitle: 'This month',
+      variant: 'gradient',
+    },
+    {
+      label: 'Sessions Completed',
+      value: trainerStats.sessionsCompleted,
+      icon: Calendar,
+      gradient: 'from-primary-500 to-primary-600',
+      textBg: 'text-primary-100',
+      iconBg: 'text-primary-200',
+      subtitle: 'This month',
+      variant: 'gradient',
+    },
+    {
+      label: 'PT Packages Sold',
+      value: trainerStats.ptPackagesSold,
+      icon: Award,
+      gradient: 'from-accent-500 to-accent-600',
+      textBg: 'text-accent-100',
+      iconBg: 'text-accent-200',
+      subtitle: 'This month',
+      variant: 'gradient',
+    },
+  ];
+
+  // Add target progress card if monthly target is set
+  if (hasMonthlyTarget) {
+    stats.push({
+      label: 'Target Progress',
+      value: `${trainerStats.targetProgress}%`,
+      icon: Target,
+      gradient: 'from-warning-500 to-warning-600',
+      textBg: 'text-warning-100',
+      iconBg: 'text-warning-200',
+      subtitle: `${formatCurrency(trainerStats.monthlyTarget - trainerStats.totalEarnings)} to go`,
+      variant: 'gradient',
+    });
+  }
+
   return (
     <Layout title="My Collection" subtitle="Track your earnings and performance">
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <div className="card bg-gradient-to-br from-success-500 to-success-600 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-success-100 text-sm">Total Earnings</p>
-              <p className="text-3xl font-bold mt-1">
-                {formatCurrency(trainerStats.totalEarnings)}
-              </p>
-              <p className="text-success-100 text-xs mt-2 flex items-center gap-1">
-                <ArrowUpRight className="w-4 h-4" />
-                This month
-              </p>
-            </div>
-            <DollarSign className="w-12 h-12 text-success-200" />
-          </div>
-        </div>
-
-        <div className="card bg-gradient-to-br from-primary-500 to-primary-600 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-primary-100 text-sm">Sessions Completed</p>
-              <p className="text-3xl font-bold mt-1">{trainerStats.sessionsCompleted}</p>
-              <p className="text-primary-100 text-xs mt-2">This month</p>
-            </div>
-            <Calendar className="w-12 h-12 text-primary-200" />
-          </div>
-        </div>
-
-        <div className="card bg-gradient-to-br from-accent-500 to-accent-600 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-accent-100 text-sm">PT Packages Sold</p>
-              <p className="text-3xl font-bold mt-1">{trainerStats.ptPackagesSold}</p>
-              <p className="text-accent-100 text-xs mt-2">This month</p>
-            </div>
-            <Award className="w-12 h-12 text-accent-200" />
-          </div>
-        </div>
-
-        {hasMonthlyTarget && (
-          <div className="card bg-gradient-to-br from-warning-500 to-warning-600 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-warning-100 text-sm">Target Progress</p>
-                <p className="text-3xl font-bold mt-1">{trainerStats.targetProgress}%</p>
-                <p className="text-warning-100 text-xs mt-2">
-                  {formatCurrency(trainerStats.monthlyTarget - trainerStats.totalEarnings)} to go
-                </p>
-              </div>
-              <Target className="w-12 h-12 text-warning-200" />
-            </div>
-          </div>
-        )}
-      </div>
+      <StatsCards stats={stats} variant="gradient" columns={hasMonthlyTarget ? 4 : 3} />
 
       {/* Target Progress Bar – only when monthly target is set */}
       {hasMonthlyTarget && (

@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 import { Avatar, Badge } from '../../components/common';
-import { ArrowLeft, Activity, FileText, CreditCard, CalendarDays, UserCheck } from 'lucide-react';
+import { ArrowLeft, Activity, FileText, CreditCard, CalendarDays, UserCheck, ClipboardClock, QrCode } from 'lucide-react';
+import MemberQRCard from './components/MemberQRCard';
 
 import CustomerForm from './customer-forms/CustomerForm';
 import { useCustomer } from '../../hooks/useCustomers';
@@ -15,18 +16,20 @@ import BillsTab from './customer-tabs/BillsTab.page';
 import ScansTab from './customer-tabs/ScansTab.page';
 import PtSessionsTab from './customer-tabs/PtSessionsTab.page';
 import ClassAttendanceTab from './customer-tabs/ClassAttendanceTab.page';
+import WalkinCustomerTab from './customer-tabs/WalkinCustomerTab.page';
 
 /* --------------------------- Tab Config --------------------------- */
 const customerTabs = [
   { key: 'progress', label: 'Progress Tracking', icon: Activity, component: ProgressTab },
   { key: 'scans', label: 'Scans', icon: FileText, component: ScansTab },
-  { key: 'bills', label: 'Plans & Billing', icon: CreditCard, component: BillsTab },
+  { key: 'bills', label: 'Plans, PT Packages s& Billing', icon: CreditCard, component: BillsTab },
   { key: 'pt-sessions', label: 'PT Sessions', icon: CalendarDays, component: PtSessionsTab },
-  { key: 'class-attendance', label: 'Class Attendance', icon: UserCheck, component: ClassAttendanceTab },
+  { key: 'class-attendance', label: 'Group Class Attendance', icon: UserCheck, component: ClassAttendanceTab },
+  { key: 'walkins', label: 'Walkin History', icon: ClipboardClock, component: WalkinCustomerTab },
 ];
 
 /* --------------------------- Profile Header --------------------------- */
-const ProfileHeader = ({ member, onEdit }) => (
+const ProfileHeader = ({ member, onEdit, onViewCard }) => (
   <div className="card mb-4">
     <div className="flex items-center justify-between gap-6">
       <div className="flex items-center gap-4 flex-1">
@@ -62,9 +65,19 @@ const ProfileHeader = ({ member, onEdit }) => (
           <div className="text-xs text-dark-400 mb-1">Balance</div>
           <div className="text-lg font-semibold text-danger-600">{formatCurrency(member.balance)}</div>
         </div>
-        <button onClick={onEdit} className="btn-secondary flex items-center gap-2 text-sm py-2 px-4">
-          Edit
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={onViewCard} 
+            className="btn-secondary flex items-center gap-2 text-sm py-2 px-4"
+            title="View Member QR Card"
+          >
+            <QrCode className="w-4 h-4" />
+            View Card
+          </button>
+          <button onClick={onEdit} className="btn-secondary flex items-center gap-2 text-sm py-2 px-4">
+            Edit
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -110,6 +123,7 @@ const CustomerProfile = () => {
   const activeTab = searchParams.get('tab') || 'progress';
 
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showQRCard, setShowQRCard] = useState(false);
 
   const { data: customer, isLoading: loading, refetch: refetchCustomer } = useCustomer(id);
   const [formData, setFormData] = useState(null);
@@ -146,7 +160,11 @@ const CustomerProfile = () => {
         <ArrowLeft className="w-5 h-5" /> Back to Members
       </button>
 
-      <ProfileHeader member={member} onEdit={() => setShowEditModal(true)} />
+      <ProfileHeader 
+        member={member} 
+        onEdit={() => setShowEditModal(true)}
+        onViewCard={() => setShowQRCard(true)}
+      />
       <ProfileStats member={member} />
 
       {/* Tabs */}
@@ -192,6 +210,16 @@ const CustomerProfile = () => {
             setFormData(mapCustomerToUI(customer));
             await refetchCustomer();
           }}
+        />
+      )}
+
+      {/* QR Card Modal */}
+      {customer && (
+        <MemberQRCard
+          isOpen={showQRCard}
+          onClose={() => setShowQRCard(false)}
+          member={member}
+          customer={customer}
         />
       )}
     </Layout>

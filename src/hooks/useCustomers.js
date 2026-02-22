@@ -28,6 +28,9 @@ export const useCustomers = (page = 1, options = {}) => {
       };
     },
     placeholderData: keepPreviousData, // Keep previous page data while loading new page
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes - data is considered fresh
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnMount: false, // Don't refetch on mount if data is fresh
   });
 };
 
@@ -159,7 +162,9 @@ export const useSearchCustomers = (keyword = '', page = 1, pagelimit = 50) => {
         pagination: result.pagination,
       };
     },
-    enabled: true, // Always enabled, but will use default page when keyword is empty
-    staleTime: 30 * 1000, // Cache for 30 seconds
+    enabled: !!keyword && keyword.trim().length > 0, // Only search when there's a keyword
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnMount: false, // Don't refetch on mount if data is fresh
   });
 };

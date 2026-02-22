@@ -193,27 +193,33 @@ export const AuthProvider = ({ children }) => {
           return;
         }
 
-        // Check if token is expired
-        if (isTokenExpired()) {
-          clearSession();
-          Alert.error('Session Expired', 'Your session has expired. Please login again.', {
-            showCancelButton: false,
-            showDenyButton: false,
-            confirmButtonText: 'Go to Login',
-          }).then(() => {
-            window.location.href = '/login';
-          });
-          setLoading(false);
-          return;
+        // Check if 24-hour session duration exceeded FIRST
+        if (isSessionDurationExceeded()) {
+          // Session expired - check if token also expired
+          if (isTokenExpired()) {
+            // Both expired - redirect to login
+            clearSession();
+            Alert.error('Session Expired', 'Your session has expired. Please login again.', {
+              showCancelButton: false,
+              showDenyButton: false,
+              confirmButtonText: 'OK',
+            }).then(() => {
+              window.location.href = '/login';
+            });
+            setLoading(false);
+            return;
+          }
+          // Session expired but token still valid - allow user to continue until token expires
+          // Don't redirect yet
         }
 
-        // Check if 24-hour session duration exceeded
-        if (isSessionDurationExceeded()) {
+        // Check if token is expired (only if session is still valid)
+        if (!isSessionDurationExceeded() && isTokenExpired()) {
           clearSession();
           Alert.error('Session Expired', 'Your session has expired. Please login again.', {
             showCancelButton: false,
             showDenyButton: false,
-            confirmButtonText: 'Go to Login',
+            confirmButtonText: 'OK',
           }).then(() => {
             window.location.href = '/login';
           });
@@ -240,29 +246,37 @@ export const AuthProvider = ({ children }) => {
               return;
             }
 
-            // Check if token is expired
+            // Check if 24-hour session duration exceeded FIRST
+            if (isSessionDurationExceeded()) {
+              // Session expired - check if token also expired
+              if (isTokenExpired()) {
+                // Both expired - redirect to login
+                clearSession();
+                await firebaseSignOut(auth);
+                Alert.error('Session Expired', 'Your session has expired. Please login again.', {
+                  showCancelButton: false,
+                  showDenyButton: false,
+                  confirmButtonText: 'OK',
+                }).then(() => {
+                  window.location.href = '/login';
+                });
+                setLoading(false);
+                return;
+              }
+              // Session expired but token still valid - don't refresh token, just continue
+              // Don't redirect yet, wait for token to expire
+              setLoading(false);
+              return;
+            }
+
+            // Check if token is expired (only if session is still valid)
             if (isTokenExpired()) {
               clearSession();
               await firebaseSignOut(auth);
               Alert.error('Session Expired', 'Your session has expired. Please login again.',{
                 showCancelButton: false,
                 showDenyButton: false,
-                confirmButtonText: 'Go to Login',
-              }).then(() => {
-                window.location.href = '/login';
-              });
-              setLoading(false);
-              return;
-            }
-
-            // Check if 24-hour session duration exceeded
-            if (isSessionDurationExceeded()) {
-              clearSession();
-              await firebaseSignOut(auth);
-              Alert.error('Session Expired', 'Your session has expired. Please login again.', {
-                showCancelButton: false,
-                showDenyButton: false,
-                confirmButtonText: 'Go to Login',
+                confirmButtonText: 'OK',
               }).then(() => {
                 window.location.href = '/login';
               });
@@ -271,6 +285,7 @@ export const AuthProvider = ({ children }) => {
             }
             
             try {
+              // Only refresh token if session is still valid
               // Force refresh token to get a fresh one (even if current is still valid)
               const idToken = await firebaseUser.getIdToken(true);
               setToken(idToken);
@@ -290,7 +305,7 @@ export const AuthProvider = ({ children }) => {
                 Alert.error('Session Expired', 'Your session has expired. Please login again.', {
                   showCancelButton: false,
                   showDenyButton: false,
-                  confirmButtonText: 'Go to Login',
+                  confirmButtonText: 'OK',
                 }).then(() => {
                   window.location.href = '/login';
                 });
@@ -336,26 +351,33 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      // Check if token is expired
+      // Check if 24-hour session duration exceeded FIRST
+      if (isSessionDurationExceeded()) {
+        // Session expired - check if token also expired
+        if (isTokenExpired()) {
+          // Both expired - redirect to login
+          clearSession();
+          Alert.error('Session Expired', 'Your session has expired. Please login again.',{
+            showCancelButton: false,
+            showDenyButton: false,
+            confirmButtonText: 'OK',
+          }).then(() => {
+            window.location.href = '/login';
+          });
+          return;
+        }
+        // Session expired but token still valid - allow user to continue until token expires
+        // Don't redirect yet
+        return;
+      }
+
+      // Check if token is expired (only if session is still valid)
       if (isTokenExpired()) {
         clearSession();
         Alert.error('Session Expired', 'Your session has expired. Please login again.',{
           showCancelButton: false,
           showDenyButton: false,
-          confirmButtonText: 'Go to Login',
-        }).then(() => {
-          window.location.href = '/login';
-        });
-        return;
-      }
-
-      // Check if 24-hour session duration exceeded
-      if (isSessionDurationExceeded()) {
-        clearSession();
-        Alert.error('Session Expired', 'Your session has expired. Please login again.',{
-          showCancelButton: false,
-          showDenyButton: false,
-          confirmButtonText: 'Go to Login',
+          confirmButtonText: 'OK',
         }).then(() => {
           window.location.href = '/login';
         });
@@ -380,7 +402,7 @@ export const AuthProvider = ({ children }) => {
             Alert.error('Session Invalid', 'Your session is invalid. Please login again.', {
               showCancelButton: false,
               showDenyButton: false,
-              confirmButtonText: 'Go to Login',
+              confirmButtonText: 'OK',
             }).then(() => {
               window.location.href = '/login';
             });
@@ -409,27 +431,21 @@ export const AuthProvider = ({ children }) => {
 
     const refreshToken = async () => {
       try {
-        // Check if token is expired
+        // Check if 24-hour session duration exceeded FIRST
+        if (isSessionDurationExceeded()) {
+          // Session expired - stop refreshing token, but don't logout yet
+          // Wait for token to expire naturally
+          console.log('Session expired - stopping token refresh');
+          return;
+        }
+
+        // Check if token is expired (only if session is still valid)
         if (isTokenExpired()) {
           clearSession();
           Alert.error('Session Expired', 'Your session has expired. Please login again.', {
             showCancelButton: false,
             showDenyButton: false,
-            confirmButtonText: 'Go to Login',
-          }).then(() => {
-            window.location.href = '/login';
-          });
-          await logout();
-          return;
-        }
-
-        // Check if 24-hour session duration exceeded
-        if (isSessionDurationExceeded()) {
-          clearSession();
-          Alert.error('Session Expired', 'Your session has expired. Please login again.', {
-            showCancelButton: false,
-            showDenyButton: false,
-            confirmButtonText: 'Go to Login',
+            confirmButtonText: 'OK',
           }).then(() => {
             window.location.href = '/login';
           });
@@ -453,13 +469,13 @@ export const AuthProvider = ({ children }) => {
         console.log('Token refreshed successfully');
       } catch (error) {
         console.error('Error refreshing token:', error);
-        // If token refresh fails and token is expired, logout
-        if (isTokenExpired() || isSessionDurationExceeded()) {
+        // Only logout if session is expired AND token is expired
+        if (isSessionDurationExceeded() && isTokenExpired()) {
           clearSession();
           Alert.error('Session Expired', 'Your session has expired. Please login again.', {
             showCancelButton: false,
             showDenyButton: false,
-            confirmButtonText: 'Go to Login',
+            confirmButtonText: 'OK',
           }).then(() => {
             window.location.href = '/login';
           });
@@ -469,18 +485,42 @@ export const AuthProvider = ({ children }) => {
     };
 
     // Refresh token every 50 minutes (before 1-hour expiration)
-    const refreshInterval = setInterval(refreshToken, TOKEN_REFRESH_INTERVAL);
+    // Only refresh if session is still valid
+    const refreshInterval = setInterval(() => {
+      if (!isSessionDurationExceeded()) {
+        refreshToken();
+      }
+    }, TOKEN_REFRESH_INTERVAL);
 
-    // Check token expiration and session duration every 5 minutes
+    // Check session and token expiration every 5 minutes
     const sessionCheckInterval = setInterval(() => {
-      if (isTokenExpired() || isSessionDurationExceeded()) {
+      // If session expired, check if token also expired
+      if (isSessionDurationExceeded()) {
+        if (isTokenExpired()) {
+          // Both expired - logout now
+          clearInterval(refreshInterval);
+          clearInterval(sessionCheckInterval);
+          clearSession();
+          Alert.error('Session Expired', 'Your session has expired. Please login again.',{
+            showCancelButton: false,
+            showDenyButton: false,
+            confirmButtonText: 'OK',
+          }).then(() => {
+            window.location.href = '/login';
+          });
+          logout();
+        }
+        // If session expired but token not expired yet, just stop refreshing
+        // (already handled by refreshInterval check above)
+      } else if (isTokenExpired()) {
+        // Session valid but token expired - should not happen if refresh works
         clearInterval(refreshInterval);
         clearInterval(sessionCheckInterval);
         clearSession();
         Alert.error('Session Expired', 'Your session has expired. Please login again.',{
           showCancelButton: false,
           showDenyButton: false,
-          confirmButtonText: 'Go to Login',
+          confirmButtonText: 'OK',
         }).then(() => {
           window.location.href = '/login';
         });

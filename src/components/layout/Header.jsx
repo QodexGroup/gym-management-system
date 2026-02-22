@@ -7,6 +7,7 @@ import {
   ChevronDown,
   User,
   LogOut,
+  QrCode,
 } from 'lucide-react';
 
 const Header = ({ title, subtitle }) => {
@@ -50,6 +51,14 @@ const Header = ({ title, subtitle }) => {
               label=""
             />
           </div>
+
+          <button
+            onClick={() => navigate('/kiosk/qr-scanner')}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-dark-700 text-dark-100 hover:bg-dark-600 transition-colors"
+          >
+            <QrCode className="w-4 h-4" />
+            <span className="hidden sm:inline text-sm font-medium">QR Scanner</span>
+          </button>
 
           {/* Role Switcher (Demo) */}
           {/* <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-dark-100 rounded-lg">
