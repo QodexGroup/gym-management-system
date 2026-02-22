@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AlertProvider from './components/AlertProvider';
@@ -6,6 +6,7 @@ import { queryClient } from './lib/queryClient';
 
 // Auth Pages
 import Login from './auth/Login';
+import SignUp from './auth/SignUp';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -31,10 +32,12 @@ import UserManagement from './pages/admin/UserManagement.page';
 import Notifications from './pages/Notifications';
 import MyAccount from './pages/MyAccount';
 import Settings from './pages/Settings';
+import Subscription from './pages/Subscription.page';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, isTrialExpired } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -46,6 +49,10 @@ const ProtectedRoute = ({ children }) => {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (isTrialExpired && !location.pathname.startsWith('/subscription')) {
+    return <Navigate to="/subscription" replace />;
   }
 
   return children;
@@ -89,6 +96,7 @@ function App() {
               <Routes>
                 {/* Auth Routes */}
                 <Route path="/login" element={<Login />} />
+                <Route path="/sign-up" element={<SignUp />} />
 
                 {/* Protected Routes */}
                 <Route path="/" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
@@ -132,6 +140,9 @@ function App() {
 
                 {/* My Account */}
                 <Route path="/my-account" element={<ProtectedRoute><MyAccount /></ProtectedRoute>} />
+
+                {/* Subscription (owner) */}
+                <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
 
                 {/* Settings */}
                 {/* <Route path="/settings" element={<Settings />} /> */}

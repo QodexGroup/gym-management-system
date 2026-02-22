@@ -150,6 +150,22 @@ export const authService = {
    * Get current authenticated user
    * @returns {Promise<Object>}
    */
+  async signUp(idToken, payload) {
+    const response = await fetch(`${API_BASE_URL}/auth/sign-up`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(json.message || json.error || `Sign-up failed (${response.status})`);
+    }
+    return json.success ? json.data : null;
+  },
+
   async getCurrentUser() {
     try {
       const response = await authenticatedFetch(`${API_BASE_URL}/auth/me`, {

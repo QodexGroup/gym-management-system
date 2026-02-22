@@ -10,6 +10,7 @@ import {
 } from '../../hooks/useClassSchedules';
 import { useCoaches } from '../../hooks/useUsers';
 import { useAuth } from '../../context/AuthContext';
+import { useAccountLimit } from '../../hooks/useAccountLimit';
 import ClassScheduleForm from './forms/ClassScheduleForm';
 import { formatDate, formatTimeFromDate } from '../../utils/formatters';
 import { SCHEDULE_TYPE_LABELS, RECURRING_INTERVAL_LABELS, getCapacityStatus } from '../../constants/classScheduleConstants';
@@ -24,8 +25,8 @@ const ClassScheduleList = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
 
-  // Get current user
-  const { user, isTrainer } = useAuth();
+  const { user, isTrainer, fetchUserData } = useAuth();
+  const { canCreate: canAddSchedule } = useAccountLimit('class_schedules');
 
   // Build query options (only for non-coaches)
   const scheduleOptions = useMemo(() => {
@@ -84,7 +85,8 @@ const ClassScheduleList = () => {
     setSelectedSchedule(null);
   };
 
-  const handleFormSubmit = () => {
+  const handleFormSubmit = async () => {
+    await fetchUserData();
     handleCloseModal();
   };
 
@@ -97,6 +99,7 @@ const ClassScheduleList = () => {
 
     try {
       await deleteMutation.mutateAsync(scheduleId);
+      await fetchUserData();
     } catch (error) {
       console.error('Error deleting schedule:', error);
     }
@@ -138,6 +141,7 @@ const ClassScheduleList = () => {
             onAddClick={() => handleOpenModal()}
             addButtonLabel="Create Class"
             addButtonIcon={Plus}
+            addButtonDisabled={!canAddSchedule}
           />
         </div>
 

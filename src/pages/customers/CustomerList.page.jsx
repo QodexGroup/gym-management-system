@@ -13,13 +13,17 @@ import CustomerForm from './customer-forms/CustomerForm';
 
 import { useCustomers, useDeleteCustomer } from '../../hooks/useCustomers';
 import { usePermissions } from '../../hooks/usePermissions';
+import { useAccountLimit } from '../../hooks/useAccountLimit';
+import { useAuth } from '../../context/AuthContext';
 import { customerTableColumns } from './tables/customerTable.config';
 import { useCustomerSearch } from '../../hooks/useCustomerSearch';
 import { usePagination } from '../../hooks/usePagination';
 
 const CustomerList = () => {
   const navigate = useNavigate();
+  const { fetchUserData } = useAuth();
   const { hasPermission } = usePermissions();
+  const { canCreate: canAddMember, message: limitMessage } = useAccountLimit('customers');
 
   // Pagination state
   const { currentPage, setCurrentPage, goToPrev, goToNext } = usePagination(1);
@@ -125,6 +129,7 @@ const CustomerList = () => {
     if (!result.isConfirmed) return;
 
     await deleteCustomerMutation.mutateAsync(id);
+    await fetchUserData();
     Alert.success('Deleted!', 'Member has been deleted.', { timer: 2000, showConfirmButton: false });
   }
 
@@ -148,10 +153,18 @@ const CustomerList = () => {
           </div>
 
           {hasPermission('members_list_add') && (
-            <button onClick={() => handleOpenModal()} className="btn-primary flex items-center gap-2">
-              <UserPlus className="w-4 h-4" />
-              Add Member
-            </button>
+            <>
+              {limitMessage && <span className="text-sm text-warning-500">{limitMessage}</span>}
+              <button
+                onClick={() => handleOpenModal()}
+                disabled={!canAddMember}
+                title={!canAddMember ? limitMessage : ''}
+                className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <UserPlus className="w-4 h-4" />
+                Add Member
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -193,6 +206,7 @@ const CustomerList = () => {
         formData={formData}
         setFormData={setFormData}
         selectedCustomer={selectedCustomer}
+        onSaveSuccess={fetchUserData}
       />
     </Layout>
   );

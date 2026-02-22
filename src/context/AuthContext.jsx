@@ -18,6 +18,8 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [account, setAccount] = useState(null);
+  const [usage, setUsage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem('firebase_token'));
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -52,6 +54,8 @@ export const AuthProvider = ({ children }) => {
   // Clear session data
   const clearSession = () => {
     setUser(null);
+    setAccount(null);
+    setUsage(null);
     setToken(null);
     localStorage.removeItem('firebase_token');
     localStorage.removeItem('firebase_uid');
@@ -93,9 +97,13 @@ export const AuthProvider = ({ children }) => {
         phone: data.phone,
         firebase_uid: data.firebase_uid,
         permissions: permissions,
+        isPlatformAdmin: !!data.isPlatformAdmin,
+        emailVerified: !!data.emailVerified,
         avatar: data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.firstname + ' ' + data.lastname)}&background=random`,
       };
       setUser(userData);
+      setAccount(data.account || null);
+      setUsage(data.usage || null);
       return userData;
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -489,19 +497,25 @@ export const AuthProvider = ({ children }) => {
   const isAdmin = isAdminRole(user?.role);
   const isTrainer = isCoachRole(user?.role);
   const isStaff = isStaffRole(user?.role);
+  const isPlatformAdmin = !!user?.isPlatformAdmin;
   const isAuthenticated = !!user && !!token && !isTokenExpired() && !isSessionDurationExceeded();
+  const isTrialExpired = account?.subscriptionStatus === 'trial_expired';
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
+    <AuthContext.Provider value={{
+      user,
+      account,
+      usage,
       token,
       loading,
-      login, 
-      logout, 
-      isAdmin, 
+      login,
+      logout,
+      isAdmin,
       isTrainer,
       isStaff,
+      isPlatformAdmin,
       isAuthenticated,
+      isTrialExpired,
       fetchUserData,
     }}>
       {children}

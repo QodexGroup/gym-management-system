@@ -15,10 +15,11 @@ import {
   Dumbbell,
   ClipboardClock,
   FileBarChart,
+  Wallet,
 } from 'lucide-react';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isPlatformAdmin } = useAuth();
   const { hasPermission } = usePermissions();
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState([]);
@@ -54,6 +55,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     {
       section: 'ACCOUNT',
       items: [
+        { path: '/subscription', icon: Wallet, label: 'Subscription', adminOnly: false },
         { path: '/membership-plans', icon: CreditCard, label: 'Membership Plans', adminOnly: true },
         { path: '/pt-packages', icon: Dumbbell, label: 'PT Packages', adminOnly: true },
         { path: '/users', icon: UserCog, label: 'User Management', adminOnly: true },
@@ -87,7 +89,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         ...section,
         items: section.items
           .filter((item) => {
-            // If item is admin-only, only show to admins
+            if (item.platformAdminOnly) {
+              return isPlatformAdmin;
+            }
             if (item.adminOnly) {
               return isAdmin;
             }
@@ -125,7 +129,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             return item;
           }),
       }));
-  }, [isAdmin, hasPermission]);
+  }, [isAdmin, isPlatformAdmin, hasPermission]);
 
   const isMenuActive = (item) => {
     if (item.path) {
