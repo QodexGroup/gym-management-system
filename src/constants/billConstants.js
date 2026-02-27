@@ -35,6 +35,6 @@ export const BILL_STATUS_VARIANTS = {
   [BILL_STATUS.PAID]: 'success',
   [BILL_STATUS.PARTIAL]: 'warning',
   [BILL_STATUS.ACTIVE]: 'primary',
-  [BILL_STATUS.VOIDED]: 'secondary',
+  [BILL_STATUS.VOIDED]: 'danger',
 };
 

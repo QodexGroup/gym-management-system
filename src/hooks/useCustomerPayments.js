@@ -14,13 +14,23 @@ export const useCustomerPaymentsByBill = (billId, options = {}) => {
     queryKey: ['customerPayments', 'bill', billId, options],
     queryFn: async () => {
       const result = await customerPaymentService.getByBillId(billId, options);
-      // If paginated, extract the data array; otherwise return as-is
+      // Handle paginated response: { data: [...], pagination: {...} }
       if (result && typeof result === 'object' && Array.isArray(result.data)) {
         return result.data;
       }
-      return Array.isArray(result) ? result : [];
+      // Handle direct array response
+      if (Array.isArray(result)) {
+        return result;
+      }
+      // Handle response with nested data structure
+      if (result && result.data && Array.isArray(result.data)) {
+        return result.data;
+      }
+      return [];
     },
     enabled: !!billId,
+    refetchOnMount: true, // Always refetch when component mounts (when modal opens)
+    staleTime: 0, // Consider data stale immediately to ensure fresh data
   });
 };
 
@@ -36,10 +46,17 @@ export const useCreateCustomerPayment = () => {
         ...paymentData,
         customerId,
       });
-      return { customerId };
+      return { billId, customerId };
     },
     onSuccess: async (data) => {
       const customerId = data?.customerId;
+      const billId = data?.billId;
+
+      // Refresh payments list for this bill (used in BillsForm)
+      if (billId) {
+        queryClient.invalidateQueries({ queryKey: ['customerPayments', 'bill', billId] });
+      }
+
       if (customerId) {
         // Refresh bills for this customer
         queryClient.invalidateQueries({ queryKey: customerBillKeys.byCustomer(customerId) });

@@ -1,11 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useMembershipPlans } from '../../../hooks/useMembershipPlans';
 import { useCustomerPaymentsByBill, useDeleteCustomerPayment } from '../../../hooks/useCustomerPayments';
-import { BILL_TYPE, BILL_TYPE_OPTIONS } from '../../../constants/billConstants';
+import { BILL_TYPE, BILL_TYPE_OPTIONS, BILL_STATUS } from '../../../constants/billConstants';
 import { Alert } from '../../../utils/alert';
-import { Info } from 'lucide-react';
+import { Info, Lock } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
 import { paymentHistoryTableColumns } from '../tables/paymentHistoryTable.config';
 
@@ -42,8 +42,28 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
   });
 
   const billId = initialData?.id || null;
-  const { data: payments = [] } = useCustomerPaymentsByBill(billId);
+  const { data: payments = [], isLoading: isLoadingPayments } = useCustomerPaymentsByBill(billId);
   const deletePaymentMutation = useDeleteCustomerPayment();
+
+  // Check if bill is locked (previous cycle bill)
+  // A membership subscription bill is editable/payable only if it belongs to the current cycle
+  // Current cycle start is based on the member's latest membership_start_date
+  // If bill_date < current membership_start_date, treat it as history-only
+  const isBillLocked = useMemo(() => {
+    if (!isEditMode || !initialData || formData.billType !== BILL_TYPE.MEMBERSHIP_SUBSCRIPTION) {
+      return false;
+    }
+    
+    if (!currentMembership?.membershipStartDate) {
+      return false;
+    }
+
+    const billDate = new Date(initialData.billDate);
+    const membershipStartDate = new Date(currentMembership.membershipStartDate);
+    
+    // If bill_date < current membership_start_date, it's a previous cycle bill (locked)
+    return billDate < membershipStartDate;
+  }, [isEditMode, initialData, formData.billType, currentMembership]);
 
   // Selected membership plan
   const selectedPlan = useMemo(() => {
@@ -109,6 +129,13 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
       {isPaidBill && (
         <div className="p-3 bg-blue-500/10 border-2 border-blue-400 rounded-lg text-sm text-blue-300 font-medium">
           <strong className="text-blue-200">This bill is already paid.</strong>
+        </div>
+      )}
+
+      {isBillLocked && (
+        <div className="p-3 bg-yellow-500/10 border-2 border-yellow-400 rounded-lg text-sm text-yellow-300 font-medium flex items-center gap-2">
+          <Lock className="w-4 h-4" />
+          <strong className="text-yellow-200">This bill belongs to a previous billing cycle and cannot be edited or paid.</strong>
         </div>
       )}
 
@@ -208,15 +235,20 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
       </div>
 
       {/* Payments History */}
-      {billId && payments.length > 0 && (
+      {billId && (
         <div className="pt-4 border-t border-dark-100">
           <h4 className="text-sm font-semibold text-dark-800 mb-2">Payment History</h4>
-          <DataTable
-            data={payments}
-            columns={paymentHistoryTableColumns(handleDeletePayment)}
-            pageSize={5}
-            noPagination={payments.length <= 5}
-          />
+          {isLoadingPayments ? (
+            <div className="text-sm text-dark-400 py-4">Loading payment history...</div>
+          ) : payments && payments.length > 0 ? (
+            <DataTable
+              data={payments}
+              columns={paymentHistoryTableColumns(handleDeletePayment)}
+              noPagination={true}
+            />
+          ) : (
+            <div className="text-sm text-dark-400 py-4">No payments recorded for this bill.</div>
+          )}
         </div>
       )}
 
@@ -226,7 +258,12 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
         <button 
           type="submit" 
           className="flex-1 btn-primary" 
-          disabled={isEditMode && formData.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && !activeMembershipPlan}
+          disabled={
+            isBillLocked || 
+            isPaidBill || 
+            initialData?.billStatus === BILL_STATUS.VOIDED ||
+            (isEditMode && formData.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && !activeMembershipPlan)
+          }
         >
           {isEditMode ? 'Update Bill' : 'Generate Bill'}
         </button>

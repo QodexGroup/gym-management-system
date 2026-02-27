@@ -64,7 +64,7 @@ export const billsTableColumns = ({ canEdit, canDelete, canAddPayment, onEdit, o
               <Edit className="w-4 h-4" />
             </button>
           )}
-          {canDelete && row.billStatus !== BILL_STATUS.PAID && (
+          {canDelete && row.billStatus !== BILL_STATUS.PAID && row.billStatus !== BILL_STATUS.VOIDED && (
             <button
               onClick={() => onDelete?.(row.id)}
               className="p-2 rounded-lg text-dark-400 hover:text-danger-600 hover:bg-danger-50 transition-colors"

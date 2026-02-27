@@ -12,7 +12,7 @@ import { useCustomerBills, useCreateCustomerBill, useUpdateCustomerBill, useDele
 import { useCreateCustomerPayment } from '../../../hooks/useCustomerPayments';
 import { useCreateOrUpdateCustomerMembership } from '../../../hooks/useCustomerMembership';
 import { useCustomerPtPackages, useAssignPtPackage, useCancelPtPackage } from '../../../hooks/useCustomerPtPackages';
-import { BILL_STATUS } from '../../../constants/billConstants';
+import { BILL_STATUS, BILL_TYPE } from '../../../constants/billConstants';
 import { CUSTOMER_MEMBERSHIP_STATUS } from '../../../constants/customerMembership';
 import { CUSTOMER_PT_PACKAGE_STATUS, CUSTOMER_PT_PACKAGE_STATUS_LABELS, CUSTOMER_PT_PACKAGE_STATUS_VARIANTS } from '../../../constants/ptConstants';
 import { usePermissions } from '../../../hooks/usePermissions';
@@ -86,9 +86,27 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
 
   /* ---------------- Handlers ---------------- */
   const handleEdit = useCallback((bill) => {
+    // Check if bill is locked (previous cycle membership subscription bill)
+    if (bill.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && member?.currentMembership?.membershipStartDate) {
+      const billDate = new Date(bill.billDate);
+      const membershipStartDate = new Date(member.currentMembership.membershipStartDate);
+      
+      // If bill_date < current membership_start_date, it's a previous cycle bill (locked)
+      if (billDate < membershipStartDate) {
+        Alert.warning('Bill Locked', 'This bill belongs to a previous billing cycle and cannot be edited.');
+        return;
+      }
+    }
+    
+    // Check if bill is voided
+    if (bill.billStatus === BILL_STATUS.VOIDED) {
+      Alert.warning('Bill Voided', 'This bill has been voided and cannot be edited.');
+      return;
+    }
+    
     setSelectedBill(bill);
     setShowBillModal(true);
-  }, []);
+  }, [member]);
 
   const handleDelete = useCallback(async (id) => {
     const result = await Alert.confirmDelete();
@@ -105,9 +123,27 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
   }, [deleteBillMutation, member?.id, onCustomerUpdate]);
 
   const handleOpenPayment = useCallback((bill) => {
+    // Check if bill is locked (previous cycle membership subscription bill)
+    if (bill.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && member?.currentMembership?.membershipStartDate) {
+      const billDate = new Date(bill.billDate);
+      const membershipStartDate = new Date(member.currentMembership.membershipStartDate);
+      
+      // If bill_date < current membership_start_date, it's a previous cycle bill (locked)
+      if (billDate < membershipStartDate) {
+        Alert.warning('Bill Locked', 'This bill belongs to a previous billing cycle and cannot be paid.');
+        return;
+      }
+    }
+    
+    // Check if bill is voided
+    if (bill.billStatus === BILL_STATUS.VOIDED) {
+      Alert.warning('Bill Voided', 'This bill has been voided and cannot receive payments.');
+      return;
+    }
+    
     setPaymentBill(bill);
     setShowPaymentModal(true);
-  }, []);
+  }, [member]);
 
   const handlePaymentSubmit = useCallback(async (paymentData) => {
     if (!paymentBill) return;
@@ -117,15 +153,16 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
         customerId: member.id,
         paymentData
       });
-      // Invalidate queries to trigger automatic refetch (removes duplicate queries)
-      queryClient.invalidateQueries({ queryKey: customerBillKeys.byCustomer(member.id) });
+      // Mutation's onSuccess already handles query invalidation and customer update
       setShowPaymentModal(false);
       setPaymentBill(null);
+      // Only call onCustomerUpdate to refresh the parent component's customer data
+      // The mutation already invalidates bills queries
       onCustomerUpdate?.();
     } catch (error) {
       console.error(error);
     }
-  }, [paymentBill, createPaymentMutation, member.id, onCustomerUpdate, queryClient]);
+  }, [paymentBill, createPaymentMutation, member.id, onCustomerUpdate]);
 
   const handleBillSubmit = useCallback(async (billData) => {
     try {

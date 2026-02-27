@@ -32,15 +32,13 @@ export const customerPaymentService = {
   /**
    * Get all payments for a bill
    * @param {number} billId
-   * @param {Object} options - Optional query parameters (page, pagelimit, sort, filters, etc.)
-   * @returns {Promise<Array|Object>} - Returns array if not paginated, or pagination object if paginated
+   * @param {Object} options - Optional query parameters (sort, filters, etc.)
+   * @returns {Promise<Array>} - Returns array of all payments
    */
   async getByBillId(billId, options = {}) {
     try {
       // Build query string from options
       const queryParams = new URLSearchParams();
-      if (options.page) queryParams.append('page', options.page);
-      if (options.pagelimit) queryParams.append('pagelimit', options.pagelimit);
       if (options.sort) queryParams.append('sort', options.sort);
       if (options.filters) {
         Object.entries(options.filters).forEach(([key, value]) => {
@@ -63,7 +61,14 @@ export const customerPaymentService = {
       }
 
       const data = await response.json();
-      return normalizePaginatedResponse(data);
+      
+      if (!data.success || !data.data) {
+        return { data: [], pagination: null };
+      }
+      return { 
+        data: Array.isArray(data.data) ? data.data : [], 
+        pagination: null 
+      };
     } catch (error) {
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
         throw new Error('Cannot connect to API. Please check if the server is running and CORS is configured.');

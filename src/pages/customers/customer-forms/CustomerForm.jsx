@@ -253,7 +253,7 @@ const CustomerForm = ({
         {/* Membership & Coach */}
         {!selectedCustomer && (
           <div className="border-b border-dark-200 pb-6">
-            <h3 className="text-lg font-semibold text-dark-50 mb-4">Membership & Coach</h3>
+            <h3 className="text-lg font-semibold text-dark-50 mb-4">Membership Plan</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="label">Membership Plan</label>
@@ -268,27 +268,6 @@ const CustomerForm = ({
                       {plan.planName} - ₱{parseFloat(plan.price).toLocaleString()}
                     </option>
                   ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="label">Coach</label>
-                <select
-                  className="input"
-                  value={formData.currentTrainerId || ''}
-                  onChange={(e) => setFormData({ ...formData, currentTrainerId: e.target.value || null })}
-                >
-                  <option value="">No coach</option>
-                  {loadingCoaches
-                    ? <option disabled>Loading coaches...</option>
-                    : trainers.length > 0
-                      ? trainers.map(coach => (
-                          <option key={coach.id} value={coach.id}>
-                            {coach.fullname || `${coach.firstname || ''} ${coach.lastname || ''}`.trim() || 'Unnamed Coach'}
-                          </option>
-                        ))
-                      : <option disabled>No coaches available</option>
-                  }
                 </select>
               </div>
             </div>
