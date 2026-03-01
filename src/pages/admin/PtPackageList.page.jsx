@@ -11,6 +11,8 @@ import {
   usePtPackages,
   useDeletePtPackage,
 } from '../../hooks/usePtPackages';
+import { useAccountLimit } from '../../hooks/useAccountLimit';
+import { useAuth } from '../../context/AuthContext';
 import { usePtCategories } from '../../hooks/usePtCategories';
 import { usePagination } from '../../hooks/usePagination';
 import { formatCurrency } from '../../utils/formatters';
@@ -19,8 +21,9 @@ import { GridDesign } from '../../components/Grid';
 import PtPackageForm from './forms/PtPackageForm';
 
 const PtPackageList = () => {
-  // Pagination state
+  const { fetchUserData } = useAuth();
   const { currentPage, setCurrentPage, goToPrev, goToNext } = usePagination(1);
+  const { canCreate: canAddPackage } = useAccountLimit('pt_packages');
 
   // Search & filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -80,7 +83,8 @@ const PtPackageList = () => {
     setSelectedPackage(null);
   };
 
-  const handleFormSubmit = () => {
+  const handleFormSubmit = async () => {
+    await fetchUserData();
     handleCloseModal();
   };
 
@@ -93,6 +97,7 @@ const PtPackageList = () => {
 
     try {
       await deleteMutation.mutateAsync(packageId);
+      await fetchUserData();
     } catch (error) {
       console.error('Error deleting package:', error);
     }
@@ -125,6 +130,7 @@ const PtPackageList = () => {
             onAddClick={() => handleOpenModal()}
             addButtonLabel="Add PT Package"
             addButtonIcon={Plus}
+            addButtonDisabled={!canAddPackage}
           />
         </div>
         <GridDesign
