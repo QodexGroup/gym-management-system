@@ -65,7 +65,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             { path: '/reports/summary', label: 'Summary Report', adminOnly: true },
             { path: '/reports/collection', label: 'Collection Report', adminOnly: true },
             { path: '/reports/expense', label: 'Expense Report', adminOnly: true },
-            { path: '/reports/my-collection', label: 'My Collection', adminOrCoach: true },
+            { path: '/reports/my-collection', label: 'My Collection', coachOnly: true },
           ],
         },
         { path: '/users', icon: UserCog, label: 'User Management', adminOnly: true },
@@ -115,6 +115,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               return {
                 ...item,
                 children: item.children.filter((child) => {
+                  if (child.adminOnly) {
+                    return isAdmin;
+                  }
+                  if (child.coachOnly) {
+                    return isTrainer;
+                  }
                   if (isAdmin) {
                     return child.permission ? hasPermission(child.permission) : true;
                   }

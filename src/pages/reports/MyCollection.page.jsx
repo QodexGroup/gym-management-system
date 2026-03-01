@@ -1,10 +1,11 @@
 import Layout from '../../components/layout/Layout';
-import { Badge, StatsCards } from '../../components/common';
+import { StatsCards } from '../../components/common';
+import DataTable from '../../components/DataTable/DataTable';
 import {
   DollarSign,
-  Target,
-  Calendar,
+  CreditCard,
   Award,
+  TrendingUp,
   Loader2,
 } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
@@ -24,22 +25,21 @@ import {
 } from 'recharts';
 import { useMyCollection } from '../../hooks/useMyCollection';
 import { CHART_TOOLTIP_STYLE, CHART_CURSOR, CHART_PIE_ACTIVE } from '../../constants/reportConstants';
+import { recentPaymentsTableColumns } from './tables/recentPaymentsTable.config';
 
 const MyCollectionPage = () => {
   const { data, isLoading, isError, error } = useMyCollection();
 
   const trainerStats = data?.trainerStats ?? {
     totalEarnings: 0,
-    sessionsCompleted: 0,
+    totalPayments: 0,
     ptPackagesSold: 0,
-    averageSessionRate: 0,
-    monthlyTarget: null,
-    targetProgress: 0,
+    averagePayment: 0,
   };
   const weeklyEarnings = data?.weeklyEarnings ?? [];
   const earningsBreakdown = data?.earningsBreakdown ?? [{ name: 'PT Package Sales', value: 0, color: '#0ea5e9' }];
   const monthlyProgress = data?.monthlyProgress ?? [];
-  const recentSessions = data?.recentSessions ?? [];
+  const recentPayments = data?.recentPayments ?? [];
 
   if (isLoading) {
     return (
@@ -61,8 +61,6 @@ const MyCollectionPage = () => {
     );
   }
 
-  const hasMonthlyTarget = trainerStats.monthlyTarget != null && trainerStats.monthlyTarget > 0;
-
   // Prepare stats array for StatsCards component
   const stats = [
     {
@@ -76,9 +74,9 @@ const MyCollectionPage = () => {
       variant: 'gradient',
     },
     {
-      label: 'Sessions Completed',
-      value: trainerStats.sessionsCompleted,
-      icon: Calendar,
+      label: 'Total Payments',
+      value: trainerStats.totalPayments,
+      icon: CreditCard,
       gradient: 'from-primary-500 to-primary-600',
       textBg: 'text-primary-100',
       iconBg: 'text-primary-200',
@@ -95,51 +93,22 @@ const MyCollectionPage = () => {
       subtitle: 'This month',
       variant: 'gradient',
     },
-  ];
-
-  // Add target progress card if monthly target is set
-  if (hasMonthlyTarget) {
-    stats.push({
-      label: 'Target Progress',
-      value: `${trainerStats.targetProgress}%`,
-      icon: Target,
+    {
+      label: 'Average Payment',
+      value: formatCurrency(trainerStats.averagePayment),
+      icon: TrendingUp,
       gradient: 'from-warning-500 to-warning-600',
       textBg: 'text-warning-100',
       iconBg: 'text-warning-200',
-      subtitle: `${formatCurrency(trainerStats.monthlyTarget - trainerStats.totalEarnings)} to go`,
+      subtitle: 'Per payment',
       variant: 'gradient',
-    });
-  }
+    },
+  ];
 
   return (
     <Layout title="My Collection" subtitle="Track your earnings and performance">
       {/* Summary Stats */}
-      <StatsCards stats={stats} variant="gradient" columns={hasMonthlyTarget ? 4 : 3} />
-
-      {/* Target Progress Bar – only when monthly target is set */}
-      {hasMonthlyTarget && (
-        <div className="card mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-dark-800">Monthly Target Progress</h3>
-            <span className="text-sm text-dark-500">
-              {formatCurrency(trainerStats.totalEarnings)} / {formatCurrency(trainerStats.monthlyTarget)}
-            </span>
-          </div>
-          <div className="h-4 bg-dark-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-primary-500 to-success-500 rounded-full transition-all duration-500"
-              style={{ width: `${Math.min(100, trainerStats.targetProgress)}%` }}
-            />
-          </div>
-          <div className="flex items-center justify-between mt-2 text-sm text-dark-500">
-            <span>$0</span>
-            <span className="text-success-600 font-medium">
-              {trainerStats.targetProgress}% achieved
-            </span>
-            <span>{formatCurrency(trainerStats.monthlyTarget)}</span>
-          </div>
-        </div>
-      )}
+      <StatsCards stats={stats} variant="gradient" columns={4} />
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -164,8 +133,8 @@ const MyCollectionPage = () => {
                 />
                 <Bar
                   yAxisId="right"
-                  dataKey="sessions"
-                  name="Sessions"
+                  dataKey="payments"
+                  name="Payments"
                   fill="#22c55e"
                   radius={[4, 4, 0, 0]}
                   cursor={CHART_CURSOR}
@@ -214,10 +183,10 @@ const MyCollectionPage = () => {
         </div>
       </div>
 
-      {/* Monthly Progress Chart */}
+      {/* Monthly Earnings Trend */}
       <div className="card mb-6">
         <h3 className="text-lg font-semibold text-dark-800 mb-4">
-          Monthly Earnings vs Target
+          Monthly Earnings Trend
         </h3>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
@@ -234,48 +203,20 @@ const MyCollectionPage = () => {
                 strokeWidth={2}
                 dot={{ fill: '#0ea5e9', strokeWidth: 2 }}
               />
-              <Line
-                type="monotone"
-                dataKey="target"
-                name="Target"
-                stroke="#8b5cf6"
-                strokeDasharray="5 5"
-                strokeWidth={2}
-              />
             </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Recent Sessions */}
+      {/* Recent Payments */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-dark-800 mb-4">Recent Sessions</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-dark-50">
-                <th className="table-header">Date</th>
-                <th className="table-header">Member</th>
-                <th className="table-header">Type</th>
-                <th className="table-header">Earnings</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-dark-100">
-              {recentSessions.map((session) => (
-                <tr key={session.id} className="hover:bg-dark-50">
-                  <td className="table-cell">{session.date}</td>
-                  <td className="table-cell font-medium">{session.member}</td>
-                  <td className="table-cell">
-                    <Badge variant="primary">{session.type}</Badge>
-                  </td>
-                  <td className="table-cell font-semibold text-success-600">
-                    {session.amount > 0 ? `+${formatCurrency(session.amount)}` : '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          columns={recentPaymentsTableColumns}
+          data={recentPayments}
+          title="Recent Payments"
+          emptyMessage="No payments found"
+          loading={isLoading}
+        />
       </div>
     </Layout>
   );
