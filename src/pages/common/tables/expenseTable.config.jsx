@@ -13,45 +13,6 @@ export const expenseTableColumns = ({
   onDelete,
 }) => [
   {
-    key: 'date',
-    label: 'Date',
-    render: (expense) => expense.formattedDate,
-  },
-  {
-    key: 'category',
-    label: 'Category',
-    render: (expense) => (
-      <Badge variant="default">{expense.category}</Badge>
-    ),
-  },
-  {
-    key: 'description',
-    label: 'Description',
-    render: (expense) => (
-      <span className="font-medium">{expense.description}</span>
-    ),
-  },
-  {
-    key: 'amount',
-    label: 'Amount',
-    render: (expense) => (
-      <span className="font-semibold text-dark-50">
-        {formatCurrency(expense.amount)}
-      </span>
-    ),
-  },
-  {
-    key: 'status',
-    label: 'Status',
-    render: (expense) => (
-      <Badge
-        variant={EXPENSE_STATUS_VARIANTS[expense.status] || 'default'}
-      >
-        {EXPENSE_STATUS_LABELS[expense.status] || expense.status}
-      </Badge>
-    ),
-  },
-  {
     key: 'actions',
     label: 'Actions',
     align: 'right',
@@ -104,6 +65,45 @@ export const expenseTableColumns = ({
         </div>
       );
     },
+  },
+  {
+    key: 'date',
+    label: 'Date',
+    render: (expense) => expense.formattedDate,
+  },
+  {
+    key: 'category',
+    label: 'Category',
+    render: (expense) => (
+      <Badge variant="default">{expense.category}</Badge>
+    ),
+  },
+  {
+    key: 'description',
+    label: 'Description',
+    render: (expense) => (
+      <span className="font-medium">{expense.description}</span>
+    ),
+  },
+  {
+    key: 'amount',
+    label: 'Amount',
+    render: (expense) => (
+      <span className="font-semibold text-dark-50">
+        {formatCurrency(expense.amount)}
+      </span>
+    ),
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    render: (expense) => (
+      <Badge
+        variant={EXPENSE_STATUS_VARIANTS[expense.status] || 'default'}
+      >
+        {EXPENSE_STATUS_LABELS[expense.status] || expense.status}
+      </Badge>
+    ),
   },
 ];
 

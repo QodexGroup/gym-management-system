@@ -5,6 +5,35 @@ import { WALKIN_CUSTOMER_STATUS, WALKIN_CUSTOMER_STATUS_LABELS } from '../../../
 
 export const walkinCustomerTableColumns = ({ onCheckOut, onCancel }) => [
   {
+    key: 'actions',
+    label: 'Actions',
+    align: 'right',
+    render: (wc) => (
+      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        {wc.status === WALKIN_CUSTOMER_STATUS.INSIDE && onCheckOut && (
+          <button
+            onClick={() => onCheckOut(wc.id)}
+            className="flex items-center gap-1 px-3 py-1.5 text-sm text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+            title="Check Out"
+          >
+            <UserX className="w-4 h-4" />
+            Check Out
+          </button>
+        )}
+        {wc.status === WALKIN_CUSTOMER_STATUS.INSIDE && onCancel && (
+          <button
+            onClick={() => onCancel(wc.id)}
+            className="flex items-center gap-1 px-3 py-1.5 text-sm text-dark-600 hover:bg-dark-100 rounded-lg transition-colors"
+            title="Cancel"
+          >
+            <Ban className="w-4 h-4" />
+            Cancel
+          </button>
+        )}
+      </div>
+    ),
+  },
+  {
     key: 'customer',
     label: 'Member',
     render: (wc) => {
@@ -70,34 +99,5 @@ export const walkinCustomerTableColumns = ({ onCheckOut, onCancel }) => [
       const status = statusVariants[wc.status] || statusVariants[WALKIN_CUSTOMER_STATUS.INSIDE];
       return <Badge variant={status.variant}>{status.label}</Badge>;
     },
-  },
-  {
-    key: 'actions',
-    label: 'Actions',
-    align: 'right',
-    render: (wc) => (
-      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        {wc.status === WALKIN_CUSTOMER_STATUS.INSIDE && onCheckOut && (
-          <button
-            onClick={() => onCheckOut(wc.id)}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
-            title="Check Out"
-          >
-            <UserX className="w-4 h-4" />
-            Check Out
-          </button>
-        )}
-        {wc.status === WALKIN_CUSTOMER_STATUS.INSIDE && onCancel && (
-          <button
-            onClick={() => onCancel(wc.id)}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm text-dark-600 hover:bg-dark-100 rounded-lg transition-colors"
-            title="Cancel"
-          >
-            <Ban className="w-4 h-4" />
-            Cancel
-          </button>
-        )}
-      </div>
-    ),
   },
 ];

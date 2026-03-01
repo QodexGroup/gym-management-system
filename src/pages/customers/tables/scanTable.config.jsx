@@ -11,6 +11,26 @@ export const scanTableColumns = ({
   onViewImage,
 }) => [
   {
+    key: 'actions',
+    label: 'Actions',
+    align: 'right',
+    render: (row) => (
+      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        {canEdit && (
+          <button onClick={() => onEdit?.(row)} title="Edit">
+            <Edit className="w-4 h-4" />
+          </button>
+        )}
+
+        {canDelete && (
+          <button onClick={() => onDelete?.(row.id)} title="Delete">
+            <Trash className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    ),
+  },
+  {
     key: 'scanDate',
     label: 'Date',
     render: (row) => (
@@ -79,25 +99,5 @@ export const scanTableColumns = ({
         </div>
       );
     },
-  },
-  {
-    key: 'actions',
-    label: 'Actions',
-    align: 'right',
-    render: (row) => (
-      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        {canEdit && (
-          <button onClick={() => onEdit?.(row)} title="Edit">
-            <Edit className="w-4 h-4" />
-          </button>
-        )}
-
-        {canDelete && (
-          <button onClick={() => onDelete?.(row.id)} title="Delete">
-            <Trash className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-    ),
   },
 ];

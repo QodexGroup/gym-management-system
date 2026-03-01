@@ -6,40 +6,6 @@ import { BILL_STATUS, BILL_STATUS_LABELS, BILL_STATUS_VARIANTS } from '../../../
 
 export const billsTableColumns = ({ canEdit, canDelete, canAddPayment, onEdit, onDelete, onAddPayment }) => [
   {
-    key: 'billDate',
-    label: 'Bill Date',
-    render: (row) => <span>{formatDate(row.billDate)}</span>,
-  },
-  {
-    key: 'billType',
-    label: 'Bill Type',
-    render: (row) => {
-      const billTypeDisplay = row.billType === BILL_TYPE.CUSTOM_AMOUNT && row.customService
-        ? `${row.billType} - ${row.customService}`
-        : row.billType;
-      return <span>{billTypeDisplay}</span>;
-    },
-  },
-  {
-    key: 'netAmount',
-    label: 'Net Amount',
-    render: (row) => <span className="font-semibold">{formatCurrency(row.netAmount)}</span>,
-  },
-  {
-    key: 'paidAmount',
-    label: 'Paid Amount',
-    render: (row) => <span className="font-semibold">{formatCurrency(row.paidAmount)}</span>,
-  },
-  {
-    key: 'billStatus',
-    label: 'Status',
-    render: (row) => (
-      <Badge variant={BILL_STATUS_VARIANTS[row.billStatus] || 'warning'}>
-        {BILL_STATUS_LABELS[row.billStatus] || row.billStatus}
-      </Badge>
-    ),
-  },
-  {
     key: 'actions',
     label: 'Actions',
     align: 'right',
@@ -76,5 +42,39 @@ export const billsTableColumns = ({ canEdit, canDelete, canAddPayment, onEdit, o
         </div>
       );
     },
+  },
+  {
+    key: 'billDate',
+    label: 'Bill Date',
+    render: (row) => <span>{formatDate(row.billDate)}</span>,
+  },
+  {
+    key: 'billType',
+    label: 'Bill Type',
+    render: (row) => {
+      const billTypeDisplay = row.billType === BILL_TYPE.CUSTOM_AMOUNT && row.customService
+        ? `${row.billType} - ${row.customService}`
+        : row.billType;
+      return <span>{billTypeDisplay}</span>;
+    },
+  },
+  {
+    key: 'netAmount',
+    label: 'Net Amount',
+    render: (row) => <span className="font-semibold">{formatCurrency(row.netAmount)}</span>,
+  },
+  {
+    key: 'paidAmount',
+    label: 'Paid Amount',
+    render: (row) => <span className="font-semibold">{formatCurrency(row.paidAmount)}</span>,
+  },
+  {
+    key: 'billStatus',
+    label: 'Status',
+    render: (row) => (
+      <Badge variant={BILL_STATUS_VARIANTS[row.billStatus] || 'warning'}>
+        {BILL_STATUS_LABELS[row.billStatus] || row.billStatus}
+      </Badge>
+    ),
   },
 ];
