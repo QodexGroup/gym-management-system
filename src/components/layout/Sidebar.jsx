@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isTrainer } = useAuth();
   const { hasPermission } = usePermissions();
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState([]);
@@ -60,12 +60,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           label: 'Reports',
           icon: FileBarChart,
           key: 'reports',
-          adminOnly: true,
+          adminOrCoach: true,
           children: [
             { path: '/reports/summary', label: 'Summary Report', adminOnly: true },
             { path: '/reports/collection', label: 'Collection Report', adminOnly: true },
             { path: '/reports/expense', label: 'Expense Report', adminOnly: true },
-            { path: '/reports/my-collection', label: 'My Collection', adminOnly: true },
+            { path: '/reports/my-collection', label: 'My Collection', coachOnly: true },
           ],
         },
         { path: '/users', icon: UserCog, label: 'User Management', adminOnly: true },
@@ -77,8 +77,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const menuSections = useMemo(() => {
     return allMenuItems
       .filter((section) => {
-        // Hide ACCOUNT section for non-admin users
-        if (section.section === 'ACCOUNT' && !isAdmin) {
+        if (section.section === 'ACCOUNT' && !isAdmin && !isTrainer) {
           return false;
         }
         return true;
@@ -87,12 +86,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         ...section,
         items: section.items
           .filter((item) => {
-            // If item is admin-only, only show to admins
             if (item.adminOnly) {
               return isAdmin;
             }
+            if (item.adminOrCoach) {
+              return isAdmin || isTrainer;
+            }
 
-            // Admin can see everything (except items with explicit permission requirements)
             if (isAdmin) {
               // If item has a permission requirement, check it
               if (item.permission) {
@@ -115,17 +115,26 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               return {
                 ...item,
                 children: item.children.filter((child) => {
+                  if (child.adminOnly) {
+                    return isAdmin;
+                  }
+                  if (child.coachOnly) {
+                    return isTrainer;
+                  }
                   if (isAdmin) {
                     return child.permission ? hasPermission(child.permission) : true;
                   }
-                  return child.permission ? hasPermission(child.permission) : true;
+                  if (child.adminOrCoach && isTrainer) {
+                    return true;
+                  }
+                  return child.permission ? hasPermission(child.permission) : false;
                 }),
               };
             }
             return item;
           }),
       }));
-  }, [isAdmin, hasPermission]);
+  }, [isAdmin, isTrainer, hasPermission]);
 
   const isMenuActive = (item) => {
     if (item.path) {
