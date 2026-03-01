@@ -52,4 +52,21 @@ export const subscriptionService = {
     if (!res.ok) throw new Error(json.message || 'Failed to reject');
     return json.success ? json.data : null;
   },
+
+  async getBillingInformation() {
+    const res = await authenticatedFetch(`${API_BASE_URL}/accounts/billing-information`);
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || 'Failed to fetch billing information');
+    return json.success ? json.data : null;
+  },
+
+  async updateBillingInformation(payload) {
+    const res = await authenticatedFetch(`${API_BASE_URL}/accounts/billing-information`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || 'Failed to save billing information');
+    return json.success ? json.data : null;
+  },
 };

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { subscriptionService } from '../services/subscriptionService';
 import { uploadReceipt } from '../services/fileUploadService';
 import { Toast } from '../utils/alert';
-import { CreditCard, Upload, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { CreditCard, Upload, CheckCircle, Clock, AlertCircle, Building2 } from 'lucide-react';
 
 const USAGE_LABELS = {
   customers: 'Members',
@@ -18,23 +18,54 @@ const Subscription = () => {
   const { user, account, usage, fetchUserData } = useAuth();
   const [plans, setPlans] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [billing, setBilling] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [savingBilling, setSavingBilling] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [receiptFile, setReceiptFile] = useState(null);
+  const [billingForm, setBillingForm] = useState({
+    legalName: '',
+    businessName: '',
+    billingEmail: '',
+    taxId: '',
+    vatNumber: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    stateProvince: '',
+    postalCode: '',
+    country: '',
+  });
   const accountId = user?.accountId ?? account?.id;
 
   useEffect(() => {
     const load = async () => {
       try {
-        // Refresh account/usage so Users count (e.g. 2/2) is current when viewing this page
         await fetchUserData();
-        const [plansData, requestsData] = await Promise.all([
+        const [plansData, requestsData, billingData] = await Promise.all([
           subscriptionService.getPlans(),
           subscriptionService.getSubscriptionRequests(),
+          subscriptionService.getBillingInformation().catch(() => null),
         ]);
         setPlans(plansData.filter((p) => !p.isTrial));
         setRequests(requestsData);
+        setBilling(billingData);
+        if (billingData) {
+          setBillingForm({
+            legalName: billingData.legalName ?? '',
+            businessName: billingData.businessName ?? '',
+            billingEmail: billingData.billingEmail ?? '',
+            taxId: billingData.taxId ?? '',
+            vatNumber: billingData.vatNumber ?? '',
+            addressLine1: billingData.addressLine1 ?? '',
+            addressLine2: billingData.addressLine2 ?? '',
+            city: billingData.city ?? '',
+            stateProvince: billingData.stateProvince ?? '',
+            postalCode: billingData.postalCode ?? '',
+            country: billingData.country ?? '',
+          });
+        }
       } catch (err) {
         Toast.error(err.message);
       } finally {
@@ -81,6 +112,24 @@ const Subscription = () => {
   const isTrial = account?.subscriptionStatus === 'trial';
   const showUpgradeForm = isTrialExpired || isTrial || !!pendingRequest;
 
+  const handleBillingChange = (field, value) => {
+    setBillingForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveBilling = async (e) => {
+    e.preventDefault();
+    setSavingBilling(true);
+    try {
+      const data = await subscriptionService.updateBillingInformation(billingForm);
+      setBilling(data);
+      Toast.success('Billing information saved.');
+    } catch (err) {
+      Toast.error(err.message);
+    } finally {
+      setSavingBilling(false);
+    }
+  };
+
   if (loading) {
     return (
       <Layout title="Subscription">
@@ -118,8 +167,145 @@ const Subscription = () => {
           </div>
         </div>
 
-        {/* Usage (trial) */}
-        {usage && (
+        {/* Billing information (account owner) */}
+        <div className="card">
+          <h3 className="text-lg font-semibold text-dark-50 mb-4 flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-primary-500" />
+            Billing Information
+          </h3>
+          <p className="text-sm text-dark-400 mb-4">
+            Used for invoices and compliance. Optional.
+          </p>
+          <form onSubmit={handleSaveBilling} className="space-y-4 max-w-2xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-dark-300 mb-1">Legal name</label>
+                <input
+                  type="text"
+                  value={billingForm.legalName}
+                  onChange={(e) => handleBillingChange('legalName', e.target.value)}
+                  className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-100"
+                  placeholder="Full legal name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark-300 mb-1">Business name</label>
+                <input
+                  type="text"
+                  value={billingForm.businessName}
+                  onChange={(e) => handleBillingChange('businessName', e.target.value)}
+                  className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-100"
+                  placeholder="Company or gym name"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-dark-300 mb-1">Billing email</label>
+              <input
+                type="email"
+                value={billingForm.billingEmail}
+                onChange={(e) => handleBillingChange('billingEmail', e.target.value)}
+                className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-100"
+                placeholder="billing@example.com"
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-dark-300 mb-1">Tax ID</label>
+                <input
+                  type="text"
+                  value={billingForm.taxId}
+                  onChange={(e) => handleBillingChange('taxId', e.target.value)}
+                  className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-100"
+                  placeholder="e.g. TIN"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark-300 mb-1">VAT number</label>
+                <input
+                  type="text"
+                  value={billingForm.vatNumber}
+                  onChange={(e) => handleBillingChange('vatNumber', e.target.value)}
+                  className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-100"
+                  placeholder="Optional"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-dark-300 mb-1">Address line 1</label>
+              <input
+                type="text"
+                value={billingForm.addressLine1}
+                onChange={(e) => handleBillingChange('addressLine1', e.target.value)}
+                className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-100"
+                placeholder="Street, building"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-dark-300 mb-1">Address line 2</label>
+              <input
+                type="text"
+                value={billingForm.addressLine2}
+                onChange={(e) => handleBillingChange('addressLine2', e.target.value)}
+                className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-100"
+                placeholder="Unit, suite (optional)"
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-dark-300 mb-1">City</label>
+                <input
+                  type="text"
+                  value={billingForm.city}
+                  onChange={(e) => handleBillingChange('city', e.target.value)}
+                  className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-100"
+                  placeholder="City"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark-300 mb-1">State / Province</label>
+                <input
+                  type="text"
+                  value={billingForm.stateProvince}
+                  onChange={(e) => handleBillingChange('stateProvince', e.target.value)}
+                  className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-100"
+                  placeholder="State or province"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark-300 mb-1">Postal code</label>
+                <input
+                  type="text"
+                  value={billingForm.postalCode}
+                  onChange={(e) => handleBillingChange('postalCode', e.target.value)}
+                  className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-100"
+                  placeholder="ZIP / Postal code"
+                />
+              </div>
+            </div>
+            <div className="max-w-xs">
+              <label className="block text-sm font-medium text-dark-300 mb-1">Country (code)</label>
+              <input
+                type="text"
+                value={billingForm.country}
+                onChange={(e) => handleBillingChange('country', e.target.value.toUpperCase().slice(0, 2))}
+                className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-100"
+                placeholder="e.g. PH"
+                maxLength={2}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={savingBilling}
+              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {savingBilling ? 'Saving...' : 'Save billing information'}
+            </button>
+          </form>
+        </div>
+
+        {/* TODO (production): Usage block — uncomment when re-enabling insert limits in useAccountLimit. Shows current/limit per resource (members, class schedules, etc.). */}
+        {/* {usage && (
           <div className="card">
             <h3 className="text-lg font-semibold text-dark-50 mb-4">Usage</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
@@ -133,7 +319,7 @@ const Subscription = () => {
               ))}
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Request form - when trial expired, on trial (upgrade), or pending request */}
         {showUpgradeForm && (
