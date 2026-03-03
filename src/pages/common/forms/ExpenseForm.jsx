@@ -5,6 +5,7 @@ import { Modal } from '../../../components/common';
 import { useCreateExpense, useUpdateExpense } from '../../../hooks/useExpenses';
 import { getInitialExpenseFormData, mapExpenseToFormData } from '../../../models/expenseModel';
 import { EXPENSE_STATUS } from '../../../constants/expenseConstants';
+import { Toast } from '../../../utils/alert';
 
 const ExpenseForm = ({
   selectedExpense,
@@ -31,6 +32,11 @@ const ExpenseForm = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     const isEdit = !!selectedExpense;
+
+    if (!formData.expenseDate) {
+      Toast.error('Please select a date');
+      return;
+    }
 
     try {
       // Normalize all fields
