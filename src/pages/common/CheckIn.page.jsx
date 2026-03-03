@@ -262,8 +262,10 @@ const CheckIn = () => {
       walkinCustomerTableColumns({
         onCheckOut: handleCheckOut,
         onCancel: handleCancel,
+        isCheckingOut: checkOutMutation.isPending,
+        isCancelling: cancelMutation.isPending,
       }),
-    [handleCheckOut, handleCancel]
+    [handleCheckOut, handleCancel, checkOutMutation.isPending, cancelMutation.isPending]
   );
 
   // Show loading state

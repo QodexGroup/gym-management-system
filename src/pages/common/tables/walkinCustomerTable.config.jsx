@@ -3,7 +3,7 @@ import { Clock, UserX, Ban } from 'lucide-react';
 import { formatTimeFromDate } from '../../../utils/formatters';
 import { WALKIN_CUSTOMER_STATUS, WALKIN_CUSTOMER_STATUS_LABELS } from '../../../constants/walkinConstant';
 
-export const walkinCustomerTableColumns = ({ onCheckOut, onCancel }) => [
+export const walkinCustomerTableColumns = ({ onCheckOut, onCancel, isCheckingOut = false, isCancelling = false }) => [
   {
     key: 'actions',
     label: 'Actions',
@@ -13,21 +13,23 @@ export const walkinCustomerTableColumns = ({ onCheckOut, onCancel }) => [
         {wc.status === WALKIN_CUSTOMER_STATUS.INSIDE && onCheckOut && (
           <button
             onClick={() => onCheckOut(wc.id)}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+            disabled={isCheckingOut}
+            className="flex items-center gap-1 px-3 py-1.5 text-sm text-danger-600 hover:bg-danger-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Check Out"
           >
             <UserX className="w-4 h-4" />
-            Check Out
+            {isCheckingOut ? 'Checking Out...' : 'Check Out'}
           </button>
         )}
         {wc.status === WALKIN_CUSTOMER_STATUS.INSIDE && onCancel && (
           <button
             onClick={() => onCancel(wc.id)}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm text-dark-600 hover:bg-dark-100 rounded-lg transition-colors"
+            disabled={isCancelling}
+            className="flex items-center gap-1 px-3 py-1.5 text-sm text-dark-600 hover:bg-dark-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Cancel"
           >
             <Ban className="w-4 h-4" />
-            Cancel
+            {isCancelling ? 'Cancelling...' : 'Cancel'}
           </button>
         )}
       </div>

@@ -1,4 +1,4 @@
-import { authenticatedFetch } from './authService';
+import { authenticatedFetch, postWithIdempotency, putWithIdempotency } from './authService';
 import { normalizePaginatedResponse } from '../models/apiResponseModel';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -98,13 +98,12 @@ export const customerService = {
   /**
    * Create a new customer
    * @param {Object} customerData
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async create(customerData) {
-    const response = await authenticatedFetch(`${API_BASE_URL}/customers`, {
-      method: 'POST',
-      body: JSON.stringify(customerData),
-    });
+  async create(customerData, idempotencyKey = null) {
+    const options = idempotencyKey ? { idempotencyKey } : {};
+    const response = await postWithIdempotency(`${API_BASE_URL}/customers`, customerData, options);
 
     if (!response.ok) {
       const error = await response.json();
@@ -119,14 +118,13 @@ export const customerService = {
    * Update a customer
    * @param {number|string} id
    * @param {Object} customerData
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async update(id, customerData) {
+  async update(id, customerData, idempotencyKey = null) {
     const customerId = parseInt(id, 10);
-    const response = await authenticatedFetch(`${API_BASE_URL}/customers/${customerId}`, {
-      method: 'PUT',
-      body: JSON.stringify(customerData),
-    });
+    const options = idempotencyKey ? { idempotencyKey } : {};
+    const response = await putWithIdempotency(`${API_BASE_URL}/customers/${customerId}`, customerData, options);
 
     if (!response.ok) {
       const error = await response.json();

@@ -1,4 +1,4 @@
-import { authenticatedFetch } from './authService';
+import { authenticatedFetch, postWithIdempotency } from './authService';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -11,14 +11,13 @@ export const customerFileService = {
    * Create a file record for a progress entry
    * @param {number} progressId - Progress record ID
    * @param {Object} fileData - File metadata (without fileableType - determined by backend)
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async createProgressFile(progressId, fileData) {
+  async createProgressFile(progressId, fileData, idempotencyKey = null) {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/customers/progress/${progressId}/files`, {
-        method: 'POST',
-        body: JSON.stringify(fileData),
-      });
+      const options = idempotencyKey ? { idempotencyKey } : {};
+      const response = await postWithIdempotency(`${API_BASE_URL}/customers/progress/${progressId}/files`, fileData, options);
 
       if (!response.ok) {
         const error = await response.json();
@@ -36,14 +35,13 @@ export const customerFileService = {
    * Create a file record for a scan entry
    * @param {number} scanId - Scan record ID
    * @param {Object} fileData - File metadata (without fileableType - determined by backend)
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async createScanFile(scanId, fileData) {
+  async createScanFile(scanId, fileData, idempotencyKey = null) {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/customers/scans/${scanId}/files`, {
-        method: 'POST',
-        body: JSON.stringify(fileData),
-      });
+      const options = idempotencyKey ? { idempotencyKey } : {};
+      const response = await postWithIdempotency(`${API_BASE_URL}/customers/scans/${scanId}/files`, fileData, options);
 
       if (!response.ok) {
         const error = await response.json();

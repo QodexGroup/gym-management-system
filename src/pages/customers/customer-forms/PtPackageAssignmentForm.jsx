@@ -5,7 +5,7 @@ import { usePtPackages } from '../../../hooks/usePtPackages';
 import { useCoaches } from '../../../hooks/useUsers';
 import { formatCurrency } from '../../../utils/formatters';
 
-const PtPackageAssignmentForm = ({ customerId, onSubmit, onCancel }) => {
+const PtPackageAssignmentForm = ({ customerId, onSubmit, onCancel, isSubmitting = false }) => {
   const { data: ptPackagesData, isLoading: loadingPackages } = usePtPackages({ pagelimit: 0 });
   const { data: coachesData = [], isLoading: loadingCoaches } = useCoaches();
 
@@ -105,15 +105,16 @@ const PtPackageAssignmentForm = ({ customerId, onSubmit, onCancel }) => {
           type="button"
           onClick={onCancel}
           className="flex-1 btn-secondary"
+          disabled={isSubmitting}
         >
           Cancel
         </button>
         <button
           type="submit"
           className="flex-1 btn-primary"
-          disabled={!formData.ptPackageId}
+          disabled={isSubmitting || !formData.ptPackageId}
         >
-          Assign Package
+          {isSubmitting ? 'Assigning...' : 'Assign Package'}
         </button>
       </div>
     </form>

@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { customerBillService } from '../services/customerBillService';
 import { Toast } from '../utils/alert';
 import { customerKeys } from './useCustomers';
@@ -35,12 +37,19 @@ export const useCustomerBills = (customerId, options = {}) => {
  */
 export const useCreateCustomerBill = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async (billData) => {
-      return await customerBillService.create(billData);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await customerBillService.create(billData, idempotencyKeyRef.current);
     },
     onSuccess: async (data) => {
+      idempotencyKeyRef.current = null; // Reset after success
       const customerId = data?.customerId;
       if (customerId) {
         queryClient.invalidateQueries({ queryKey: customerBillKeys.byCustomer(customerId) });
@@ -56,6 +65,7 @@ export const useCreateCustomerBill = () => {
       Toast.success('Bill created successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to create bill');
     },
   });
@@ -66,12 +76,19 @@ export const useCreateCustomerBill = () => {
  */
 export const useUpdateCustomerBill = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async ({ id, data }) => {
-      return await customerBillService.update(id, data);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await customerBillService.update(id, data, idempotencyKeyRef.current);
     },
     onSuccess: async (data, variables) => {
+      idempotencyKeyRef.current = null; // Reset after success
       const customerId = data?.customerId;
       if (customerId) {
         queryClient.invalidateQueries({ queryKey: customerBillKeys.byCustomer(customerId) });
@@ -87,6 +104,7 @@ export const useUpdateCustomerBill = () => {
       Toast.success('Bill updated successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to update bill');
     },
   });

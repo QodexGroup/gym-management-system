@@ -1,4 +1,4 @@
-import { authenticatedFetch } from './authService';
+import { authenticatedFetch, postWithIdempotency, putWithIdempotency } from './authService';
 import { normalizePaginatedResponse } from '../models/apiResponseModel';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -13,21 +13,17 @@ export const classSessionBookingService = {
    * @param {number} sessionId - Class schedule session ID
    * @param {number} customerId - Customer ID
    * @param {string} notes - Optional booking notes
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async bookSession(sessionId, customerId, notes = '') {
+  async bookSession(sessionId, customerId, notes = '', idempotencyKey = null) {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/class-session-bookings`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId,
-          customerId,
-          notes,
-        }),
-      });
+      const options = idempotencyKey ? { idempotencyKey } : {};
+      const response = await postWithIdempotency(`${API_BASE_URL}/class-session-bookings`, {
+        sessionId,
+        customerId,
+        notes,
+      }, options);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -162,17 +158,13 @@ export const classSessionBookingService = {
    * Update a booking (customer, session, notes)
    * @param {number} bookingId - Booking ID
    * @param {Object} bookingData - Booking data to update
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async updateBooking(bookingId, bookingData) {
+  async updateBooking(bookingId, bookingData, idempotencyKey = null) {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/class-session-bookings/${bookingId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(bookingData),
-      });
+      const options = idempotencyKey ? { idempotencyKey } : {};
+      const response = await putWithIdempotency(`${API_BASE_URL}/class-session-bookings/${bookingId}`, bookingData, options);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

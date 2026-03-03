@@ -1,4 +1,4 @@
-import { authenticatedFetch } from './authService';
+import { authenticatedFetch, postWithIdempotency, putWithIdempotency } from './authService';
 import { normalizePaginatedResponse } from '../models/apiResponseModel';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -42,13 +42,12 @@ export const walkinService = {
   /**
    * Create a new walkin
    * @param {Object} walkinData
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async create(walkinData) {
-    const response = await authenticatedFetch(`${API_BASE_URL}/walkins`, {
-      method: 'POST',
-      body: JSON.stringify(walkinData),
-    });
+  async create(walkinData, idempotencyKey = null) {
+    const options = idempotencyKey ? { idempotencyKey } : {};
+    const response = await postWithIdempotency(`${API_BASE_URL}/walkins`, walkinData, options);
 
     if (!response.ok) {
       const error = await response.json();
@@ -149,13 +148,12 @@ export const walkinService = {
    * Create a walkin customer (check-in)
    * @param {number} walkinId - Walkin ID
    * @param {Object} customerData - Customer data (customer_id)
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async createWalkinCustomer(walkinId, customerData) {
-    const response = await authenticatedFetch(`${API_BASE_URL}/walkins/${walkinId}/customers`, {
-      method: 'POST',
-      body: JSON.stringify(customerData),
-    });
+  async createWalkinCustomer(walkinId, customerData, idempotencyKey = null) {
+    const options = idempotencyKey ? { idempotencyKey } : {};
+    const response = await postWithIdempotency(`${API_BASE_URL}/walkins/${walkinId}/customers`, customerData, options);
 
     if (!response.ok) {
       const error = await response.json();
@@ -295,13 +293,12 @@ export const walkinService = {
   /**
    * QR Code Check-in (convenience method for kiosk)
    * @param {string} uuid - Customer QR code UUID
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async qrCheckIn(uuid) {
-    const response = await authenticatedFetch(`${API_BASE_URL}/walkins/qr-checkin`, {
-      method: 'POST',
-      body: JSON.stringify({ uuid }),
-    });
+  async qrCheckIn(uuid, idempotencyKey = null) {
+    const options = idempotencyKey ? { idempotencyKey } : {};
+    const response = await postWithIdempotency(`${API_BASE_URL}/walkins/qr-checkin`, { uuid }, options);
 
     if (!response.ok) {
       const error = await response.json();

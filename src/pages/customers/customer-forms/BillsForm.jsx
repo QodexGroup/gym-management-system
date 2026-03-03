@@ -9,7 +9,7 @@ import { Info, Lock } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
 import { paymentHistoryTableColumns } from '../tables/paymentHistoryTable.config';
 
-const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustomerUpdate, initialData = null }) => {
+const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustomerUpdate, initialData = null, isSubmitting = false }) => {
   const { data: membershipPlans = [] } = useMembershipPlans();
   const isEditMode = !!initialData;
   const isPaidBill = isEditMode && initialData?.billStatus === 'paid';
@@ -254,18 +254,21 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
 
       {/* Actions */}
       <div className="flex gap-3 pt-4">
-        <button type="button" onClick={onCancel} className="flex-1 btn-secondary">Cancel</button>
+        <button type="button" onClick={onCancel} className="flex-1 btn-secondary" disabled={isSubmitting}>Cancel</button>
         <button 
           type="submit" 
           className="flex-1 btn-primary" 
           disabled={
+            isSubmitting ||
             isBillLocked || 
             isPaidBill || 
             initialData?.billStatus === BILL_STATUS.VOIDED ||
             (isEditMode && formData.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && !activeMembershipPlan)
           }
         >
-          {isEditMode ? 'Update Bill' : 'Generate Bill'}
+          {isSubmitting
+            ? 'Saving...'
+            : isEditMode ? 'Update Bill' : 'Generate Bill'}
         </button>
       </div>
     </form>

@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { customerService } from '../services/customerService';
 import { Toast } from '../utils/alert';
 
@@ -69,18 +71,26 @@ export const useCustomer = (id) => {
  */
 export const useCreateCustomer = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async (customerData) => {
-      return await customerService.create(customerData);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await customerService.create(customerData, idempotencyKeyRef.current);
     },
     onSuccess: () => {
+      idempotencyKeyRef.current = null; // Reset after success
       // Invalidate and refetch customers list
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
       queryClient.invalidateQueries({ queryKey: customerKeys.allCustomers() });
       Toast.success('Customer created successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to create customer');
     },
   });
@@ -91,12 +101,19 @@ export const useCreateCustomer = () => {
  */
 export const useUpdateCustomer = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async ({ id, data }) => {
-      return await customerService.update(id, data);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await customerService.update(id, data, idempotencyKeyRef.current);
     },
     onSuccess: async (updatedCustomer, variables) => {
+      idempotencyKeyRef.current = null; // Reset after success
       // Update the cache with the returned data immediately
       if (updatedCustomer) {
         queryClient.setQueryData(customerKeys.detail(variables.id), updatedCustomer);
@@ -120,6 +137,7 @@ export const useUpdateCustomer = () => {
       Toast.success('Customer updated successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to update customer');
     },
   });

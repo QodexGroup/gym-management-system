@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { customerScanService } from '../services/customerScanService';
 import { deleteFiles } from '../services/fileUploadService';
 import { Toast } from '../utils/alert';
@@ -33,12 +35,19 @@ export const useCustomerScans = (customerId, options = {}) => {
  */
 export const useCreateCustomerScan = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async ({ customerId, scanData }) => {
-      return await customerScanService.create(customerId, scanData);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await customerScanService.create(customerId, scanData, idempotencyKeyRef.current);
     },
     onSuccess: (data, variables) => {
+      idempotencyKeyRef.current = null; // Reset after success
       // Invalidate and refetch scans list for this customer
       queryClient.invalidateQueries({ 
         queryKey: customerScanKeys.lists(),
@@ -46,6 +55,7 @@ export const useCreateCustomerScan = () => {
       Toast.success('Scan created successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to create scan');
     },
   });
@@ -56,12 +66,19 @@ export const useCreateCustomerScan = () => {
  */
 export const useUpdateCustomerScan = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async ({ id, scanData }) => {
-      return await customerScanService.update(id, scanData);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await customerScanService.update(id, scanData, idempotencyKeyRef.current);
     },
     onSuccess: async (updatedScan, variables) => {
+      idempotencyKeyRef.current = null; // Reset after success
       // Update the cache with the returned data immediately
       if (updatedScan) {
         queryClient.setQueryData(
@@ -84,6 +101,7 @@ export const useUpdateCustomerScan = () => {
       Toast.success('Scan updated successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to update scan');
     },
   });

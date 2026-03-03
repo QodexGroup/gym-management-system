@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { classSessionBookingService } from '../services/classSessionBookingService';
 import { Toast } from '../utils/alert';
 import { classScheduleSessionKeys } from './useClassScheduleSessions';
@@ -18,12 +20,19 @@ export const classSessionBookingKeys = {
  */
 export const useBookClassSession = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async ({ sessionId, customerId, notes = '' }) => {
-      return await classSessionBookingService.bookSession(sessionId, customerId, notes);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await classSessionBookingService.bookSession(sessionId, customerId, notes, idempotencyKeyRef.current);
     },
     onSuccess: () => {
+      idempotencyKeyRef.current = null; // Reset after success
       queryClient.invalidateQueries({ queryKey: classSessionBookingKeys.all });
       queryClient.invalidateQueries({ queryKey: classScheduleSessionKeys.all });
       // Invalidate booking sessions for calendar
@@ -31,6 +40,7 @@ export const useBookClassSession = () => {
       Toast.success('Class session booked successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to book class session');
     },
   });
@@ -111,18 +121,26 @@ export const useMarkAllAsAttended = () => {
  */
 export const useUpdateClassSessionBooking = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async ({ bookingId, data }) => {
-      return await classSessionBookingService.updateBooking(bookingId, data);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await classSessionBookingService.updateBooking(bookingId, data, idempotencyKeyRef.current);
     },
     onSuccess: () => {
+      idempotencyKeyRef.current = null; // Reset after success
       queryClient.invalidateQueries({ queryKey: classSessionBookingKeys.all });
       queryClient.invalidateQueries({ queryKey: classScheduleSessionKeys.all });
       queryClient.invalidateQueries({ queryKey: [...classSessionBookingKeys.lists(), 'calendar'] });
       Toast.success('Booking updated successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to update booking');
     },
   });
