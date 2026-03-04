@@ -1,4 +1,4 @@
-import { authenticatedFetch } from './authService';
+import { authenticatedFetch, postWithIdempotency, putWithIdempotency } from './authService';
 import { normalizePaginatedResponse } from '../models/apiResponseModel';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -67,10 +67,7 @@ export const expenseCategoryService = {
    * @returns {Promise<Object>}
    */
   async create(categoryData) {
-    const response = await authenticatedFetch(`${API_BASE_URL}/expense-categories`, {
-      method: 'POST',
-      body: JSON.stringify(categoryData),
-    });
+    const response = await postWithIdempotency(`${API_BASE_URL}/expense-categories`, categoryData);
 
     if (!response.ok) {
       const error = await response.json();
@@ -88,10 +85,7 @@ export const expenseCategoryService = {
    * @returns {Promise<Object>}
    */
   async update(id, categoryData) {
-    const response = await authenticatedFetch(`${API_BASE_URL}/expense-categories/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(categoryData),
-    });
+    const response = await putWithIdempotency(`${API_BASE_URL}/expense-categories/${id}`, categoryData);
 
     if (!response.ok) {
       const error = await response.json();

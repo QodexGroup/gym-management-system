@@ -1,4 +1,4 @@
-import { authenticatedFetch } from './authService';
+import { authenticatedFetch, postWithIdempotency, putWithIdempotency } from './authService';
 import { normalizePaginatedResponse } from '../models/apiResponseModel';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -47,14 +47,13 @@ export const customerProgressService = {
    * Create a new progress record
    * @param {number} customerId - Customer ID
    * @param {Object} progressData - Progress data
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async create(customerId, progressData) {
+  async create(customerId, progressData, idempotencyKey = null) {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/customers/progress`, {
-        method: 'POST',
-        body: JSON.stringify({ ...progressData, customerId }),
-      });
+      const options = idempotencyKey ? { idempotencyKey } : {};
+      const response = await postWithIdempotency(`${API_BASE_URL}/customers/progress`, { ...progressData, customerId }, options);
 
       if (!response.ok) {
         const error = await response.json();
@@ -72,14 +71,13 @@ export const customerProgressService = {
    * Update a progress record
    * @param {number} id - Progress record ID
    * @param {Object} progressData - Progress data
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async update(id, progressData) {
+  async update(id, progressData, idempotencyKey = null) {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/customers/progress/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(progressData),
-      });
+      const options = idempotencyKey ? { idempotencyKey } : {};
+      const response = await putWithIdempotency(`${API_BASE_URL}/customers/progress/${id}`, progressData, options);
 
       if (!response.ok) {
         const error = await response.json();

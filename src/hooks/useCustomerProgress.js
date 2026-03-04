@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { customerProgressService } from '../services/customerProgressService';
 import { deleteFiles } from '../services/fileUploadService';
 import { Toast } from '../utils/alert';
@@ -33,12 +35,19 @@ export const useCustomerProgress = (customerId, options = {}) => {
  */
 export const useCreateCustomerProgress = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async ({ customerId, progressData }) => {
-      return await customerProgressService.create(customerId, progressData);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await customerProgressService.create(customerId, progressData, idempotencyKeyRef.current);
     },
     onSuccess: (data, variables) => {
+      idempotencyKeyRef.current = null; // Reset after success
       // Invalidate and refetch progress list for this customer
       queryClient.invalidateQueries({ 
         queryKey: customerProgressKeys.lists(),
@@ -46,6 +55,7 @@ export const useCreateCustomerProgress = () => {
       Toast.success('Progress record created successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to create progress record');
     },
   });
@@ -56,12 +66,19 @@ export const useCreateCustomerProgress = () => {
  */
 export const useUpdateCustomerProgress = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async ({ id, progressData }) => {
-      return await customerProgressService.update(id, progressData);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await customerProgressService.update(id, progressData, idempotencyKeyRef.current);
     },
     onSuccess: async (updatedProgress, variables) => {
+      idempotencyKeyRef.current = null; // Reset after success
       // Update the cache with the returned data immediately
       if (updatedProgress) {
         queryClient.setQueryData(
@@ -84,6 +101,7 @@ export const useUpdateCustomerProgress = () => {
       Toast.success('Progress record updated successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to update progress record');
     },
   });

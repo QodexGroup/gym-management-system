@@ -1,4 +1,4 @@
-import { authenticatedFetch } from './authService';
+import { authenticatedFetch, postWithIdempotency } from './authService';
 import { normalizePaginatedResponse } from '../models/apiResponseModel';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -12,13 +12,12 @@ export const customerPaymentService = {
    * Create a new payment for a bill
    * @param {number} billId
    * @param {Object} paymentData
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async create(billId, paymentData) {
-    const response = await authenticatedFetch(`${API_BASE_URL}/customers/bills/${billId}/payments`, {
-      method: 'POST',
-      body: JSON.stringify(paymentData),
-    });
+  async create(billId, paymentData, idempotencyKey = null) {
+    const options = idempotencyKey ? { idempotencyKey } : {};
+    const response = await postWithIdempotency(`${API_BASE_URL}/customers/bills/${billId}/payments`, paymentData, options);
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));

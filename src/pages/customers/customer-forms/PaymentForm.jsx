@@ -6,7 +6,7 @@ import { formatCurrency, formatDate } from '../../../utils/formatters';
 import { Banknote, CreditCard, Smartphone } from 'lucide-react';
 import { PAYMENT_METHOD, PAYMENT_METHOD_LABELS } from '../../../constants/paymentConstants';
 
-const PaymentForm = ({ bill, member, onSubmit, onCancel }) => {
+const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false }) => {
   const remainingAmount = useMemo(() => {
     const net = parseFloat(bill.netAmount) || 0;
     const paid = parseFloat(bill.paidAmount) || 0;
@@ -170,11 +170,11 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel }) => {
       </div>
 
       <div className="flex gap-3 pt-4">
-        <button type="button" onClick={onCancel} className="flex-1 btn-secondary">
+        <button type="button" onClick={onCancel} className="flex-1 btn-secondary" disabled={isSubmitting}>
           Cancel
         </button>
-        <button type="submit" className="flex-1 btn-success" disabled={isAmountInvalid}>
-          Record Payment
+        <button type="submit" className="flex-1 btn-success" disabled={isSubmitting || isAmountInvalid}>
+          {isSubmitting ? 'Recording...' : 'Record Payment'}
         </button>
       </div>
     </form>

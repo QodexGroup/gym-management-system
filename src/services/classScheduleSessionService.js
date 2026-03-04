@@ -1,4 +1,4 @@
-import { authenticatedFetch } from './authService';
+import { authenticatedFetch, putWithIdempotency } from './authService';
 import { normalizePaginatedResponse } from '../models/apiResponseModel';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -45,17 +45,13 @@ export const classScheduleSessionService = {
    * Update a class schedule session
    * @param {number} id - Session ID
    * @param {Object} data - Update data (startTime, endTime, duration)
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async update(id, data) {
+  async update(id, data, idempotencyKey = null) {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/class-schedule-sessions/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
+      const options = idempotencyKey ? { idempotencyKey } : {};
+      const response = await putWithIdempotency(`${API_BASE_URL}/class-schedule-sessions/${id}`, data, options);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

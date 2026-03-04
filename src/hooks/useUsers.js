@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { userService } from '../services/userService';
 import { Toast } from '../utils/alert';
 
@@ -31,16 +33,24 @@ export const useUsers = () => {
  */
 export const useCreateUser = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async (userData) => {
-      return await userService.create(userData);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await userService.create(userData, idempotencyKeyRef.current);
     },
     onSuccess: () => {
+      idempotencyKeyRef.current = null; // Reset after success
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       Toast.success('User created successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to create user');
     },
   });
@@ -51,17 +61,25 @@ export const useCreateUser = () => {
  */
 export const useUpdateUser = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async ({ id, data }) => {
-      return await userService.update(id, data);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await userService.update(id, data, idempotencyKeyRef.current);
     },
     onSuccess: (data, variables) => {
+      idempotencyKeyRef.current = null; // Reset after success
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.id) });
       Toast.success('User updated successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to update user');
     },
   });

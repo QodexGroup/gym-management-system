@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { membershipPlanService } from '../services/membershipPlanService';
 import { Toast } from '../utils/alert';
 
@@ -31,16 +33,24 @@ export const useMembershipPlans = () => {
  */
 export const useCreateMembershipPlan = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async (planData) => {
-      return await membershipPlanService.create(planData);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await membershipPlanService.create(planData, idempotencyKeyRef.current);
     },
     onSuccess: () => {
+      idempotencyKeyRef.current = null; // Reset after success
       queryClient.invalidateQueries({ queryKey: membershipPlanKeys.lists() });
       Toast.success('Membership plan created successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to create membership plan');
     },
   });
@@ -51,17 +61,25 @@ export const useCreateMembershipPlan = () => {
  */
 export const useUpdateMembershipPlan = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async ({ id, data }) => {
-      return await membershipPlanService.update(id, data);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await membershipPlanService.update(id, data, idempotencyKeyRef.current);
     },
     onSuccess: (data, variables) => {
+      idempotencyKeyRef.current = null; // Reset after success
       queryClient.invalidateQueries({ queryKey: membershipPlanKeys.lists() });
       queryClient.invalidateQueries({ queryKey: membershipPlanKeys.detail(variables.id) });
       Toast.success('Membership plan updated successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to update membership plan');
     },
   });

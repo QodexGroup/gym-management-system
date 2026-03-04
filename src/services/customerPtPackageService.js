@@ -1,4 +1,4 @@
-import { authenticatedFetch } from './authService';
+import { authenticatedFetch, postWithIdempotency } from './authService';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -46,16 +46,16 @@ export const customerPtPackageService = {
    * Assign PT package to customer
    * @param {number} customerId
    * @param {Object} packageData
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async assign(customerId, packageData) {
+  async assign(customerId, packageData, idempotencyKey = null) {
     try {
-      const response = await authenticatedFetch(
+      const options = idempotencyKey ? { idempotencyKey } : {};
+      const response = await postWithIdempotency(
         `${API_BASE_URL}/customers/${customerId}/pt-packages`,
-        {
-          method: 'POST',
-          body: JSON.stringify(packageData),
-        }
+        packageData,
+        options
       );
 
       if (!response.ok) {

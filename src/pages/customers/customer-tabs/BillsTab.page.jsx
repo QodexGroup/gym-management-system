@@ -411,6 +411,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
           onSubmit={handleBillSubmit}
           onCancel={() => { setShowBillModal(false); setSelectedBill(null); }}
           onCustomerUpdate={onCustomerUpdate}
+          isSubmitting={createBillMutation.isPending || updateBillMutation.isPending}
         />
       </Modal>
 
@@ -426,6 +427,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
             member={member}
             onSubmit={handlePaymentSubmit}
             onCancel={() => { setShowPaymentModal(false); setPaymentBill(null); }}
+            isSubmitting={createPaymentMutation.isPending}
           />
         )}
       </Modal>
@@ -441,6 +443,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
           currentMembership={currentMembership}
           onSubmit={handleMembershipSubmit}
           onCancel={() => setShowMembershipModal(false)}
+          isSubmitting={membershipMutation.isPending}
         />
       </Modal>
 
@@ -454,6 +457,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
           customerId={member.id}
           onSubmit={handleAssignPtPackage}
           onCancel={() => setShowPtPackageModal(false)}
+          isSubmitting={assignPtPackageMutation.isPending}
         />
       </Modal>
     </div>

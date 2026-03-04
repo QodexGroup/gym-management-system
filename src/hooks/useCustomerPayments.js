@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { customerPaymentService } from '../services/customerPaymentService';
 import { Toast } from '../utils/alert';
 import { customerBillKeys } from './useCustomerBills';
@@ -39,16 +41,23 @@ export const useCustomerPaymentsByBill = (billId, options = {}) => {
  */
 export const useCreateCustomerPayment = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async ({ billId, customerId, paymentData }) => {
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
       await customerPaymentService.create(billId, {
         ...paymentData,
         customerId,
-      });
+      }, idempotencyKeyRef.current);
       return { billId, customerId };
     },
     onSuccess: async (data) => {
+      idempotencyKeyRef.current = null; // Reset after success
       const customerId = data?.customerId;
       const billId = data?.billId;
 
@@ -72,6 +81,7 @@ export const useCreateCustomerPayment = () => {
       Toast.success('Payment recorded successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to record payment');
     },
   });

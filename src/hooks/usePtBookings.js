@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { ptBookingService } from '../services/ptBookingService';
 import { Toast } from '../utils/alert';
 
@@ -59,12 +61,19 @@ export const usePtBookingsByCoach = (coachId, startDate = null, endDate = null, 
  */
 export const useCreatePtBooking = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async (bookingData) => {
-      return await ptBookingService.create(bookingData);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await ptBookingService.create(bookingData, idempotencyKeyRef.current);
     },
     onSuccess: () => {
+      idempotencyKeyRef.current = null; // Reset after success
       // Invalidate all PT booking queries
       queryClient.invalidateQueries({ queryKey: ptBookingKeys.all });
       // Invalidate class schedule sessions to refetch calendar data
@@ -72,6 +81,7 @@ export const useCreatePtBooking = () => {
       Toast.success('PT session booked successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to book PT session');
     },
   });
@@ -82,12 +92,19 @@ export const useCreatePtBooking = () => {
  */
 export const useUpdatePtBooking = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async ({ id, data }) => {
-      return await ptBookingService.update(id, data);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await ptBookingService.update(id, data, idempotencyKeyRef.current);
     },
     onSuccess: () => {
+      idempotencyKeyRef.current = null; // Reset after success
       // Invalidate all PT booking queries
       queryClient.invalidateQueries({ queryKey: ptBookingKeys.all });
       // Invalidate class schedule sessions to refetch calendar data
@@ -95,6 +112,7 @@ export const useUpdatePtBooking = () => {
       Toast.success('PT session updated successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to update PT session');
     },
   });

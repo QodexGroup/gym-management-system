@@ -5,7 +5,7 @@ import { useMembershipPlans } from '../../../hooks/useMembershipPlans';
 import { formatCurrency } from '../../../utils/formatters';
 import { Alert } from '../../../utils/alert';
 
-const MembershipPlanForm = ({ customerId, currentMembership, onSubmit, onCancel }) => {
+const MembershipPlanForm = ({ customerId, currentMembership, onSubmit, onCancel, isSubmitting = false }) => {
   const { data: membershipPlans = [], isLoading: loadingPlans } = useMembershipPlans();
 
   const [formData, setFormData] = useState({
@@ -108,15 +108,18 @@ const MembershipPlanForm = ({ customerId, currentMembership, onSubmit, onCancel 
           type="button"
           onClick={onCancel}
           className="flex-1 btn-secondary"
+          disabled={isSubmitting}
         >
           Cancel
         </button>
         <button
           type="submit"
           className={`flex-1 ${currentMembership ? 'btn-primary' : 'btn-success'}`}
-          disabled={!formData.membershipPlanId}
+          disabled={isSubmitting || !formData.membershipPlanId}
         >
-          {currentMembership ? 'Update Membership Plan' : 'Add Membership Plan'}
+          {isSubmitting
+            ? 'Saving...'
+            : currentMembership ? 'Update Membership Plan' : 'Add Membership Plan'}
         </button>
       </div>
     </form>

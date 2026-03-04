@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { expenseService } from '../services/expenseService';
 import { expenseCategoryService } from '../services/expenseCategoryService';
 import { Toast } from '../utils/alert';
@@ -56,16 +58,24 @@ export const useExpenseCategories = (options = {}) => {
  */
 export const useCreateExpense = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async (expenseData) => {
-      return await expenseService.create(expenseData);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await expenseService.create(expenseData, idempotencyKeyRef.current);
     },
     onSuccess: () => {
+      idempotencyKeyRef.current = null; // Reset after success
       queryClient.invalidateQueries({ queryKey: expenseKeys.lists() });
       Toast.success('Expense created successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to create expense');
     },
   });
@@ -76,17 +86,25 @@ export const useCreateExpense = () => {
  */
 export const useUpdateExpense = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async ({ id, data }) => {
-      return await expenseService.update(id, data);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await expenseService.update(id, data, idempotencyKeyRef.current);
     },
     onSuccess: (data, variables) => {
+      idempotencyKeyRef.current = null; // Reset after success
       queryClient.invalidateQueries({ queryKey: expenseKeys.lists() });
       queryClient.invalidateQueries({ queryKey: expenseKeys.detail(variables.id) });
       Toast.success('Expense updated successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to update expense');
     },
   });

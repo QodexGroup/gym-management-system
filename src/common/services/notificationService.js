@@ -1,4 +1,4 @@
-import { authenticatedFetch } from '../../services/authService';
+import { authenticatedFetch, postWithIdempotency } from '../../services/authService';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -47,10 +47,7 @@ export const notificationService = {
   },
 
   async markAsRead(id) {
-    const response = await authenticatedFetch(`${API_BASE_URL}/notifications/${id}/read`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    });
+    const response = await postWithIdempotency(`${API_BASE_URL}/notifications/${id}/read`, {});
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
@@ -60,10 +57,7 @@ export const notificationService = {
   },
 
   async markAllAsRead() {
-    const response = await authenticatedFetch(`${API_BASE_URL}/notifications/read-all`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    });
+    const response = await postWithIdempotency(`${API_BASE_URL}/notifications/read-all`, {});
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
@@ -86,11 +80,7 @@ export const notificationService = {
   },
 
   async updatePreferences(preferences) {
-    const response = await authenticatedFetch(`${API_BASE_URL}/notification-preferences`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify(preferences),
-    });
+    const response = await postWithIdempotency(`${API_BASE_URL}/notification-preferences`, preferences);
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || `HTTP error! status: ${response.status}`);

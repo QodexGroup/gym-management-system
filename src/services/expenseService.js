@@ -1,4 +1,4 @@
-import { authenticatedFetch } from './authService';
+import { authenticatedFetch, postWithIdempotency, putWithIdempotency } from './authService';
 import { normalizePaginatedResponse } from '../models/apiResponseModel';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -71,13 +71,12 @@ export const expenseService = {
   /**
    * Create a new expense
    * @param {Object} expenseData
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async create(expenseData) {
-    const response = await authenticatedFetch(`${API_BASE_URL}/expenses`, {
-      method: 'POST',
-      body: JSON.stringify(expenseData),
-    });
+  async create(expenseData, idempotencyKey = null) {
+    const options = idempotencyKey ? { idempotencyKey } : {};
+    const response = await postWithIdempotency(`${API_BASE_URL}/expenses`, expenseData, options);
 
     if (!response.ok) {
       const error = await response.json();
@@ -92,13 +91,12 @@ export const expenseService = {
    * Update an expense
    * @param {number} id
    * @param {Object} expenseData
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async update(id, expenseData) {
-    const response = await authenticatedFetch(`${API_BASE_URL}/expenses/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(expenseData),
-    });
+  async update(id, expenseData, idempotencyKey = null) {
+    const options = idempotencyKey ? { idempotencyKey } : {};
+    const response = await putWithIdempotency(`${API_BASE_URL}/expenses/${id}`, expenseData, options);
 
     if (!response.ok) {
       const error = await response.json();

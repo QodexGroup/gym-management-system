@@ -1,4 +1,4 @@
-import { authenticatedFetch } from './authService';
+import { authenticatedFetch, postWithIdempotency, putWithIdempotency } from './authService';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -49,13 +49,12 @@ export const membershipPlanService = {
   /**
    * Create a new membership plan
    * @param {Object} planData
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async create(planData) {
-    const response = await authenticatedFetch(`${API_BASE_URL}/membership-plans`, {
-      method: 'POST',
-      body: JSON.stringify(planData),
-    });
+  async create(planData, idempotencyKey = null) {
+    const options = idempotencyKey ? { idempotencyKey } : {};
+    const response = await postWithIdempotency(`${API_BASE_URL}/membership-plans`, planData, options);
 
     if (!response.ok) {
       const error = await response.json();
@@ -70,13 +69,12 @@ export const membershipPlanService = {
    * Update a membership plan
    * @param {number} id
    * @param {Object} planData
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async update(id, planData) {
-    const response = await authenticatedFetch(`${API_BASE_URL}/membership-plans/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(planData),
-    });
+  async update(id, planData, idempotencyKey = null) {
+    const options = idempotencyKey ? { idempotencyKey } : {};
+    const response = await putWithIdempotency(`${API_BASE_URL}/membership-plans/${id}`, planData, options);
 
     if (!response.ok) {
       const error = await response.json();
