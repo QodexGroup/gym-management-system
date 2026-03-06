@@ -1,12 +1,11 @@
 import { authenticatedFetch } from './authService';
 import { dashboardService } from './dashboardService';
-import { customerBillService } from './customerBillService';
 import { MAX_REPORT_ROWS, getReportDateRange } from '../constants/reportConstants';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 /**
- * Report Service - collection/summary with max 3 months, 200 rows; email when >200.
+ * Report Service - collection/summary payment-based; max 200 rows; email when >200.
  */
 export const reportService = {
   async getDashboardStats() {
@@ -49,28 +48,29 @@ export const reportService = {
     return data;
   },
 
+  /**
+   * Get collection/summary report data (payment-based) from API.
+   */
   async getCollectionData(options = {}) {
     const { dateRange = 'this_month', customDateFrom, customDateTo } = options;
     const { start: dateFrom, end: dateTo } = getReportDateRange(dateRange, customDateFrom, customDateTo);
-    const [stats, billsResult] = await Promise.all([
+    const [stats, collectionResponse] = await Promise.all([
       dashboardService.getDashboardStats(),
-      customerBillService.getAllBills({
-        page: 1,
-        pagelimit: MAX_REPORT_ROWS,
-        filters: { dateFrom, dateTo },
-      }),
+      authenticatedFetch(`${API_BASE_URL}/reports/collection-data?${new URLSearchParams({ dateFrom, dateTo })}`),
     ]);
-    const allBills = billsResult?.data ?? [];
-    const total = billsResult?.total ?? allBills.length;
-    const paidBills = allBills.filter((b) => b.billStatus === 'paid' && (parseFloat(b.paidAmount) || 0) > 0);
-    paidBills.sort((a, b) => new Date(b.billDate || b.updatedAt) - new Date(a.billDate || a.updatedAt));
-    const reportTooLarge = total > MAX_REPORT_ROWS;
+    if (!collectionResponse.ok) {
+      const err = await collectionResponse.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to load report data');
+    }
+    const collectionJson = await collectionResponse.json();
+    const payload = collectionJson.data ?? collectionJson;
     return {
       ...stats,
-      recentTransactions: paidBills,
-      totalCollectedFromBills: paidBills.reduce((sum, b) => sum + (parseFloat(b.paidAmount) || 0), 0),
-      reportTooLarge,
-      totalRows: total,
+      recentTransactions: payload.recentTransactions ?? [],
+      totalCollectedFromBills: payload.totalCollectedFromPayments ?? 0,
+      todayRevenue: payload.todayRevenue ?? stats?.todayRevenue ?? 0,
+      reportTooLarge: payload.reportTooLarge ?? false,
+      totalRows: payload.totalRows ?? 0,
     };
   },
 };

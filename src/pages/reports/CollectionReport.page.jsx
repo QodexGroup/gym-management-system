@@ -2,7 +2,7 @@ import { useRef, useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
 import Layout from '../../components/layout/Layout';
-import { Badge, DateRangeExportBar, PrintArea, MessageCard, StatsCards } from '../../components/common';
+import { DateRangeExportBar, PrintArea, MessageCard, StatsCards } from '../../components/common';
 import DataTable from '../../components/DataTable';
 import {
   DollarSign,
@@ -27,7 +27,6 @@ import {
 import { useReportCollection } from '../../hooks/useReportCollection';
 import { reportService } from '../../services/reportService';
 import { exportReportToPdf, exportReportToExcel } from '../../utils/reportPrintExport';
-import { BILL_STATUS_LABELS, BILL_STATUS_VARIANTS } from '../../constants/billConstants';
 import { REPORT_DATE_RANGE_OPTIONS, getReportDateRange, MAX_REPORT_ROWS, CHART_TOOLTIP_STYLE, CHART_CURSOR, CHART_PIE_ACTIVE } from '../../constants/reportConstants';
 import { Alert, Toast } from '../../utils/alert';
 
@@ -83,11 +82,18 @@ const CollectionReportPage = () => {
 
   const totalTransactions = filteredTransactions.length;
   const averageTransaction = totalTransactions > 0 ? totalCollected / totalTransactions : 0;
-  const paymentMethodData = [
-    { name: 'Cash', value: totalCollected * 0.5, color: '#22c55e' },
-    { name: 'Card', value: totalCollected * 0.3, color: '#0ea5e9' },
-    { name: 'Transfer', value: totalCollected * 0.2, color: '#8b5cf6' },
-  ].filter((d) => d.value > 0);
+  const paymentMethodData = useMemo(() => {
+    const byMethod = {};
+    filteredTransactions.forEach((t) => {
+      const key = (t.paymentMethod || 'other').toLowerCase();
+      const k = key.includes('cash') ? 'Cash' : key.includes('card') ? 'Card' : key.includes('transfer') ? 'Transfer' : 'Other';
+      byMethod[k] = (byMethod[k] || 0) + (parseFloat(t.amount) || 0);
+    });
+    const colors = { Cash: '#22c55e', Card: '#0ea5e9', Transfer: '#8b5cf6', Other: '#64748b' };
+    return Object.entries(byMethod)
+      .filter(([, v]) => v > 0)
+      .map(([name, value]) => ({ name, value, color: colors[name] || colors.Other }));
+  }, [filteredTransactions]);
   const membershipTypeData = membershipDistribution.map((item) => ({
     name: item.name,
     revenue: (item.value || 0) * 50,
@@ -122,13 +128,13 @@ const CollectionReportPage = () => {
   ];
 
   const doExportPdf = () => {
-    const headers = ['Date', 'Member', 'Bill Type', 'Paid Amount', 'Status'];
+    const headers = ['Date', 'Member', 'Type', 'Amount', 'Payment Method'];
     const rows = filteredTransactions.map((t) => [
-      formatDate(t.billDate),
+      formatDate(t.paymentDate),
       t.customerName || 'N/A',
       t.billType || 'N/A',
-      formatCurrency(t.paidAmount),
-      BILL_STATUS_LABELS[t.billStatus] || t.billStatus,
+      formatCurrency(t.amount),
+      (t.paymentMethod && String(t.paymentMethod)) || 'N/A',
     ]);
     exportReportToPdf({
       title: 'Collection Report',
@@ -142,13 +148,13 @@ const CollectionReportPage = () => {
   };
 
   const doExportExcel = () => {
-    const headers = ['Date', 'Member', 'Bill Type', 'Paid Amount', 'Status'];
+    const headers = ['Date', 'Member', 'Type', 'Amount', 'Payment Method'];
     const rows = filteredTransactions.map((t) => [
-      formatDate(t.billDate),
+      formatDate(t.paymentDate),
       t.customerName || 'N/A',
       t.billType || 'N/A',
-      parseFloat(t.paidAmount) || 0,
-      BILL_STATUS_LABELS[t.billStatus] || t.billStatus,
+      parseFloat(t.amount) || 0,
+      (t.paymentMethod && String(t.paymentMethod)) || 'N/A',
     ]);
     exportReportToExcel({
       sheetName: 'Collection',
@@ -241,11 +247,11 @@ const CollectionReportPage = () => {
   ];
 
   const collectionColumns = [
-    { key: 'billDate', label: 'Date', render: (row) => formatDate(row.billDate) },
+    { key: 'paymentDate', label: 'Date', render: (row) => formatDate(row.paymentDate) },
     { key: 'customerName', label: 'Member', render: (row) => <span className="font-medium">{row.customerName || 'N/A'}</span> },
     { key: 'billType', label: 'Type', render: (row) => row.billType || 'N/A' },
-    { key: 'paidAmount', label: 'Amount', render: (row) => <span className="font-semibold text-dark-800">{formatCurrency(row.paidAmount)}</span> },
-    { key: 'billStatus', label: 'Status', render: (row) => <Badge variant={BILL_STATUS_VARIANTS[row.billStatus] || 'success'}>{BILL_STATUS_LABELS[row.billStatus] || row.billStatus}</Badge> },
+    { key: 'amount', label: 'Amount', render: (row) => <span className="font-semibold text-dark-800">{formatCurrency(row.amount)}</span> },
+    { key: 'paymentMethod', label: 'Payment Method', render: (row) => row.paymentMethod ? String(row.paymentMethod) : 'N/A' },
   ];
 
   return (
@@ -263,19 +269,19 @@ const CollectionReportPage = () => {
             <tr className="bg-slate-100">
               <th className="table-header text-left p-2 border border-slate-300">Date</th>
               <th className="table-header text-left p-2 border border-slate-300">Member</th>
-              <th className="table-header text-left p-2 border border-slate-300">Bill Type</th>
-              <th className="table-header text-left p-2 border border-slate-300">Paid Amount</th>
-              <th className="table-header text-left p-2 border border-slate-300">Status</th>
+              <th className="table-header text-left p-2 border border-slate-300">Type</th>
+              <th className="table-header text-left p-2 border border-slate-300">Amount</th>
+              <th className="table-header text-left p-2 border border-slate-300">Payment Method</th>
             </tr>
           </thead>
           <tbody>
             {filteredTransactions.map((payment) => (
               <tr key={payment.id}>
-                <td className="p-2 border border-slate-300">{formatDate(payment.billDate)}</td>
+                <td className="p-2 border border-slate-300">{formatDate(payment.paymentDate)}</td>
                 <td className="p-2 border border-slate-300">{payment.customerName || 'N/A'}</td>
                 <td className="p-2 border border-slate-300">{payment.billType || 'N/A'}</td>
-                <td className="p-2 border border-slate-300">{formatCurrency(payment.paidAmount)}</td>
-                <td className="p-2 border border-slate-300">{BILL_STATUS_LABELS[payment.billStatus] || payment.billStatus}</td>
+                <td className="p-2 border border-slate-300">{formatCurrency(payment.amount)}</td>
+                <td className="p-2 border border-slate-300">{payment.paymentMethod ? String(payment.paymentMethod) : 'N/A'}</td>
               </tr>
             ))}
           </tbody>
