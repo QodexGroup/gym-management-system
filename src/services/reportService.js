@@ -14,14 +14,14 @@ export const reportService = {
 
   /**
    * Check if report data for the given range is too large for direct export (> 200 rows).
-   * @param {{ reportType: string, dateFrom: string, dateTo: string }} options
+   * @param {{ reportType: string, dateFrom: string, dateTo: string }} options (sent as startDate, endDate to API)
    * @returns {{ tooLarge: boolean, rowCount: number }}
    */
   async checkExportSize(options = {}) {
     const { reportType, dateFrom, dateTo } = options;
     const response = await authenticatedFetch(`${API_BASE_URL}/reports/check-export`, {
       method: 'POST',
-      body: JSON.stringify({ reportType, dateFrom, dateTo }),
+      body: JSON.stringify({ reportType, startDate: dateFrom, endDate: dateTo }),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || 'Failed to check export size');
@@ -30,7 +30,7 @@ export const reportService = {
 
   /**
    * Request email delivery of a report (placeholder – backend returns 202).
-   * @param {{ reportType: string, format?: string, dateRange?: string, dateFrom?: string, dateTo?: string }} options
+   * @param {{ reportType: string, format?: string, dateRange?: string, dateFrom?: string, dateTo?: string }} options (sent as startDate, endDate to API)
    */
   async emailReport(options = {}) {
     const response = await authenticatedFetch(`${API_BASE_URL}/reports/email`, {
@@ -39,8 +39,8 @@ export const reportService = {
         reportType: options.reportType,
         format: options.format || 'pdf',
         dateRange: options.dateRange,
-        dateFrom: options.dateFrom,
-        dateTo: options.dateTo,
+        startDate: options.dateFrom,
+        endDate: options.dateTo,
       }),
     });
     const data = await response.json();
@@ -56,7 +56,7 @@ export const reportService = {
     const { start: dateFrom, end: dateTo } = getReportDateRange(dateRange, customDateFrom, customDateTo);
     const [stats, collectionResponse] = await Promise.all([
       dashboardService.getDashboardStats(),
-      authenticatedFetch(`${API_BASE_URL}/reports/collection-data?${new URLSearchParams({ dateFrom, dateTo })}`),
+      authenticatedFetch(`${API_BASE_URL}/reports/collection-data?${new URLSearchParams({ startDate: dateFrom, endDate: dateTo })}`),
     ]);
     if (!collectionResponse.ok) {
       const err = await collectionResponse.json().catch(() => ({}));
