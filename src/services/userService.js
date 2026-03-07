@@ -1,4 +1,4 @@
-import { authenticatedFetch } from './authService';
+import { authenticatedFetch, postWithIdempotency, putWithIdempotency } from './authService';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -83,13 +83,12 @@ export const userService = {
   /**
    * Create a new user
    * @param {Object} userData
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async create(userData) {
-    const response = await authenticatedFetch(`${API_BASE_URL}/users`, {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
+  async create(userData, idempotencyKey = null) {
+    const options = idempotencyKey ? { idempotencyKey } : {};
+    const response = await postWithIdempotency(`${API_BASE_URL}/users`, userData, options);
 
     if (!response.ok) {
       const error = await response.json();
@@ -104,13 +103,12 @@ export const userService = {
    * Update a user
    * @param {number} id
    * @param {Object} userData
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async update(id, userData) {
-    const response = await authenticatedFetch(`${API_BASE_URL}/users/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(userData),
-    });
+  async update(id, userData, idempotencyKey = null) {
+    const options = idempotencyKey ? { idempotencyKey } : {};
+    const response = await putWithIdempotency(`${API_BASE_URL}/users/${id}`, userData, options);
 
     if (!response.ok) {
       const error = await response.json();

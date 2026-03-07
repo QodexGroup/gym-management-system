@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { walkinService } from '../services/walkinService';
 import { Toast } from '../utils/alert';
 
@@ -56,12 +58,19 @@ export const useWalkinCustomers = (walkinId, page = 1, options = {}) => {
  */
 export const useCreateWalkin = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async (walkinData) => {
-      return await walkinService.create(walkinData);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await walkinService.create(walkinData, idempotencyKeyRef.current);
     },
     onSuccess: async (walkin) => {
+      idempotencyKeyRef.current = null; // Reset after success
       // Set the query data directly with the new walkin
       queryClient.setQueryData(walkinKeys.today(), walkin);
       // Also invalidate to ensure consistency
@@ -69,6 +78,7 @@ export const useCreateWalkin = () => {
       Toast.success('Walkin created successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to create walkin');
     },
   });
@@ -79,17 +89,25 @@ export const useCreateWalkin = () => {
  */
 export const useCreateWalkinCustomer = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async ({ walkinId, customerData }) => {
-      return await walkinService.createWalkinCustomer(walkinId, customerData);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await walkinService.createWalkinCustomer(walkinId, customerData, idempotencyKeyRef.current);
     },
     onSuccess: (data, variables) => {
+      idempotencyKeyRef.current = null; // Reset after success
       // Invalidate walkin customers list - React Query will refetch automatically when needed
       queryClient.invalidateQueries({ queryKey: walkinKeys.customers(variables.walkinId) });
       Toast.success('Customer checked in successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to check in customer');
     },
   });

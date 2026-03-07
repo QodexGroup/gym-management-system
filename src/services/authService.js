@@ -1,4 +1,5 @@
 import { Alert } from '../utils/alert';
+import { v4 as uuidv4 } from 'uuid';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -139,6 +140,56 @@ export const authenticatedFetch = async (url, options = {}) => {
   }
 
   return response;
+};
+
+/**
+ * Make an authenticated POST request with idempotency key
+ * @param {string} url - API endpoint
+ * @param {Object} body - Request body
+ * @param {Object} options - Additional fetch options (can include idempotencyKey)
+ * @returns {Promise<Response>}
+ */
+export const postWithIdempotency = async (url, body, options = {}) => {
+  // Use provided key or generate new one
+  const idempotencyKey = options.idempotencyKey || uuidv4();
+  
+  // Remove idempotencyKey from options to avoid passing it as a header
+  const { idempotencyKey: _, ...restOptions } = options;
+  
+  return authenticatedFetch(url, {
+    ...restOptions,
+    method: 'POST',
+    headers: {
+      'Idempotency-Key': idempotencyKey,
+      ...restOptions.headers,
+    },
+    body: JSON.stringify(body),
+  });
+};
+
+/**
+ * Make an authenticated PUT request with idempotency key
+ * @param {string} url - API endpoint
+ * @param {Object} body - Request body
+ * @param {Object} options - Additional fetch options (can include idempotencyKey)
+ * @returns {Promise<Response>}
+ */
+export const putWithIdempotency = async (url, body, options = {}) => {
+  // Use provided key or generate new one
+  const idempotencyKey = options.idempotencyKey || uuidv4();
+  
+  // Remove idempotencyKey from options to avoid passing it as a header
+  const { idempotencyKey: _, ...restOptions } = options;
+  
+  return authenticatedFetch(url, {
+    ...restOptions,
+    method: 'PUT',
+    headers: {
+      'Idempotency-Key': idempotencyKey,
+      ...restOptions.headers,
+    },
+    body: JSON.stringify(body),
+  });
 };
 
 /**

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 import StatsCards from '../../components/common/StatsCards';
+import DataTable from '../../components/DataTable';
 import { Avatar, Badge } from '../../components/common';
 import {
   Users,
@@ -114,7 +115,7 @@ const AdminDashboard = () => {
       value: stats.expiringMemberships,
       icon: AlertTriangle,
       color: 'warning',
-      subtitle: 'Next 30 days',
+      subtitle: 'Next 7 days',
     },
     // Today's Check-ins - Commented out for future use
     // {
@@ -193,59 +194,54 @@ const AdminDashboard = () => {
 
         {/* Memberships Expiring Soon */}
         <div className="card md:col-span-8">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-dark-50">Memberships Expiring Soon</h3>
-            <button
-              onClick={() => navigate('/members')}
-              className="text-sm text-primary-500 hover:text-primary-600 font-medium cursor-pointer"
-            >
-              View All Members →
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-dark-800">
-                  <th className="table-header">Member</th>
-                  <th className="table-header">Membership</th>
-                  <th className="table-header">Expiry Date</th>
-                  <th className="table-header">Status</th>
-                  <th className="table-header">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-dark-100">
-                {(stats.expiringMembersList || []).map((member) => (
-                  <tr key={member.id} className="hover:bg-dark-700">
-                    <td className="table-cell">
-                      <div className="flex items-center gap-3">
-                        <Avatar src={member.avatar} name={member.name} size="sm" />
-                        <div>
-                          <p className="font-medium text-dark-50">{member.name}</p>
-                          <p className="text-xs text-dark-400">{member.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="table-cell">{member.membership}</td>
-                    <td className="table-cell">{member.membershipExpiry}</td>
-                    <td className="table-cell">
-                      <Badge
-                        variant={
-                          member.membershipStatus === 'expiring' ? 'warning' : member.membershipStatus === 'expired' ? 'danger' : 'success'
-                        }
-                      >
-                        {member.membershipStatus}
-                      </Badge>
-                    </td>
-                    <td className="table-cell">
-                      <button className="btn-primary text-sm py-1.5 px-3">
-                        Send Reminder
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            title="Memberships Expiring Soon"
+            actionButton={
+              <button
+                onClick={() => navigate('/members')}
+                className="text-sm text-primary-500 hover:text-primary-600 font-medium cursor-pointer"
+              >
+                View All Members →
+              </button>
+            }
+            columns={[
+              {
+                key: 'member',
+                label: 'Member',
+                render: (row) => (
+                  <div className="flex items-center gap-3">
+                    <Avatar src={row.avatar} name={row.name} size="sm" />
+                    <div>
+                      <p className="font-medium text-dark-50">{row.name}</p>
+                      <p className="text-xs text-dark-400">{row.email}</p>
+                    </div>
+                  </div>
+                ),
+              },
+              { key: 'membership', label: 'Membership' },
+              { key: 'membershipExpiry', label: 'Expiry Date' },
+              {
+                key: 'membershipStatus',
+                label: 'Status',
+                render: (row) => (
+                  <Badge
+                    variant={
+                      row.membershipStatus === 'expiring'
+                        ? 'warning'
+                        : row.membershipStatus === 'expired'
+                          ? 'danger'
+                          : 'success'
+                    }
+                  >
+                    {row.membershipStatus}
+                  </Badge>
+                ),
+              },
+            ]}
+            data={stats.expiringMembersList || []}
+            onRowClick={(member) => navigate(`/members/${member.id}`)}
+            emptyMessage="No memberships expiring in the next 7 days"
+          />
         </div>
 
         {/* Membership Distribution */}

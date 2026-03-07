@@ -11,6 +11,30 @@ export const progressTableColumns = ({
   onImageClick,
 }) => [
   {
+    key: 'actions',
+    label: 'Actions',
+    align: 'right',
+    render: (row) => (
+      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        <button onClick={() => onEdit?.(row, { view: true })} title="View">
+          <ChevronRight className="w-4 h-4" />
+        </button>
+
+        {canEdit && (
+          <button onClick={() => onEdit(row)} title="Edit">
+            <Edit className="w-4 h-4" />
+          </button>
+        )}
+
+        {canDelete && (
+          <button onClick={() => onDelete(row.id)} title="Delete">
+            <Trash className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    ),
+  },
+  {
     key: 'recordedDate',
     label: 'Date',
     render: (row) => (
@@ -116,30 +140,6 @@ export const progressTableColumns = ({
     label: 'Notes',
     render: (row) => (
       <p className="truncate max-w-[200px]">{row.notes || '-'}</p>
-    ),
-  },
-  {
-    key: 'actions',
-    label: 'Actions',
-    align: 'right',
-    render: (row) => (
-      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        <button onClick={() => onEdit?.(row, { view: true })} title="View">
-          <ChevronRight className="w-4 h-4" />
-        </button>
-
-        {canEdit && (
-          <button onClick={() => onEdit(row)} title="Edit">
-            <Edit className="w-4 h-4" />
-          </button>
-        )}
-
-        {canDelete && (
-          <button onClick={() => onDelete(row.id)} title="Delete">
-            <Trash className="w-4 h-4" />
-          </button>
-        )}
-      </div>
     ),
   },
 ];

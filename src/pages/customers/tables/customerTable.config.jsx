@@ -4,6 +4,30 @@ import { formatDate, formatCurrency } from '../../../utils/formatters';
 
 export const customerTableColumns = ({ canEdit, canDelete, onEdit, onDelete }) => [
   {
+    key: 'actions',
+    label: 'Actions',
+    align: 'right',
+    render: (c) => (
+      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        <button onClick={() => onEdit?.(c, { view: true })} title="View">
+          <ChevronRight className="w-4 h-4" />
+        </button>
+
+        {canEdit && (
+          <button onClick={() => onEdit(c)} title="Edit">
+            <Edit className="w-4 h-4" />
+          </button>
+        )}
+
+        {canDelete && (
+          <button onClick={() => onDelete(c.id)} title="Delete">
+            <Trash className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    ),
+  },
+  {
     key: 'member',
     label: 'Member',
     render: (c) => {
@@ -81,29 +105,5 @@ export const customerTableColumns = ({ canEdit, canDelete, onEdit, onDelete }) =
     key: 'balance',
     label: 'Balance',
     render: (c) => formatCurrency(c.balance),
-  },
-  {
-    key: 'actions',
-    label: 'Actions',
-    align: 'right',
-    render: (c) => (
-      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        <button onClick={() => onEdit?.(c, { view: true })} title="View">
-          <ChevronRight className="w-4 h-4" />
-        </button>
-
-        {canEdit && (
-          <button onClick={() => onEdit(c)} title="Edit">
-            <Edit className="w-4 h-4" />
-          </button>
-        )}
-
-        {canDelete && (
-          <button onClick={() => onDelete(c.id)} title="Delete">
-            <Trash className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-    ),
   },
 ];

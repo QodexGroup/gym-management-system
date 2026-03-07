@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { classScheduleSessionService } from '../services/classScheduleSessionService';
 import { Toast } from '../utils/alert';
 import { classSessionBookingKeys } from './useClassSessionBookings';
@@ -27,12 +29,19 @@ export const useClassScheduleSessions = (options = {}) => {
  */
 export const useUpdateClassScheduleSession = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async ({ id, data }) => {
-      return await classScheduleSessionService.update(id, data);
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await classScheduleSessionService.update(id, data, idempotencyKeyRef.current);
     },
     onSuccess: () => {
+      idempotencyKeyRef.current = null; // Reset after success
       // Invalidate class schedule sessions
       queryClient.invalidateQueries({ queryKey: classScheduleSessionKeys.all });
       // Invalidate booking sessions so they refetch with updated session data
@@ -42,6 +51,7 @@ export const useUpdateClassScheduleSession = () => {
       Toast.success('Session updated successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to update session');
     },
   });

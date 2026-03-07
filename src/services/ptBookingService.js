@@ -1,4 +1,4 @@
-import { authenticatedFetch } from './authService';
+import { authenticatedFetch, postWithIdempotency, putWithIdempotency } from './authService';
 import { normalizePaginatedResponse } from '../models/apiResponseModel';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -86,14 +86,13 @@ export const ptBookingService = {
   /**
    * Create a new PT booking
    * @param {Object} bookingData - Booking data in snake_case format
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async create(bookingData) {
+  async create(bookingData, idempotencyKey = null) {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/pt-bookings`, {
-        method: 'POST',
-        body: JSON.stringify(bookingData),
-      });
+      const options = idempotencyKey ? { idempotencyKey } : {};
+      const response = await postWithIdempotency(`${API_BASE_URL}/pt-bookings`, bookingData, options);
 
       if (!response.ok) {
         const error = await response.json();
@@ -111,14 +110,13 @@ export const ptBookingService = {
    * Update a PT booking
    * @param {number} id - Booking ID
    * @param {Object} bookingData - Booking data in snake_case format
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
-  async update(id, bookingData) {
+  async update(id, bookingData, idempotencyKey = null) {
     try {
-      const response = await authenticatedFetch(`${API_BASE_URL}/pt-bookings/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(bookingData),
-      });
+      const options = idempotencyKey ? { idempotencyKey } : {};
+      const response = await putWithIdempotency(`${API_BASE_URL}/pt-bookings/${id}`, bookingData, options);
 
       if (!response.ok) {
         const error = await response.json();

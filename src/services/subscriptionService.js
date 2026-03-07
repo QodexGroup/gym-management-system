@@ -10,8 +10,13 @@ export const subscriptionService = {
     return json.success ? json.data : [];
   },
 
-  async getSubscriptionRequests() {
-    const res = await authenticatedFetch(`${API_BASE_URL}/accounts/subscription-requests`);
+  async getSubscriptionRequests(filters = {}) {
+    const query = new URLSearchParams();
+    if (filters.startDate || filters.dateFrom) query.set('startDate', filters.startDate || filters.dateFrom);
+    if (filters.endDate || filters.dateTo) query.set('endDate', filters.endDate || filters.dateTo);
+    const queryString = query.toString();
+    const url = `${API_BASE_URL}/accounts/subscription-requests${queryString ? `?${queryString}` : ''}`;
+    const res = await authenticatedFetch(url);
     const json = await res.json();
     if (!res.ok) throw new Error(json.message || 'Failed to fetch requests');
     return json.success ? json.data : [];

@@ -1,4 +1,4 @@
-import { authenticatedFetch } from './authService';
+import { authenticatedFetch, postWithIdempotency } from './authService';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -13,13 +13,12 @@ export const customerMembershipService = {
    * @param {Object} membershipData - Membership data
    * @param {number} membershipData.membershipPlanId - Membership plan ID
    * @param {string} [membershipData.membershipStartDate] - Optional start date (YYYY-MM-DD)
+   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>} Response data
    */
-  async createOrUpdate(customerId, membershipData) {
-    const response = await authenticatedFetch(`${API_BASE_URL}/customers/${customerId}/membership`, {
-      method: 'POST',
-      body: JSON.stringify(membershipData),
-    });
+  async createOrUpdate(customerId, membershipData, idempotencyKey = null) {
+    const options = idempotencyKey ? { idempotencyKey } : {};
+    const response = await postWithIdempotency(`${API_BASE_URL}/customers/${customerId}/membership`, membershipData, options);
 
     if (!response.ok) {
       const error = await response.json();

@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { customerPaymentService } from '../services/customerPaymentService';
 import { Toast } from '../utils/alert';
 import { customerBillKeys } from './useCustomerBills';
@@ -14,13 +16,23 @@ export const useCustomerPaymentsByBill = (billId, options = {}) => {
     queryKey: ['customerPayments', 'bill', billId, options],
     queryFn: async () => {
       const result = await customerPaymentService.getByBillId(billId, options);
-      // If paginated, extract the data array; otherwise return as-is
+      // Handle paginated response: { data: [...], pagination: {...} }
       if (result && typeof result === 'object' && Array.isArray(result.data)) {
         return result.data;
       }
-      return Array.isArray(result) ? result : [];
+      // Handle direct array response
+      if (Array.isArray(result)) {
+        return result;
+      }
+      // Handle response with nested data structure
+      if (result && result.data && Array.isArray(result.data)) {
+        return result.data;
+      }
+      return [];
     },
     enabled: !!billId,
+    refetchOnMount: true, // Always refetch when component mounts (when modal opens)
+    staleTime: 0, // Consider data stale immediately to ensure fresh data
   });
 };
 
@@ -29,17 +41,31 @@ export const useCustomerPaymentsByBill = (billId, options = {}) => {
  */
 export const useCreateCustomerPayment = () => {
   const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
 
   return useMutation({
     mutationFn: async ({ billId, customerId, paymentData }) => {
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
       await customerPaymentService.create(billId, {
         ...paymentData,
         customerId,
-      });
-      return { customerId };
+      }, idempotencyKeyRef.current);
+      return { billId, customerId };
     },
     onSuccess: async (data) => {
+      idempotencyKeyRef.current = null; // Reset after success
       const customerId = data?.customerId;
+      const billId = data?.billId;
+
+      // Refresh payments list for this bill (used in BillsForm)
+      if (billId) {
+        queryClient.invalidateQueries({ queryKey: ['customerPayments', 'bill', billId] });
+      }
+
       if (customerId) {
         // Refresh bills for this customer
         queryClient.invalidateQueries({ queryKey: customerBillKeys.byCustomer(customerId) });
@@ -55,6 +81,7 @@ export const useCreateCustomerPayment = () => {
       Toast.success('Payment recorded successfully');
     },
     onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
       Toast.error(error.message || 'Failed to record payment');
     },
   });

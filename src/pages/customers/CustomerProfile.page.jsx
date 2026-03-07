@@ -22,7 +22,7 @@ import WalkinCustomerTab from './customer-tabs/WalkinCustomerTab.page';
 const customerTabs = [
   { key: 'progress', label: 'Progress Tracking', icon: Activity, component: ProgressTab },
   { key: 'scans', label: 'Scans', icon: FileText, component: ScansTab },
-  { key: 'bills', label: 'Plans, PT Packages s& Billing', icon: CreditCard, component: BillsTab },
+  { key: 'bills', label: 'Plans, PT Packages & Billing', icon: CreditCard, component: BillsTab },
   { key: 'pt-sessions', label: 'PT Sessions', icon: CalendarDays, component: PtSessionsTab },
   { key: 'class-attendance', label: 'Group Class Attendance', icon: UserCheck, component: ClassAttendanceTab },
   { key: 'walkins', label: 'Walkin History', icon: ClipboardClock, component: WalkinCustomerTab },
