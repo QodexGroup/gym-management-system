@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { initializeFirebaseServices } from '../services/firebaseService';
 import { useAuth } from '../context/AuthContext';
@@ -233,7 +233,7 @@ const Login = () => {
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-400">
-          <p>Don't have an account? Contact your administrator.</p>
+          <p>Don't have an account? <Link to="/sign-up" className="text-blue-400 hover:underline">Create one</Link></p>
         </div>
       </div>
     </div>
