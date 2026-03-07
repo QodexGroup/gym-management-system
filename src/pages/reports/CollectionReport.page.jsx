@@ -264,31 +264,12 @@ const CollectionReportPage = () => {
         generatedAt={generatedAt}
         summaryRows={summaryRows}
       >
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="bg-slate-100">
-              <th className="table-header text-left p-2 border border-slate-300">Date</th>
-              <th className="table-header text-left p-2 border border-slate-300">Member</th>
-              <th className="table-header text-left p-2 border border-slate-300">Type</th>
-              <th className="table-header text-left p-2 border border-slate-300">Amount</th>
-              <th className="table-header text-left p-2 border border-slate-300">Payment Method</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredTransactions.map((payment) => (
-              <tr key={payment.id}>
-                <td className="p-2 border border-slate-300">{formatDate(payment.paymentDate)}</td>
-                <td className="p-2 border border-slate-300">{payment.customerName || 'N/A'}</td>
-                <td className="p-2 border border-slate-300">{payment.billType || 'N/A'}</td>
-                <td className="p-2 border border-slate-300">{formatCurrency(payment.amount)}</td>
-                <td className="p-2 border border-slate-300">{payment.paymentMethod ? String(payment.paymentMethod) : 'N/A'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {filteredTransactions.length === 0 && (
-          <p className="text-center py-4 text-slate-500">No transactions in selected period</p>
-        )}
+        <DataTable
+          columns={collectionColumns}
+          data={filteredTransactions}
+          keyField="id"
+          emptyMessage="No transactions in selected period"
+        />
       </PrintArea>
 
       <DateRangeExportBar
