@@ -10,11 +10,14 @@ import {
   getSubscriptionInvoiceStatusBadgeClass,
   getSubscriptionInvoiceStatusLabel,
 } from '../../../constants/subscriptionConstants';
+import InvoicePaymentModal from '../forms/InvoicePaymentModal';
 
 const PAGE_SIZE = 20;
 
 const SubscriptionInvoicesTab = () => {
   const [invoicePage, setInvoicePage] = useState(1);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const openReceipt = async (receiptUrl) => {
     if (!receiptUrl) return;
@@ -26,11 +29,22 @@ const SubscriptionInvoicesTab = () => {
     }
   };
 
+  const handlePayInvoice = (invoice) => {
+    setSelectedInvoice(invoice);
+    setIsPaymentModalOpen(true);
+  };
+
+  const handleClosePaymentModal = () => {
+    setIsPaymentModalOpen(false);
+    setSelectedInvoice(null);
+  };
+
   const invoiceColumns = subscriptionInvoiceColumns({
     formatMoney: (value) => formatCurrency(value || 0),
     formatStatusLabel: getSubscriptionInvoiceStatusLabel,
     getStatusBadgeClass: getSubscriptionInvoiceStatusBadgeClass,
     onOpenReceipt: openReceipt,
+    onPayInvoice: handlePayInvoice,
   });
 
   const { data: requestData, isLoading } = useSubscriptionRequests({
@@ -67,6 +81,13 @@ const SubscriptionInvoicesTab = () => {
             />
           </div>
         )}
+
+      {/* Invoice Payment Modal */}
+      <InvoicePaymentModal
+        invoice={selectedInvoice}
+        isOpen={isPaymentModalOpen}
+        onClose={handleClosePaymentModal}
+      />
     </div>
   );
 };

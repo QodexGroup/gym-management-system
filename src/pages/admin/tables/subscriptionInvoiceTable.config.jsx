@@ -1,4 +1,6 @@
-export const subscriptionInvoiceColumns = ({ formatMoney, formatStatusLabel, getStatusBadgeClass, onOpenReceipt }) => [
+import { SUBSCRIPTION_INVOICE_STATUS } from '../../../constants/subscriptionConstants';
+
+export const subscriptionInvoiceColumns = ({ formatMoney, formatStatusLabel, getStatusBadgeClass, onOpenReceipt, onPayInvoice }) => [
   {
     key: 'invoice',
     label: 'Invoice',
@@ -38,6 +40,25 @@ export const subscriptionInvoiceColumns = ({ formatMoney, formatStatusLabel, get
       ) : (
         <span className="text-dark-400">-</span>
       ),
+  },
+  {
+    key: 'actions',
+    label: 'Actions',
+    render: (row) => {
+      // Only show Pay Invoice button for pending invoices
+      if (row.status === SUBSCRIPTION_INVOICE_STATUS.PENDING) {
+        return (
+          <button
+            type="button"
+            onClick={() => onPayInvoice?.(row)}
+            className="btn-primary btn-sm"
+          >
+            Pay Invoice
+          </button>
+        );
+      }
+      return <span className="text-dark-400">-</span>;
+    },
   },
 ];
 

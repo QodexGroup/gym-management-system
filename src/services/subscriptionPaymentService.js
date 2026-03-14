@@ -41,16 +41,36 @@ export const subscriptionPaymentService = {
   },
 
   /**
-   * Create a new subscription request for the current account.
+   * Create a subscription plan change request (takes effect on next billing cycle).
+   * This updates the plan selection without creating invoices or payment requests.
    */
   async createRequest(payload) {
+    if (!payload.subscriptionPlanId) {
+      throw new Error('subscriptionPlanId is required for plan changes');
+    }
+    
+    const res = await authenticatedFetch(`${API_BASE_URL}/accounts/subscription-request`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json.message || 'Failed to update subscription plan');
+    }
+    return json.success ? json.data : null;
+  },
+
+  /**
+   * Create a payment request for an invoice (requires invoiceId and receipt).
+   */
+  async createInvoicePaymentRequest(payload) {
     const res = await authenticatedFetch(`${API_BASE_URL}/accounts/payment-request`, {
       method: 'POST',
       body: JSON.stringify(payload),
     });
     const json = await res.json();
     if (!res.ok) {
-      throw new Error(json.message || 'Failed to submit subscription request');
+      throw new Error(json.message || 'Failed to submit payment request');
     }
     return json.success ? json.data : null;
   },
