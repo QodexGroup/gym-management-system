@@ -17,6 +17,8 @@ import {
   useActivateUser,
   useResetPassword,
 } from '../../hooks/useUsers';
+import { useAccountLimit } from '../../hooks/useAccountLimit';
+import { useAuth } from '../../context/AuthContext';
 import UserForm from './forms/UserForm';
 import ResetPasswordForm from './forms/ResetPasswordForm';
 import { USER_ROLES } from '../../constants/userRoles';
@@ -31,8 +33,9 @@ const UserManagement = () => {
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
-  // Hooks
+  const { fetchUserData } = useAuth();
   const { data: usersData = [], isLoading, error } = useUsers();
+  const { canCreate: canAddUser } = useAccountLimit('users');
   const deleteUserMutation = useDeleteUser();
   const deactivateUserMutation = useDeactivateUser();
   const activateUserMutation = useActivateUser();
@@ -110,9 +113,10 @@ const UserManagement = () => {
     setSelectedUser(null);
   };
 
-  const handleUserFormSuccess = () => {
+  const handleUserFormSuccess = async () => {
     setShowUserModal(false);
     setSelectedUser(null);
+    await fetchUserData(); // refresh usage so Subscription shows correct Users count (e.g. 2/2)
   };
 
   const handleUserFormClose = () => {
@@ -187,6 +191,7 @@ const UserManagement = () => {
             onAddClick={handleAddUser}
             addButtonLabel="Add User"
             addButtonIcon={Plus}
+            addButtonDisabled={!canAddUser}
           />
         </div>
 

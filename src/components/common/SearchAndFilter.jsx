@@ -17,6 +17,7 @@ const SearchAndFilter = ({
   onAddClick,
   addButtonLabel = 'Add',
   addButtonIcon: AddIcon = Plus,
+  addButtonDisabled = false,
   
   // Styling
   dark = true,
@@ -79,7 +80,8 @@ const SearchAndFilter = ({
       {onAddClick && (
         <button
           onClick={onAddClick}
-          className="btn-primary flex items-center gap-2"
+          disabled={addButtonDisabled}
+          className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <AddIcon className="w-4 h-4" />
           {addButtonLabel}

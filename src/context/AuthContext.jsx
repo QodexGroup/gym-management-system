@@ -5,6 +5,7 @@ import { authService, setLogoutFunction, setLoggingIn } from '../services/authSe
 import { Alert } from '../utils/alert';
 import { getPhilippinesTime } from '../utils/philippinesTime';
 import { USER_ROLES, isAdminRole, isStaffRole, isCoachRole } from '../constants/userRoles';
+import { SUBSCRIPTION_STATUS } from '../constants/subscriptionConstants';
 
 const AuthContext = createContext();
 
@@ -18,6 +19,8 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [account, setAccount] = useState(null);
+  const [usage, setUsage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem('firebase_token'));
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -52,6 +55,8 @@ export const AuthProvider = ({ children }) => {
   // Clear session data
   const clearSession = () => {
     setUser(null);
+    setAccount(null);
+    setUsage(null);
     setToken(null);
     localStorage.removeItem('firebase_token');
     localStorage.removeItem('firebase_uid');
@@ -93,9 +98,13 @@ export const AuthProvider = ({ children }) => {
         phone: data.phone,
         firebase_uid: data.firebase_uid,
         permissions: permissions,
+        isAccountOwner: !!data.isAccountOwner,
+        emailVerified: !!data.emailVerified,
         avatar: data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.firstname + ' ' + data.lastname)}&background=random`,
       };
       setUser(userData);
+      setAccount(data.account || null);
+      setUsage(data.usage || null);
       return userData;
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -529,19 +538,41 @@ export const AuthProvider = ({ children }) => {
   const isAdmin = isAdminRole(user?.role);
   const isTrainer = isCoachRole(user?.role);
   const isStaff = isStaffRole(user?.role);
+  const isAccountOwner = !!user?.isAccountOwner;
+
+  // Derived auth/account flags
   const isAuthenticated = !!user && !!token && !isTokenExpired() && !isSessionDurationExceeded();
 
+  const activePlan = account?.activeAccountSubscriptionPlan || null;
+  const trialEndsAt = activePlan?.trialEndsAt ? new Date(activePlan.trialEndsAt) : null;
+  const subscriptionStartsAt = activePlan?.subscriptionStartsAt ? new Date(activePlan.subscriptionStartsAt) : null;
+
+  const isTrialExpired =
+    !!trialEndsAt &&
+    trialEndsAt < new Date() &&
+    !subscriptionStartsAt;
+
+  const isLocked =
+    !!account?.isLocked ||
+    !!activePlan?.lockedAt ||
+    account?.subscriptionStatus === SUBSCRIPTION_STATUS.LOCKED;
+
   return (
-    <AuthContext.Provider value={{ 
-      user, 
+    <AuthContext.Provider value={{
+      user,
+      account,
+      usage,
       token,
       loading,
-      login, 
-      logout, 
-      isAdmin, 
+      login,
+      logout,
+      isAdmin,
       isTrainer,
       isStaff,
+      isAccountOwner,
       isAuthenticated,
+      isTrialExpired,
+      isLocked,
       fetchUserData,
     }}>
       {children}

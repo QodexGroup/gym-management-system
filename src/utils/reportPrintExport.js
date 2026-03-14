@@ -4,8 +4,9 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { APP_NAME } from '../constants/appConfig';
 
-const DEFAULT_BUSINESS_NAME = 'Kaizen Gym';
+const DEFAULT_BUSINESS_NAME = APP_NAME;
 
 /** Default PDF font (Helvetica) has no Peso sign (₱) and can render it as ±. Use "PHP " for PDF. */
 const pdfSafeCurrency = (str) => (typeof str === 'string' ? str.replace(/\u20B1/g, 'PHP ').replace(/\u00B1/g, '') : str);
@@ -47,7 +48,7 @@ export const exportToExcel = (sheetName, headers, rows, filename = 'report.xlsx'
  * Receipt-style report PDF: header (business, title, period, generated), summary block, detail table, footer
  * @param {Object} options
  * @param {string} options.title - Report title
- * @param {string} [options.businessName] - Business name (default: Kaizen Gym)
+ * @param {string} [options.businessName] - Business name (default: from env)
  * @param {string} [options.periodLabel] - e.g. "This Month (Jan 2025)" or "1 Jan 2025 – 31 Jan 2025"
  * @param {string} [options.generatedAt] - Generated date/time string
  * @param {Array<[string, string]>} [options.summaryRows] - e.g. [['Total Collected', '₱10,000.00'], ['Transactions', '25']]

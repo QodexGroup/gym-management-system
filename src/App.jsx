@@ -8,6 +8,7 @@ import { isKioskLocked } from './constants/kiosk';
 
 // Auth Pages
 import Login from './auth/Login';
+import SignUp from './auth/SignUp';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -32,12 +33,15 @@ import MyCollectionPage from './pages/reports/MyCollection.page';
 import MembershipPlans from './pages/admin/MembershipPlans.page';
 import UserManagement from './pages/admin/UserManagement.page';
 import Notifications from './pages/Notifications';
-import MyAccount from './pages/MyAccount';
+import MyAccount from './pages/MyAccount.page';
 import Settings from './pages/Settings';
+import Subscription from './pages/admin/subscription/Subscription.page';
+import ReactivationModal from './pages/admin/forms/ReactivationModal';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, isTrialExpired, isAccountOwner } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -49,6 +53,11 @@ const ProtectedRoute = ({ children }) => {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Only redirect account owners when trial expires
+  if (isTrialExpired && isAccountOwner && !location.pathname.startsWith('/my-account')) {
+    return <Navigate to="/my-account?tab=my-plan" replace />;
   }
 
   return children;
@@ -96,6 +105,24 @@ const KioskLockGuard = ({ children }) => {
   return children;
 };
 
+// Global guard for account-level subscription state (lock + trial)
+const AccountStateGuard = ({ children }) => {
+  const { isLocked, isTrialExpired, isAccountOwner } = useAuth();
+  const location = useLocation();
+
+  // Always force trial-expired owners to My Account plan tab
+  if (isTrialExpired && isAccountOwner && !location.pathname.startsWith('/my-account')) {
+    return <Navigate to="/my-account?tab=my-plan" replace />;
+  }
+
+  return (
+    <>
+      {children}
+      {isLocked && isAccountOwner && <ReactivationModal />}
+    </>
+  );
+};
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -103,9 +130,11 @@ function App() {
         <AlertProvider>
             <Router>
               <KioskLockGuard>
-                <Routes>
+                <AccountStateGuard>
+                  <Routes>
                   {/* Auth Routes */}
                   <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<SignUp />} />
 
                 {/* Protected Routes */}
                 <Route path="/" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
@@ -154,9 +183,10 @@ function App() {
                 {/* Settings */}
                 {/* <Route path="/settings" element={<Settings />} /> */}
 
-                {/* Catch all - redirect to dashboard or login */}
+                  {/* Catch all - redirect to dashboard or login */}
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                </Routes>
+                  </Routes>
+                </AccountStateGuard>
               </KioskLockGuard>
             </Router>
           </AlertProvider>

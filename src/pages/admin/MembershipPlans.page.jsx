@@ -8,6 +8,8 @@ import {
   useUpdateMembershipPlan,
   useDeleteMembershipPlan,
 } from '../../hooks/useMembershipPlans';
+import { useAccountLimit } from '../../hooks/useAccountLimit';
+import { useAuth } from '../../context/AuthContext';
 
 import { transformMembershipPlan } from '../../models/membershipPlanModel';
 import { Alert } from '../../utils/alert';
@@ -23,7 +25,9 @@ import { GridDesign, GridDesignOne } from '../../components/Grid';
    PAGE
 -------------------------------------------------- */
 const MembershipPlans = () => {
+  const { fetchUserData } = useAuth();
   const { data = [], isLoading } = useMembershipPlans();
+  const { canCreate: canAddPlan } = useAccountLimit('membership_plans');
   const createMutation = useCreateMembershipPlan();
   const updateMutation = useUpdateMembershipPlan();
   const deleteMutation = useDeleteMembershipPlan();
@@ -96,6 +100,7 @@ const MembershipPlans = () => {
     } else {
       await createMutation.mutateAsync(payload);
     }
+    await fetchUserData();
     setShowForm(false);
     setSelectedPlan(null);
   };
@@ -104,6 +109,7 @@ const MembershipPlans = () => {
     const result = await Alert.confirmDelete();
     if (!result.isConfirmed) return;
     await deleteMutation.mutateAsync(id);
+    await fetchUserData();
   };
 
   const handleViewDetails = (plan) => {
@@ -128,7 +134,8 @@ const MembershipPlans = () => {
       <div className="flex justify-end mb-6">
         <button
           onClick={() => { setSelectedPlan(null); setShowForm(true); }}
-          className="btn-primary flex items-center gap-2"
+          disabled={!canAddPlan}
+          className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="w-4 h-4" />
           Add New Plan
