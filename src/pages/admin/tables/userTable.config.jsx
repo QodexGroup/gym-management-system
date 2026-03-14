@@ -63,6 +63,11 @@ export const getUserActionMenuItems = ({
   onActivate,
   onDelete,
 }) => {
+  // Account owners cannot be edited, have password reset, deactivated, activated, or deleted by other admins
+  if (user.isAccountOwner) {
+    return [];
+  }
+
   const items = [
     {
       key: 'edit',

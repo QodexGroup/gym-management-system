@@ -54,5 +54,6 @@ export const mapUsersData = (usersData = []) => {
     role: user.role,
     status: user.status,
     permissions: user.permissions?.map((p) => p.permission) || [],
+    isAccountOwner: !!user.isAccountOwner,
   }));
 };
