@@ -37,6 +37,16 @@ async function generateConfig() {
         const projectId = getParamValue('PROJECT_ID');
         const storageBucket = getParamValue('STORAGE_BUCKET');
         
+        // Get APP_NAME from Remote Config (with fallback to env var or default)
+        let appName;
+        try {
+            appName = getParamValue('APP_NAME');
+        } catch (error) {
+            // If APP_NAME is not in Remote Config, use env var or default
+            appName = process.env.VITE_APP_NAME || 'GymHub';
+            console.log(`⚠️  APP_NAME not found in Remote Config, using: ${appName}`);
+        }
+        
         if (process.env.PREVIEW_API_KEY) {
             console.log('✅ Using preview API key for Firebase configuration');
         }
@@ -51,6 +61,10 @@ async function generateConfig() {
                 projectId: "${projectId}",
                 storageBucket: "${storageBucket}",
                 appId: "${appId}",
+            };
+            
+            export const appConfig = {
+                appName: "${appName}",
             };
         `;
         

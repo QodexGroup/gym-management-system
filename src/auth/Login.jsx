@@ -4,11 +4,14 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { initializeFirebaseServices } from '../services/firebaseService';
 import { useAuth } from '../context/AuthContext';
 import { Toast } from '../utils/alert';
+import { ACCOUNT_STATE } from '../constants/accountState';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [deactivatedMessage, setDeactivatedMessage] = useState('');
+  const [trialExpiredMessage, setTrialExpiredMessage] = useState('');
   const [firebaseAuth, setFirebaseAuth] = useState(null);
   const { login, isAuthenticated, user, token, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -83,6 +86,29 @@ const Login = () => {
       
       if (!userData) {
         throw new Error('Failed to fetch user data from server');
+      }
+
+      // Check if account is deactivated
+      if (userData.account?.status === ACCOUNT_STATE.DEACTIVATED) {
+        // Clear session data
+        localStorage.removeItem('firebase_token');
+        localStorage.removeItem('firebase_uid');
+        setDeactivatedMessage('Your account is deactivated. Please contact GymHub Tech Support to reactivate your account.');
+        return;
+      }
+
+      // Check if trial is expired and user is not account owner
+      const activePlan = userData.account?.activeAccountSubscriptionPlan;
+      const trialEndsAt = activePlan?.trialEndsAt ? new Date(activePlan.trialEndsAt) : null;
+      const subscriptionStartsAt = activePlan?.subscriptionStartsAt ? new Date(activePlan.subscriptionStartsAt) : null;
+      const isTrialExpired = trialEndsAt && trialEndsAt < new Date() && !subscriptionStartsAt;
+      
+      if (isTrialExpired && !userData.isAccountOwner) {
+        // Clear session data
+        localStorage.removeItem('firebase_token');
+        localStorage.removeItem('firebase_uid');
+        setTrialExpiredMessage('Your trial period has ended. Please contact the account owner to subscribe to a plan to continue using the app.');
+        return;
       }
 
       Toast.success('Login successful!');
@@ -180,6 +206,18 @@ const Login = () => {
           <p className="text-gray-300">Sign in to your account to continue</p>
         </div>
 
+        {deactivatedMessage && (
+          <div className="mb-4 rounded-lg bg-red-900/40 border border-red-600 text-red-100 px-4 py-3 text-sm text-left">
+            {deactivatedMessage}
+          </div>
+        )}
+
+        {trialExpiredMessage && (
+          <div className="mb-4 rounded-lg bg-yellow-900/40 border border-yellow-600 text-yellow-100 px-4 py-3 text-sm text-left">
+            {trialExpiredMessage}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-200 mb-2">
@@ -231,10 +269,6 @@ const Login = () => {
             )}
           </button>
         </form>
-
-        <div className="mt-6 text-center text-sm text-gray-400">
-          <p>Don't have an account? <Link to="/sign-up" className="text-blue-400 hover:underline">Create one</Link></p>
-        </div>
       </div>
     </div>
   );

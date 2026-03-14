@@ -31,6 +31,7 @@ import { useExpenses, useExpenseCategories } from '../../hooks/useExpenses';
 import { EXPENSE_STATUS, EXPENSE_STATUS_LABELS, EXPENSE_STATUS_VARIANTS } from '../../constants/expenseConstants';
 import { reportService } from '../../services/reportService';
 import { exportReportToPdf, exportReportToExcel } from '../../utils/reportPrintExport';
+import { APP_NAME } from '../../constants/appConfig';
 import { REPORT_DATE_RANGE_OPTIONS, getReportDateRange, MAX_REPORT_ROWS, CHART_TOOLTIP_STYLE, CHART_CURSOR, CHART_PIE_ACTIVE } from '../../constants/reportConstants';
 import { Alert, Toast } from '../../utils/alert';
 
@@ -320,7 +321,7 @@ const ExpenseReportPage = () => {
     <Layout title="Expense Report" subtitle="Track and manage gym expenses">
       <PrintArea
         ref={printRef}
-        businessName="Kaizen Gym"
+        businessName={APP_NAME}
         title="Expense Report"
         periodLabel={periodLabel}
         generatedAt={generatedAt}

@@ -64,7 +64,7 @@ const GridDesignOne = ({
       )}
 
       {/* Footer */}
-      {(footer.length > 0 || actions.onEdit || actions.onDelete) && (
+      {(footer.length > 0 || actions.onPrimary || actions.onEdit || actions.onDelete) && (
         <div className="pt-4 border-t border-dark-100 mt-auto">
           {footer.length > 0 && (
             <div className="flex items-center gap-4 mb-4 flex-wrap">
@@ -77,8 +77,16 @@ const GridDesignOne = ({
             </div>
           )}
 
-          {(actions.onEdit || actions.onDelete) && (
+          {(actions.onPrimary || actions.onEdit || actions.onDelete) && (
             <div className="flex gap-2">
+              {actions.onPrimary && (
+                <button
+                  onClick={actions.onPrimary}
+                  className="flex-1 btn-primary flex items-center justify-center gap-2"
+                >
+                  {actions.primaryLabel || 'Select'}
+                </button>
+              )}
               {actions.onEdit && (
                 <button
                   onClick={actions.onEdit}

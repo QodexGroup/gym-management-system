@@ -27,6 +27,7 @@ import {
 import { useReportCollection } from '../../hooks/useReportCollection';
 import { reportService } from '../../services/reportService';
 import { exportReportToPdf, exportReportToExcel } from '../../utils/reportPrintExport';
+import { APP_NAME } from '../../constants/appConfig';
 import { REPORT_DATE_RANGE_OPTIONS, getReportDateRange, MAX_REPORT_ROWS, CHART_TOOLTIP_STYLE, CHART_CURSOR, CHART_PIE_ACTIVE } from '../../constants/reportConstants';
 import { Alert, Toast } from '../../utils/alert';
 
@@ -258,7 +259,7 @@ const CollectionReportPage = () => {
     <Layout title="Collection Report" subtitle="Comprehensive revenue and payment analytics">
       <PrintArea
         ref={printRef}
-        businessName="Kaizen Gym"
+        businessName={APP_NAME}
         title="Collection Report"
         periodLabel={periodLabel}
         generatedAt={generatedAt}

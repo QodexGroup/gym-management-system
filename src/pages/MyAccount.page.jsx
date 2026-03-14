@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import Layout from '../components/layout/Layout';
 import { Avatar, Badge, Modal } from '../components/common';
-import SubscriptionContent from '../components/subscription/SubscriptionContent';
+import { SubscriptionSection } from './admin/subscription/Subscription.page';
 import { Mail, Phone, Edit, Key } from 'lucide-react';
+import MyAccountProfileForm from './common/forms/MyAccountProfileForm';
+import MyAccountChangePasswordForm from './common/forms/MyAccountChangePasswordForm';
 import { useAuth } from '../context/AuthContext';
 import { userService } from '../services/userService';
 import { Toast } from '../utils/alert';
@@ -10,7 +12,7 @@ import { initializeFirebaseServices } from '../services/firebaseService';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 
 const MyAccount = () => {
-  const { user, fetchUserData } = useAuth();
+  const { user, fetchUserData, isTrialExpired, isAccountOwner } = useAuth();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -180,6 +182,17 @@ const MyAccount = () => {
     }
   };
 
+  // If trial is expired and this is the account owner, force them into subscription section
+  if (isTrialExpired && isAccountOwner) {
+    return (
+      <Layout title="My Account" subtitle="Your trial has ended. Choose a plan to continue using the app.">
+        <div className="space-y-6">
+          <SubscriptionSection defaultTab="my-plan" />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout title="My Account" subtitle="Manage your account settings">
       <div className="space-y-6">
@@ -304,7 +317,7 @@ const MyAccount = () => {
             </div>
           </div> */}
 
-        <SubscriptionContent defaultTab="billing" />
+        {isAccountOwner && <SubscriptionSection defaultTab="billing" />}
       </div>
 
       {/* Edit Profile Modal */}
@@ -314,79 +327,14 @@ const MyAccount = () => {
         title="Edit Profile"
         size="md"
       >
-        <form onSubmit={handleUpdateProfile} className="space-y-4">
-          <div className="flex justify-center mb-4">
-            <div className="relative">
-              <Avatar src={user.avatar} name={user.fullname} size="xl" />
-              <button type="button" className="absolute bottom-0 right-0 p-2 bg-primary-500 text-white rounded-full hover:bg-primary-600 transition-colors">
-                <Edit className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="label">First Name *</label>
-              <input
-                type="text"
-                name="firstname"
-                className="input"
-                value={formData.firstname}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div>
-              <label className="label">Last Name *</label>
-              <input
-                type="text"
-                name="lastname"
-                className="input"
-                value={formData.lastname}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
-          <div>
-            <label className="label">Email *</label>
-            <input
-              type="email"
-              name="email"
-              className="input"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div>
-            <label className="label">Phone</label>
-            <input
-              type="tel"
-              name="phone"
-              className="input"
-              value={formData.phone}
-              onChange={handleInputChange}
-              placeholder="+1 234 567 8900"
-            />
-          </div>
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => setShowEditModal(false)}
-              className="flex-1 btn-secondary"
-              disabled={isUpdating}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 btn-primary"
-              disabled={isUpdating}
-            >
-              {isUpdating ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
-        </form>
+        <MyAccountProfileForm
+          user={user}
+          formData={formData}
+          onChange={handleInputChange}
+          onSubmit={handleUpdateProfile}
+          isSubmitting={isUpdating}
+          onCancel={() => setShowEditModal(false)}
+        />
       </Modal>
 
       {/* Change Password Modal */}
@@ -396,62 +344,13 @@ const MyAccount = () => {
         title="Change Password"
         size="md"
       >
-        <form onSubmit={handleChangePassword} className="space-y-4">
-          <div>
-            <label className="label">Current Password *</label>
-            <input
-              type="password"
-              name="currentPassword"
-              className="input"
-              placeholder="Enter current password"
-              value={passwordData.currentPassword}
-              onChange={handlePasswordInputChange}
-              required
-            />
-          </div>
-          <div>
-            <label className="label">New Password *</label>
-            <input
-              type="password"
-              name="newPassword"
-              className="input"
-              placeholder="Enter new password (min 6 characters)"
-              value={passwordData.newPassword}
-              onChange={handlePasswordInputChange}
-              required
-              minLength={6}
-            />
-          </div>
-          <div>
-            <label className="label">Confirm New Password *</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              className="input"
-              placeholder="Confirm new password"
-              value={passwordData.confirmPassword}
-              onChange={handlePasswordInputChange}
-              required
-            />
-          </div>
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => setShowPasswordModal(false)}
-              className="flex-1 btn-secondary"
-              disabled={isChangingPassword}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 btn-primary"
-              disabled={isChangingPassword}
-            >
-              {isChangingPassword ? 'Updating...' : 'Update Password'}
-            </button>
-          </div>
-        </form>
+        <MyAccountChangePasswordForm
+          passwordData={passwordData}
+          onChange={handlePasswordInputChange}
+          onSubmit={handleChangePassword}
+          isSubmitting={isChangingPassword}
+          onCancel={() => setShowPasswordModal(false)}
+        />
       </Modal>
     </Layout>
   );

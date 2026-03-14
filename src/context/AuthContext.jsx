@@ -5,6 +5,7 @@ import { authService, setLogoutFunction, setLoggingIn } from '../services/authSe
 import { Alert } from '../utils/alert';
 import { getPhilippinesTime } from '../utils/philippinesTime';
 import { USER_ROLES, isAdminRole, isStaffRole, isCoachRole } from '../constants/userRoles';
+import { SUBSCRIPTION_STATUS } from '../constants/subscriptionConstants';
 
 const AuthContext = createContext();
 
@@ -97,7 +98,7 @@ export const AuthProvider = ({ children }) => {
         phone: data.phone,
         firebase_uid: data.firebase_uid,
         permissions: permissions,
-        isPlatformAdmin: !!data.isPlatformAdmin,
+        isAccountOwner: !!data.isAccountOwner,
         emailVerified: !!data.emailVerified,
         avatar: data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.firstname + ' ' + data.lastname)}&background=random`,
       };
@@ -537,9 +538,24 @@ export const AuthProvider = ({ children }) => {
   const isAdmin = isAdminRole(user?.role);
   const isTrainer = isCoachRole(user?.role);
   const isStaff = isStaffRole(user?.role);
-  const isPlatformAdmin = !!user?.isPlatformAdmin;
+  const isAccountOwner = !!user?.isAccountOwner;
+
+  // Derived auth/account flags
   const isAuthenticated = !!user && !!token && !isTokenExpired() && !isSessionDurationExceeded();
-  const isTrialExpired = account?.subscriptionStatus === 'trial_expired';
+
+  const activePlan = account?.activeAccountSubscriptionPlan || null;
+  const trialEndsAt = activePlan?.trialEndsAt ? new Date(activePlan.trialEndsAt) : null;
+  const subscriptionStartsAt = activePlan?.subscriptionStartsAt ? new Date(activePlan.subscriptionStartsAt) : null;
+
+  const isTrialExpired =
+    !!trialEndsAt &&
+    trialEndsAt < new Date() &&
+    !subscriptionStartsAt;
+
+  const isLocked =
+    !!account?.isLocked ||
+    !!activePlan?.lockedAt ||
+    account?.subscriptionStatus === SUBSCRIPTION_STATUS.LOCKED;
 
   return (
     <AuthContext.Provider value={{
@@ -553,9 +569,10 @@ export const AuthProvider = ({ children }) => {
       isAdmin,
       isTrainer,
       isStaff,
-      isPlatformAdmin,
+      isAccountOwner,
       isAuthenticated,
       isTrialExpired,
+      isLocked,
       fetchUserData,
     }}>
       {children}

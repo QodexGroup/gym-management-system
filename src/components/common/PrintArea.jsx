@@ -1,4 +1,5 @@
 import { forwardRef } from 'react';
+import { APP_NAME } from '../../constants/appConfig';
 
 /**
  * Reusable print-only block. Use with useReactToPrint contentRef.
@@ -7,7 +8,7 @@ import { forwardRef } from 'react';
 const PrintArea = forwardRef(
   (
     {
-      businessName = 'Kaizen Gym',
+      businessName = APP_NAME,
       title,
       periodLabel,
       generatedAt,
