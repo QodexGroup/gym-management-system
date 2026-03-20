@@ -6,6 +6,7 @@ import { Alert } from '../utils/alert';
 import { getPhilippinesTime } from '../utils/philippinesTime';
 import { USER_ROLES, isAdminRole, isStaffRole, isCoachRole } from '../constants/userRoles';
 import { SUBSCRIPTION_STATUS } from '../constants/subscriptionConstants';
+import { ACCOUNT_STATE } from '../constants/accountState';
 
 const AuthContext = createContext();
 
@@ -555,7 +556,8 @@ export const AuthProvider = ({ children }) => {
   const isLocked =
     !!account?.isLocked ||
     !!activePlan?.lockedAt ||
-    account?.subscriptionStatus === SUBSCRIPTION_STATUS.LOCKED;
+    account?.subscriptionStatus === SUBSCRIPTION_STATUS.LOCKED ||
+    account?.status === ACCOUNT_STATE.DEACTIVATED;
 
   return (
     <AuthContext.Provider value={{

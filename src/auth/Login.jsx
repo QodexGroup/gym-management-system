@@ -89,8 +89,8 @@ const Login = () => {
       }
 
       // Check if account is deactivated
-      if (userData.account?.status === ACCOUNT_STATE.DEACTIVATED) {
-        // Clear session data
+      if (userData.account?.status === ACCOUNT_STATE.DEACTIVATED && !userData.isAccountOwner) {
+        // Non-owners are blocked when deactivated.
         localStorage.removeItem('firebase_token');
         localStorage.removeItem('firebase_uid');
         setDeactivatedMessage('Your account is deactivated. Please contact GymHub Tech Support to reactivate your account.');

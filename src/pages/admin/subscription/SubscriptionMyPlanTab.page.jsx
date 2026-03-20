@@ -7,12 +7,22 @@ import { formatCurrency } from '../../../utils/formatters';
 import { SUBSCRIPTION_STATUS } from '../../../constants/subscriptionConstants';
 import { useCreateSubscriptionRequest } from '../../../hooks/useSubscriptionRequests';
 import { Alert } from '../../../utils/alert';
+import { uploadReceipt } from '../../../services/fileUploadService';
+import TrialUpgradeModal from '../forms/TrialUpgradeModal';
 
 const SubscriptionMyPlanTab = () => {
   const { account } = useAuth();
 
   const { data: plansData = [], isLoading: plansLoading } = useSubscriptionPlans();
   const createRequest = useCreateSubscriptionRequest();
+
+  const activePlan = account?.activeAccountSubscriptionPlan || null;
+  const isInTrial = !!activePlan && !activePlan.subscriptionStartsAt;
+
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeReceiptFile, setUpgradeReceiptFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [pendingUpgradePlan, setPendingUpgradePlan] = useState(null);
 
   const isTrialExpired = account?.subscriptionStatus === SUBSCRIPTION_STATUS.TRIAL_EXPIRED;
   const isActive = account?.subscriptionStatus === SUBSCRIPTION_STATUS.ACTIVE;
@@ -53,9 +63,16 @@ const SubscriptionMyPlanTab = () => {
     if (!result.isConfirmed) return;
 
     try {
-      await createRequest.mutateAsync({
-        subscriptionPlanId: plan.id,
-      });
+      if (isInTrial) {
+        // During trial upgrade, we must upload a receipt for the standalone upgrade payment.
+        setPendingUpgradePlan(plan);
+        setUpgradeReceiptFile(null);
+        setUpgradeModalOpen(true);
+        return;
+      }
+
+      // Active subscription plan change: just update plan selection (next billing cycle).
+      await createRequest.mutateAsync({ subscriptionPlanId: plan.id });
     } catch (error) {
       // Error toast is already handled inside the mutation
       // Just log for debugging
@@ -63,8 +80,45 @@ const SubscriptionMyPlanTab = () => {
     }
   };
 
+  const handleUpgradeSubmit = async (e) => {
+    e.preventDefault();
+    if (!pendingUpgradePlan) return;
+    if (!upgradeReceiptFile) {
+      Alert.error('Please upload a payment receipt file.');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      const { receiptUrl, receiptFileName } = await uploadReceipt(upgradeReceiptFile, account.id);
+
+      await createRequest.mutateAsync({
+        subscriptionPlanId: pendingUpgradePlan.id,
+        receiptUrl,
+        receiptFileName,
+      });
+
+      setUpgradeModalOpen(false);
+      setPendingUpgradePlan(null);
+    } catch (err) {
+      // Error toast is already handled inside the mutation
+      console.error('Failed to submit trial upgrade request:', err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
   <div>
+      <TrialUpgradeModal
+        isOpen={upgradeModalOpen}
+        onSubmit={handleUpgradeSubmit}
+        onFileChange={(e) => setUpgradeReceiptFile(e.target.files?.[0] || null)}
+        receiptFile={upgradeReceiptFile}
+        uploading={uploading}
+        isSubmitting={createRequest.isPending}
+      />
+
     {/* Available Plans section */}
     <h3 className="text-lg font-semibold text-dark-50 mb-4">Available Plans</h3>
     <div className="mb-8">
