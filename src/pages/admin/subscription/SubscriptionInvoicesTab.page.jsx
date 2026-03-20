@@ -2,13 +2,13 @@ import { useState } from 'react';
 import DataTable from '../../../components/DataTable';
 import { Pagination } from '../../../components/common';
 import { useSubscriptionRequests } from '../../../hooks/useSubscriptionRequests';
-import { subscriptionInvoiceColumns } from '../tables/subscriptionInvoiceTable.config';
+import { subscriptionInvoiceColumns } from '../tables/subscriptionInvoiceTable.config.jsx';
 import { getFileUrl } from '../../../services/firebaseUrlService';
 import { Toast } from '../../../utils/alert';
-import { formatCurrency } from '../../../utils/formatters';
+import { formatCurrency, formatDate } from '../../../utils/formatters';
 import {
-  getSubscriptionInvoiceStatusBadgeClass,
-  getSubscriptionInvoiceStatusLabel,
+  getSubscriptionPaymentStatusBadgeClass,
+  getSubscriptionPaymentStatusLabel,
 } from '../../../constants/subscriptionConstants';
 import InvoicePaymentModal from '../forms/InvoicePaymentModal';
 
@@ -41,8 +41,9 @@ const SubscriptionInvoicesTab = () => {
 
   const invoiceColumns = subscriptionInvoiceColumns({
     formatMoney: (value) => formatCurrency(value || 0),
-    formatStatusLabel: getSubscriptionInvoiceStatusLabel,
-    getStatusBadgeClass: getSubscriptionInvoiceStatusBadgeClass,
+    formatDate: (value) => formatDate(value),
+    formatStatusLabel: getSubscriptionPaymentStatusLabel,
+    getStatusBadgeClass: getSubscriptionPaymentStatusBadgeClass,
     onOpenReceipt: openReceipt,
     onPayInvoice: handlePayInvoice,
   });
@@ -52,7 +53,10 @@ const SubscriptionInvoicesTab = () => {
     pagelimit: PAGE_SIZE,
   });
 
-  const invoiceRows = requestData?.data || [];
+  // Invoice tab should only show invoice-linked payment requests.
+  const invoiceRows = (requestData?.data || []).filter(
+    (row) => row.paymentTransaction?.includes('AccountInvoice')
+  );
   const pagination = requestData?.pagination;
 
   return (

@@ -43,7 +43,7 @@ async function generateConfig() {
             appName = getParamValue('APP_NAME');
         } catch (error) {
             // If APP_NAME is not in Remote Config, use env var or default
-            appName = process.env.VITE_APP_NAME || 'GymHub';
+            appName = process.env.VITE_APP_NAME || 'GymHubPH';
             console.log(`⚠️  APP_NAME not found in Remote Config, using: ${appName}`);
         }
         

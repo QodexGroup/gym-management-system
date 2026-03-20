@@ -185,7 +185,7 @@ const SignUp = () => {
     <div className="min-h-screen flex items-center justify-center bg-black px-4 py-8">
       <div className="max-w-md w-full bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 p-8">
         <div className="flex justify-center mb-6">
-          <img src="/img/kaizen-logo2.png" alt="Kaizen" className="w-40 h-20 object-contain" />
+          <img src="/img/gymhubph.png" alt="GymHubPH" className="w-40 h-20 object-cover" />
         </div>
         <h1 className="text-2xl font-bold text-white mb-2 text-center">Create Your Gym Account</h1>
         <p className="text-gray-300 text-sm mb-2 text-center">Start your 7-day free trial</p>

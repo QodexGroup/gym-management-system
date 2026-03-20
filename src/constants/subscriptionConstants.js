@@ -14,6 +14,20 @@ export const SUBSCRIPTION_PAYMENT_STATUS = {
   PENDING: 'pending',
 };
 
+export const SUBSCRIPTION_PAYMENT_TRANSACTION = {
+  REACTIVATION_FEE: 'Reactivation Fee',
+  ACCOUNT_INVOICE_CLASS_KEYWORD: 'AccountInvoice',
+};
+
+export const SUBSCRIPTION_PAYMENT_DETAIL_TYPE = {
+  UPGRADE_PLAN: 'subscription_upgrade',
+};
+
+export const SUBSCRIPTION_PAYMENT_TYPE = {
+  GCASH: 'GCASH',
+  MAYA: 'MAYA',
+};
+
 /**
  * Helpers for displaying subscription payment status
  */

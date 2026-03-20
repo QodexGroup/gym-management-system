@@ -2,11 +2,11 @@ import { useState } from 'react';
 import DataTable from '../../../components/DataTable';
 import { Pagination } from '../../../components/common';
 import { useAuth } from '../../../context/AuthContext';
-import { subscriptionPaymentColumns } from '../tables/subscriptionPaymentTable.config';
+import { subscriptionPaymentColumns } from '../tables/subscriptionPaymentTable.config.jsx';
 import { getFileUrl } from '../../../services/firebaseUrlService';
 import { Toast } from '../../../utils/alert';
 import { useSubscriptionRequests } from '../../../hooks/useSubscriptionRequests';
-import { formatCurrency } from '../../../utils/formatters';
+import { formatCurrency, formatDate } from '../../../utils/formatters';
 import {
   getSubscriptionPaymentStatusBadgeClass,
   getSubscriptionPaymentStatusLabel,
@@ -30,6 +30,7 @@ const SubscriptionPaymentsTab = () => {
 
   const paymentColumns = subscriptionPaymentColumns({
     formatMoney: (value) => formatCurrency(value || 0),
+    formatDate: (value) => formatDate(value),
     formatStatusLabel: getSubscriptionPaymentStatusLabel,
     getStatusBadgeClass: getSubscriptionPaymentStatusBadgeClass,
     onOpenReceipt: openReceipt,

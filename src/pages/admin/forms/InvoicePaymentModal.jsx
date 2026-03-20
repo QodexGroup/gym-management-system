@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Modal } from '../../../components/common';
+import PaymentTypeInfo from '../../../components/common/PaymentTypeInfo';
 import { useAuth } from '../../../context/AuthContext';
 import { uploadReceipt } from '../../../services/fileUploadService';
 import { useCreateInvoicePaymentRequest } from '../../../hooks/useInvoicePaymentRequest';
+import { SUBSCRIPTION_PAYMENT_TYPE } from '../../../constants/subscriptionConstants';
 import { Toast } from '../../../utils/alert';
 import { formatCurrency } from '../../../utils/formatters';
 
@@ -13,9 +15,17 @@ import { formatCurrency } from '../../../utils/formatters';
 const InvoicePaymentModal = ({ invoice, isOpen, onClose }) => {
   const { account } = useAuth();
   const [file, setFile] = useState(null);
+  const [paymentType, setPaymentType] = useState(SUBSCRIPTION_PAYMENT_TYPE.GCASH);
   const [uploading, setUploading] = useState(false);
 
   const createPaymentRequest = useCreateInvoicePaymentRequest();
+
+  const handleClose = () => {
+    if (uploading || createPaymentRequest.isPending) return;
+    setFile(null);
+    setPaymentType(SUBSCRIPTION_PAYMENT_TYPE.GCASH);
+    onClose();
+  };
 
   const handleFileChange = (e) => {
     const f = e.target.files?.[0] || null;
@@ -42,10 +52,12 @@ const InvoicePaymentModal = ({ invoice, isOpen, onClose }) => {
         invoiceId: invoiceId,
         receiptUrl: receiptUrl,
         receiptFileName: receiptFileName,
+        paymentType,
       });
 
       // Close modal and reset form on success
       setFile(null);
+      setPaymentType(SUBSCRIPTION_PAYMENT_TYPE.GCASH);
       onClose();
     } catch (err) {
       console.error('Failed to submit payment request:', err);
@@ -61,7 +73,7 @@ const InvoicePaymentModal = ({ invoice, isOpen, onClose }) => {
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title="Pay Invoice"
       size="md"
     >
@@ -87,6 +99,8 @@ const InvoicePaymentModal = ({ invoice, isOpen, onClose }) => {
           </div>
         </div>
 
+        <PaymentTypeInfo selectedType={paymentType} onChange={setPaymentType} />
+
         <div>
           <label className="block text-sm font-medium text-dark-200 mb-2">
             Upload payment receipt
@@ -103,7 +117,7 @@ const InvoicePaymentModal = ({ invoice, isOpen, onClose }) => {
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             disabled={uploading || createPaymentRequest.isPending}
             className="flex-1 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -119,7 +133,7 @@ const InvoicePaymentModal = ({ invoice, isOpen, onClose }) => {
         </div>
 
         <p className="text-xs text-dark-400">
-          If you need help, please contact GymHub Tech Support and include your gym name and invoice number.
+          If you need help, please contact GymHubPH Tech Support and include your gym name and invoice number.
         </p>
       </form>
     </Modal>

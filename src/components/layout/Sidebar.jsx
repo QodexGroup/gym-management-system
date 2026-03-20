@@ -168,9 +168,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             }`}
           >
             <img
-              src="/img/kaizen-logo2.png"
-              alt="Kaizen Gym Logo"
-              className="w-full h-full object-contain"
+              src="/img/gymhubph.png"
+              alt="GymHubPH Logo"
+              className="w-full h-full object-cover"
             />
           </div>
         </div>

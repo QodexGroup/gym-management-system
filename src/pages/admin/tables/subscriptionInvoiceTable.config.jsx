@@ -1,20 +1,33 @@
-import { SUBSCRIPTION_INVOICE_STATUS } from '../../../constants/subscriptionConstants';
+import { SUBSCRIPTION_PAYMENT_STATUS } from '../../../constants/subscriptionConstants';
 
-export const subscriptionInvoiceColumns = ({ formatMoney, formatStatusLabel, getStatusBadgeClass, onOpenReceipt, onPayInvoice }) => [
+export const subscriptionInvoiceColumns = ({ formatMoney, formatDate, formatStatusLabel, getStatusBadgeClass, onOpenReceipt, onPayInvoice }) => [
   {
-    key: 'invoice',
-    label: 'Invoice',
-    render: (row) => row.invoiceNumber || '-',
+    key: 'invoiceNo',
+    label: 'Invoice No',
+    render: (row) => row.paymentDetails?.invoice_number || '-',
   },
   {
     key: 'billingPeriod',
     label: 'Billing Period',
-    render: (row) => row.billingPeriod || '-',
+    render: (row) => row.paymentDetails?.billing_period || '-',
   },
   {
-    key: 'amount',
-    label: 'Amount',
-    render: (row) => `P${formatMoney(row.invoiceDetails?.amount)}`,
+    key: 'invoiceDate',
+    label: 'Invoice Date',
+    render: (row) => {
+      const date = row.paymentDetails?.invoice_date || row.createdAt;
+      return date ? formatDate(date) : '-';
+    },
+  },
+  {
+    key: 'invoiceDetails',
+    label: 'Invoice Details',
+    render: (row) => row.paymentDetails?.invoiceType || 'Subscription Invoice',
+  },
+  {
+    key: 'totalAmount',
+    label: 'Total Amount',
+    render: (row) => `${formatMoney(row.amount)}`,
   },
   {
     key: 'status',
@@ -45,8 +58,12 @@ export const subscriptionInvoiceColumns = ({ formatMoney, formatStatusLabel, get
     key: 'actions',
     label: 'Actions',
     render: (row) => {
-      // Only show Pay Invoice button for pending invoices
-      if (row.status === SUBSCRIPTION_INVOICE_STATUS.PENDING) {
+      // Allow payment on first-time pending and resubmission after rejection.
+      const canPay =
+        row.status === SUBSCRIPTION_PAYMENT_STATUS.PENDING ||
+        row.status === SUBSCRIPTION_PAYMENT_STATUS.REJECTED;
+
+      if (canPay) {
         return (
           <button
             type="button"

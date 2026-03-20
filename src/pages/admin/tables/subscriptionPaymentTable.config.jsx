@@ -1,26 +1,53 @@
-export const subscriptionPaymentColumns = ({ formatMoney, formatStatusLabel, getStatusBadgeClass, onOpenReceipt }) => [
+import {
+  SUBSCRIPTION_PAYMENT_DETAIL_TYPE,
+  SUBSCRIPTION_PAYMENT_STATUS,
+  SUBSCRIPTION_PAYMENT_TRANSACTION,
+  SUBSCRIPTION_PAYMENT_TYPE,
+} from '../../../constants/subscriptionConstants';
+
+export const subscriptionPaymentColumns = ({ formatMoney, formatDate, formatStatusLabel, getStatusBadgeClass, onOpenReceipt }) => [
   {
-    key: 'invoice',
-    label: 'Invoice',
-    render: (row) => row.invoiceNumber || '-',
+    key: 'paymentDate',
+    label: 'Payment Date',
+    render: (row) => {
+      const paymentDate = row.approvedAt || row.createdAt;
+      return paymentDate ? formatDate(paymentDate) : '-';
+    },
   },
   {
-    key: 'date',
-    label: 'Date',
-    render: (row) => (row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '-'),
+    key: 'paymentFor',
+    label: 'Payment For',
+    render: (row) => {
+      if (row.paymentTransaction === SUBSCRIPTION_PAYMENT_TRANSACTION.REACTIVATION_FEE) return 'Reactivation Fee';
+      if (row.paymentDetails?.type === SUBSCRIPTION_PAYMENT_DETAIL_TYPE.UPGRADE_PLAN) return 'Upgrade Plan';
+      if (row.paymentTransaction?.includes(SUBSCRIPTION_PAYMENT_TRANSACTION.ACCOUNT_INVOICE_CLASS_KEYWORD)) return 'Invoice';
+      return row.paymentDetails?.type || 'Payment';
+    },
+  },
+  {
+    key: 'paymentType',
+    label: 'Payment Type',
+    render: (row) => {
+      if (row.paymentType === SUBSCRIPTION_PAYMENT_TYPE.GCASH) return 'GCash';
+      if (row.paymentType === SUBSCRIPTION_PAYMENT_TYPE.MAYA) return 'Maya';
+      return '-';
+    },
   },
   {
     key: 'amount',
     label: 'Amount',
-    render: (row) => `P${formatMoney(row.invoiceDetails?.amount)}`,
+    render: (row) => `${formatMoney(row.amount)}`,
   },
   {
     key: 'status',
     label: 'Status',
     render: (row) => (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(row.status)}`}>
-        {formatStatusLabel(row.status)}
-      </span>
+      <div className="space-y-1">
+        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(row.status)}`}>
+          {formatStatusLabel(row.status)}
+          {row.status === SUBSCRIPTION_PAYMENT_STATUS.REJECTED && row.rejectionReason ? ` (${row.rejectionReason})` : ''}
+        </span>
+      </div>
     ),
   },
   {

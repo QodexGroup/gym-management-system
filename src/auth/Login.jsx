@@ -93,7 +93,7 @@ const Login = () => {
         // Non-owners are blocked when deactivated.
         localStorage.removeItem('firebase_token');
         localStorage.removeItem('firebase_uid');
-        setDeactivatedMessage('Your account is deactivated. Please contact GymHub Tech Support to reactivate your account.');
+        setDeactivatedMessage('Your account is deactivated. Please contact GymHubPH Tech Support to reactivate your account.');
         return;
       }
 
@@ -194,9 +194,9 @@ const Login = () => {
         <div className="flex justify-center mb-8">
           <div className="w-48 h-24 flex items-center justify-center">
             <img
-              src="/img/kaizen-logo2.png"
-              alt="Kaizen Gym Logo"
-              className="w-full h-full object-contain"
+              src="/img/gymhubph.png"
+              alt="GymHubPH Logo"
+              className="w-full h-full object-cover"
             />
           </div>
         </div>

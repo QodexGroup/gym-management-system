@@ -363,7 +363,7 @@ const Settings = () => {
           {/* App Info */}
           <div className="card bg-dark-50">
             <p className="text-sm text-dark-500 text-center">
-              FitPro Gym Management
+              GymHubPH
               <br />
               Version 1.0.0
               <br />

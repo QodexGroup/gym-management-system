@@ -14,7 +14,7 @@ try {
 
 // Determine APP_NAME based on environment
 const APP_NAME = import.meta.env.DEV
-    ? (import.meta.env.VITE_APP_NAME || 'GymHub') // Development: Use VITE env var
-    : (appConfigModule?.appConfig?.appName || 'GymHub'); // Production: Use injected config or default
+    ? (import.meta.env.VITE_APP_NAME || 'GymHubPH') // Development: Use VITE env var
+    : (appConfigModule?.appConfig?.appName || 'GymHubPH'); // Production: Use injected config or default
 
 export { APP_NAME };
