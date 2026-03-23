@@ -1,8 +1,34 @@
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { initializeFirebaseServices } from './firebaseService';
 
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
-const RECEIPT_MAX_SIZE = 5 * 1024 * 1024; // 5MB for receipts
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+
+function extensionFromMimeType(mimeType) {
+  const map = {
+    'image/jpeg': 'jpg',
+    'image/jpg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'application/pdf': 'pdf',
+  };
+
+  return map[mimeType] || null;
+}
+
+function normalizeUploadedFileName(originalName, mimeType) {
+  const trimmed = String(originalName || '').trim();
+  if (!trimmed) return 'file';
+
+  const extFromMime = extensionFromMimeType(mimeType);
+  const extFromName = trimmed.includes('.') ? trimmed.split('.').pop()?.toLowerCase() : null;
+  const finalExt = extFromMime || extFromName;
+
+  // Remove one or more trailing extensions (e.g. ".PNG.jpg"), then sanitize.
+  const baseWithoutExt = trimmed.replace(/(\.[A-Za-z0-9]+)+$/, '');
+  const safeBase = (baseWithoutExt || 'file').replace(/[^a-zA-Z0-9.-]/g, '_');
+
+  return finalExt ? `${safeBase}.${finalExt}` : safeBase;
+}
 
 /**
  * Upload a file to Firebase Storage
@@ -15,7 +41,7 @@ const RECEIPT_MAX_SIZE = 5 * 1024 * 1024; // 5MB for receipts
 export async function uploadFile(file, accountId, customerId, onProgress = null) {
   // Validate file size
   if (file.size > MAX_FILE_SIZE) {
-    throw new Error(`File size exceeds 2MB limit. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+    throw new Error(`File size exceeds 5MB limit. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
   }
 
   // Validate file type (images and PDFs)
@@ -33,8 +59,7 @@ export async function uploadFile(file, accountId, customerId, onProgress = null)
 
     // Generate unique filename with timestamp
     const timestamp = Date.now();
-    const fileExtension = file.name.split('.').pop();
-    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const sanitizedFileName = normalizeUploadedFileName(file.name, file.type);
     const fileName = `${timestamp}_${sanitizedFileName}`;
     
     // Create storage path: {accountId}/{customerId}/filename
@@ -89,7 +114,7 @@ export async function uploadFile(file, accountId, customerId, onProgress = null)
  * @returns {Promise<{receiptUrl: string, receiptFileName: string}>}
  */
 export async function uploadReceipt(file, accountId) {
-  if (file.size > RECEIPT_MAX_SIZE) {
+  if (file.size > MAX_FILE_SIZE) {
     throw new Error(`Receipt must be under 5MB. Current: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
   }
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
@@ -101,8 +126,7 @@ export async function uploadReceipt(file, accountId) {
   if (!storage) throw new Error('Firebase Storage not initialized');
 
   const timestamp = Date.now();
-  const ext = file.name.split('.').pop();
-  const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+  const safeName = normalizeUploadedFileName(file.name, file.type);
   const fileName = `receipt_${timestamp}_${safeName}`;
   const storagePath = `${accountId}/subscription-receipts/${fileName}`;
   const storageRef = ref(storage, storagePath);
@@ -113,7 +137,7 @@ export async function uploadReceipt(file, accountId) {
   });
 
   const receiptUrl = await getDownloadURL(storageRef);
-  return { receiptUrl, receiptFileName: file.name };
+  return { receiptUrl, receiptFileName: safeName };
 }
 
 /**
