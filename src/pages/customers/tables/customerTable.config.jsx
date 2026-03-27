@@ -2,14 +2,14 @@ import { Avatar, Badge } from '../../../components/common';
 import { Phone, Mail, Calendar, Edit, Trash, ChevronRight } from 'lucide-react';
 import { formatDate, formatCurrency } from '../../../utils/formatters';
 
-export const customerTableColumns = ({ canEdit, canDelete, onEdit, onDelete }) => [
+export const customerTableColumns = ({ canEdit, canDelete, onEdit, onDelete, onView }) => [
   {
     key: 'actions',
     label: 'Actions',
     align: 'right',
     render: (c) => (
       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        <button onClick={() => onEdit?.(c, { view: true })} title="View">
+        <button onClick={() => onView(c.id)} title="View">
           <ChevronRight className="w-4 h-4" />
         </button>
 

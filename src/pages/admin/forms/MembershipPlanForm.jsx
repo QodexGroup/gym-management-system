@@ -17,6 +17,15 @@ const MembershipPlanForm = ({
   isSubmitting,
 }) => {
   const [formData, setFormData] = useState(emptyForm);
+  const [isLocked, setIsLocked] = useState(false);
+
+  const submitting = isSubmitting || isLocked;
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsLocked(false);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (!selectedPlan) {
@@ -33,27 +42,34 @@ const MembershipPlanForm = ({
     });
   }, [selectedPlan]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const payload = {
-      planName: formData.planName,
-      price: Number(formData.price),
-      planPeriod: Number(formData.planPeriod),
-      planInterval: formData.planInterval,
-      features: formData.features
-        .split('\n')
-        .map(f => f.trim())
-        .filter(Boolean),
-    };
+    if (isLocked) return; // 🚫 prevent double submit instantly
+    setIsLocked(true);
 
-    onSubmit(payload);
+    try {
+      const payload = {
+        planName: formData.planName,
+        price: Number(formData.price),
+        planPeriod: Number(formData.planPeriod),
+        planInterval: formData.planInterval,
+        features: formData.features
+          .split('\n')
+          .map(f => f.trim())
+          .filter(Boolean),
+      };
+  
+      await onSubmit(payload);
+    } catch (err) {
+      setIsLocked(false); // unlock on error
+    }
   };
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={submitting ? null : onClose}
       title={selectedPlan ? 'Edit Membership Plan' : 'Add Membership Plan'}
       size="lg"
     >
@@ -121,13 +137,13 @@ const MembershipPlanForm = ({
         </div>
 
         <div className="flex gap-3 pt-4">
-          <button type="button" onClick={onClose} className="btn-secondary flex-1">
+          <button type="button" onClick={onClose} disabled={isSubmitting} className="btn-secondary flex-1">
             Cancel
           </button>
           <button
             type="submit"
-            disabled={isSubmitting}
             className="btn-primary flex-1"
+            disabled={isSubmitting}
           >
             {isSubmitting ? 'Saving...' : 'Save'}
           </button>

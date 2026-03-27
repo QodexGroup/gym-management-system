@@ -100,9 +100,9 @@ const MembershipPlans = () => {
     } else {
       await createMutation.mutateAsync(payload);
     }
-    await fetchUserData();
     setShowForm(false);
     setSelectedPlan(null);
+    await fetchUserData();
   };
 
   const handleDelete = async (id) => {
@@ -168,7 +168,7 @@ const MembershipPlans = () => {
         selectedPlan={selectedPlan}
         onClose={() => setShowForm(false)}
         onSubmit={handleSave}
-        isSubmitting={createMutation.isLoading || updateMutation.isLoading}
+        isSubmitting={createMutation.isPending  || updateMutation.isPending}
       />
 
       {/* Membership Plan Details Modal */}

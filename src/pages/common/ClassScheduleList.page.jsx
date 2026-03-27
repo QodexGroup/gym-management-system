@@ -86,8 +86,8 @@ const ClassScheduleList = () => {
   };
 
   const handleFormSubmit = async () => {
-    await fetchUserData();
     handleCloseModal();
+    await fetchUserData();
   };
 
   const handleDeleteSchedule = async (scheduleId) => {

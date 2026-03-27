@@ -22,10 +22,15 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
   const createMutation = useCreateCustomerScan();
   const updateMutation = useUpdateCustomerScan();
 
+  
+  const [isLocked, setIsLocked] = useState(false);
+  const isSubmitting = isLocked || createMutation.isPending || updateMutation.isPending;
+
   /* ---------------- Load Scan Data ---------------- */
   useEffect(() => {
     if (!isOpen) return;
-
+      setIsLocked(false);
+    
     if (selectedScan) {
       setFormData(mapScanToFormData(selectedScan));
 
@@ -121,6 +126,10 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
   /* ---------------- Submit Form ---------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (isLocked) return; // 🚫 prevent double click
+    setIsLocked(true);
+
     if (!member?.id) return;
 
     if (!formData.scanType) return Alert.error('Validation Error', 'Please select a scan type');
@@ -156,10 +165,13 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
       onSuccess: async (data) => {
         try { await saveFiles(data.id); } catch (err) { console.error(err); }
         queryClient.invalidateQueries({ queryKey: customerScanKeys.lists() });
-        onSuccess?.();
         onClose();
+        onSuccess?.();
       },
-      onError: (err) => Toast.error(err.message || 'Failed to save scan'),
+      onError: (err) => {
+        setIsLocked(false); 
+        Toast.error(err.message || 'Failed to save scan');
+      },
     });
   };
 
@@ -167,7 +179,7 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={isSubmitting ? null : onClose}
       title={selectedScan ? 'Edit Body Composition Scan' : 'Upload Body Composition Scan'}
       size="md"
     >
@@ -283,16 +295,16 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
             type="button"
             className="flex-1 btn-secondary"
             onClick={onClose}
-            disabled={createMutation.isPending || updateMutation.isPending}
+            disabled={isSubmitting}
           >
             Cancel
           </button>
           <button
             type="submit"
             className="flex-1 btn-primary"
-            disabled={createMutation.isPending || updateMutation.isPending}
+            disabled={isSubmitting}
           >
-            {createMutation.isPending || updateMutation.isPending
+            {isSubmitting
               ? selectedScan ? 'Updating...' : 'Uploading...'
               : selectedScan ? 'Update Scan' : 'Upload Scan'}
           </button>

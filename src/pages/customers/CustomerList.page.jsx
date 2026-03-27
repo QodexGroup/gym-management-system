@@ -100,6 +100,7 @@ const CustomerList = () => {
       canDelete: hasPermission('members_list_delete'),
       onEdit: handleOpenModal,
       onDelete: handleDeleteCustomer,
+      onView: handleViewCustomer,
     }),
     [hasPermission]
   );

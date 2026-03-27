@@ -84,8 +84,8 @@ const PtPackageList = () => {
   };
 
   const handleFormSubmit = async () => {
-    await fetchUserData();
     handleCloseModal();
+    await fetchUserData();
   };
 
   const handleDeletePackage = async (packageId) => {
