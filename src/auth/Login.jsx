@@ -160,10 +160,9 @@ const Login = () => {
       
       switch (error.code) {
         case 'auth/user-not-found':
-          errorMessage = 'No account found with this email address.';
-          break;
         case 'auth/wrong-password':
-          errorMessage = 'Incorrect password. Please try again.';
+        case 'auth/invalid-credential':
+          errorMessage = 'Invalid email or password. Please try again.';
           break;
         case 'auth/invalid-email':
           errorMessage = 'Invalid email address.';
@@ -178,7 +177,7 @@ const Login = () => {
           errorMessage = 'Network error. Please check your connection.';
           break;
         default:
-          errorMessage = error.message || 'Login failed. Please try again.';
+          errorMessage = 'Login failed. Please try again.';
       }
       
       Toast.error(errorMessage);
