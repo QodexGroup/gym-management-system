@@ -209,7 +209,7 @@ const PtSessionsTab = ({ member }) => {
                 label: '',
                 getValue: (session) => {
                   const ptPackage = session.ptPackage || {};
-                  return ptPackage.packageName || 'N/A';
+                  return session.packageName || ptPackage.packageName || 'N/A';
                 },
                 variant: 'default',
               },
@@ -256,7 +256,7 @@ const PtSessionsTab = ({ member }) => {
                   )}
                   <div className="flex items-center gap-1">
                     <CheckCircle className="w-4 h-4" />
-                    {ptPackage.packageName || 'N/A'}
+                    {session.packageName || ptPackage.packageName || 'N/A'}
                   </div>
                 </div>
               );

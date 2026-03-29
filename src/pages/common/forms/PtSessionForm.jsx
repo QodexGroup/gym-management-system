@@ -4,7 +4,11 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { Loader2 } from 'lucide-react';
 import SearchableClientInput from '../../../components/common/SearchableClientInput';
 import { CLASS_DURATION_OPTIONS } from '../../../constants/classScheduleConstants';
-import { getInitialPtBookingFormData, mapPtBookingToFormData } from '../../../models/ptBookingModel';
+import {
+  getInitialPtBookingFormData,
+  mapPtBookingToFormData,
+  resolveCustomerPtPackageRowId,
+} from '../../../models/ptBookingModel';
 import { useCustomerPtPackages } from '../../../hooks/useCustomerPtPackages';
 
 const PtSessionForm = ({
@@ -27,6 +31,11 @@ const PtSessionForm = ({
   );
 
   // Get selected package and its coach
+  const packageRowKey = useMemo(
+    () => customerPtPackages.map((p) => `${p.id}:${p.ptPackageId}`).join('|'),
+    [customerPtPackages]
+  );
+
   const selectedPackage = useMemo(() => {
     if (!formData.customerPtPackageId || !customerPtPackages.length) return null;
     return customerPtPackages.find(
@@ -44,7 +53,6 @@ const PtSessionForm = ({
       setFormData(mapPtBookingToFormData(session));
     } else {
       const initialData = getInitialPtBookingFormData();
-      // Pre-fill customerId if provided and member search is disabled
       if (!showMemberSearch && customerId) {
         initialData.customerId = customerId.toString();
       }
@@ -52,27 +60,55 @@ const PtSessionForm = ({
     }
   }, [session, showMemberSearch, customerId]);
 
-  // Auto-select coach when package is selected
   useEffect(() => {
-    if (selectedPackage?.coach) {
-      setFormData((prev) => ({
+    if (!session || isLoadingPackages) return;
+    const rowId = resolveCustomerPtPackageRowId(session, customerPtPackages);
+    if (!rowId) return;
+    setFormData((prev) => ({
+      ...prev,
+      customerPtPackageId: rowId,
+    }));
+  }, [session, isLoadingPackages, packageRowKey]);
+
+  useEffect(() => {
+    setFormData((prev) => {
+      if (!selectedPackage) {
+        if (prev.customerPtPackageId) return prev;
+        if (session) return prev;
+        return {
+          ...prev,
+          coachId: '',
+          packageName: '',
+        };
+      }
+      return {
         ...prev,
-        coachId: selectedPackage.coach.id.toString(),
-      }));
-    }
-  }, [selectedPackage]);
+        coachId: selectedPackage.coach?.id?.toString() || '',
+        packageName: selectedPackage.packageName || '',
+      };
+    });
+  }, [selectedPackage, session]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(formData);
   };
 
+  const handleBookingDateChange = (date) => {
+    const dateString = date ? date.toISOString().split('T')[0] : '';
+    setFormData((prev) => ({
+      ...prev,
+      bookingDate: dateString,
+    }));
+  };
+
   const handleCustomerChange = (customerId) => {
     setFormData({
       ...formData,
       customerId,
-      customerPtPackageId: '', // Reset package when customer changes
-      coachId: '', // Reset coach when customer changes
+      customerPtPackageId: '',
+      coachId: '',
+      packageName: '',
     });
   };
 
@@ -115,7 +151,7 @@ const PtSessionForm = ({
             {formData.customerId && !isLoadingPackages &&
               customerPtPackages.map((pkg) => {
                 const sessionsRemaining = pkg.numberOfSessionsRemaining || 0;
-                const packageName = pkg.ptPackage?.packageName || 'Unknown Package';
+                const packageName = pkg.packageName || 'Unknown Package';
                 return (
                   <option key={pkg.id} value={pkg.id}>
                     {packageName} ({sessionsRemaining} sessions remaining)
@@ -156,13 +192,8 @@ const PtSessionForm = ({
         <div>
           <label className="label">Date *</label>
           <DatePicker
-            selected={
-              formData.bookingDate ? new Date(formData.bookingDate + 'T00:00:00') : null
-            }
-            onChange={(date) => {
-              const dateString = date ? date.toISOString().split('T')[0] : '';
-              setFormData({ ...formData, bookingDate: dateString });
-            }}
+            selected={formData.bookingDate ? new Date(formData.bookingDate) : null}
+            onChange={handleBookingDateChange}
             dateFormat="yyyy-MM-dd"
             placeholderText="Select date"
             className="input w-full"

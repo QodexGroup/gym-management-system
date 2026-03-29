@@ -22,11 +22,44 @@ export const getInitialPtBookingFormData = () => {
     customerId: '',
     customerPtPackageId: '',
     coachId: '',
+    packageName: '',
     bookingDate: today,
     bookingTime: currentTime,
     duration: 60, // Default 1 hour
     bookingNotes: '',
   };
+};
+
+/**
+ * PT booking rows use catalog `ptPackageId`; the session form `<select>` uses customer assignment row `id`.
+ * Resolve the assignment id once `customerPtPackages` is loaded.
+ *
+ * @param {Object} booking
+ * @param {Array} packages - customer PT package assignments (`useCustomerPtPackages` result)
+ * @returns {string}
+ */
+export const resolveCustomerPtPackageRowId = (booking, packages = []) => {
+  if (!booking || !Array.isArray(packages) || packages.length === 0) return '';
+
+  if (booking.customerPtPackageId != null && booking.customerPtPackageId !== '') {
+    const id = String(booking.customerPtPackageId);
+    if (packages.some((p) => String(p.id) === id)) return id;
+  }
+
+  const masterId = booking.ptPackageId;
+  if (masterId == null || masterId === '') return '';
+
+  const sameMaster = packages.filter((p) => String(p.ptPackageId) === String(masterId));
+  if (sameMaster.length === 0) return '';
+
+  if (booking.coachId != null && sameMaster.length > 1) {
+    const byCoach = sameMaster.find(
+      (p) => String(p.coach?.id ?? '') === String(booking.coachId)
+    );
+    if (byCoach) return String(byCoach.id);
+  }
+
+  return String(sameMaster[0].id);
 };
 
 /**
@@ -39,8 +72,9 @@ export const mapPtBookingToFormData = (booking) => {
 
   return {
     customerId: booking.customerId?.toString() || '',
-    customerPtPackageId: booking.customerPtPackageId?.toString() || booking.ptPackageId?.toString() || '',
+    customerPtPackageId: booking.customerPtPackageId?.toString() || '',
     coachId: booking.coachId?.toString() || '',
+    packageName: booking.packageName || '',
     bookingDate: booking.bookingDate || '',
     bookingTime: booking.bookingTime || '',
     duration: booking.duration || 60,
@@ -58,6 +92,7 @@ export const transformPtBookingToApiFormat = (formData) => {
     customerId: parseInt(formData.customerId),
     customerPtPackageId: parseInt(formData.customerPtPackageId),
     coachId: parseInt(formData.coachId),
+    packageName: formData.packageName?.trim() || '',
     bookingDate: formData.bookingDate,
     bookingTime: formData.bookingTime,
     duration: parseInt(formData.duration),
@@ -77,6 +112,7 @@ export const mapPtBookingsToSessions = (ptBookingsData = []) => {
       const customer = booking.customer || {};
       const coach = booking.coach || {};
       const ptPackage = booking.ptPackage || {};
+      const packageLabel = booking.packageName || ptPackage.packageName;
 
       // Combine booking date and time
       const bookingDateTime = booking.bookingDate && booking.bookingTime
@@ -94,18 +130,19 @@ export const mapPtBookingsToSessions = (ptBookingsData = []) => {
         startTime: bookingDateTime.toISOString(),
         endTime: endTime.toISOString(),
         sessionDate: bookingDateTime.toISOString(),
-        className: ptPackage.packageName || 'PT Session',
+        className: packageLabel || 'PT Session',
         coach,
         coachId: booking.coachId,
         customer,
         customerId: booking.customerId,
+        packageName: packageLabel || null,
         bookingStatus: booking.status,
         status: booking.status, // Also include as status for consistency
         duration: booking.duration || 60,
         notes: booking.bookingNotes || '',
         bookingNotes: booking.bookingNotes || '', // Also include as bookingNotes for form mapping
         ptPackageId: booking.ptPackageId,
-        customerPtPackageId: booking.customerPtPackageId || booking.ptPackageId, // For form mapping
+        customerPtPackageId: booking.customerPtPackageId,
         bookingDate: booking.bookingDate, // For form mapping
         bookingTime: booking.bookingTime, // For form mapping
       };

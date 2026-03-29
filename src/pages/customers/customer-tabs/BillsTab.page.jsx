@@ -324,7 +324,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
                     <div key={customerPackage.id} className="border-b border-dark-600 pb-2 last:border-0 last:pb-0">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-medium text-dark-50 truncate flex-1">
-                          {ptPackage?.packageName || 'Unknown'}
+                          {customerPackage.packageName || 'Unknown'}
                         </span>
                         <button
                           onClick={() => handleCancelPtPackage(customerPackage.id)}

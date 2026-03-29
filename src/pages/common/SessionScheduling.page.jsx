@@ -375,14 +375,20 @@ const SessionScheduling = () => {
       key: 'book-group-class',
       label: 'Book Group Class',
       icon: Plus,
-      onClick: () => setShowGroupClassModal(true),
+      onClick: () => {
+        setSelectedBooking(null);
+        setShowGroupClassModal(true);
+      },
       variant: 'secondary',
     },
     {
       key: 'book-pt-session',
       label: 'Book PT Session',
       icon: Plus,
-      onClick: () => setShowModal(true),
+      onClick: () => {
+        setSelectedSession(null);
+        setShowModal(true);
+      },
       variant: 'primary',
     },
   ], []);
@@ -472,13 +478,27 @@ const SessionScheduling = () => {
         />
       </Modal>
 
-      <Modal isOpen={showGroupClassModal} onClose={() => setShowGroupClassModal(false)} title={selectedBooking ? 'Edit Group Class Booking' : 'Book Group Class Session'} size="lg">
+      <Modal
+        isOpen={showGroupClassModal}
+        onClose={() => {
+          setShowGroupClassModal(false);
+          setSelectedBooking(null);
+        }}
+        title={selectedBooking ? 'Edit Group Class Booking' : 'Book Group Class Session'}
+        size="lg"
+      >
         <GroupClassBookingForm
           booking={selectedBooking}
           customers={customers}
           classSessions={classScheduleSessions}
-          onSubmit={() => setShowGroupClassModal(false)}
-          onCancel={() => setShowGroupClassModal(false)}
+          onSubmit={() => {
+            setShowGroupClassModal(false);
+            setSelectedBooking(null);
+          }}
+          onCancel={() => {
+            setShowGroupClassModal(false);
+            setSelectedBooking(null);
+          }}
           isSubmitting={false}
         />
       </Modal>

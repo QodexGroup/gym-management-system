@@ -155,7 +155,7 @@ const PtPackagesTab = ({ member }) => {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h5 className="text-lg font-semibold text-dark-50">
-                          {ptPackage?.packageName || 'Unknown Package'}
+                          {customerPackage.packageName || 'Unknown Package'}
                         </h5>
                         <Badge
                           variant={CUSTOMER_PT_PACKAGE_STATUS_VARIANTS[customerPackage.status] || 'default'}
@@ -235,7 +235,7 @@ const PtPackagesTab = ({ member }) => {
                     <div>
                       <div className="flex items-center gap-3 mb-2">
                         <h5 className="text-lg font-semibold text-dark-50">
-                          {ptPackage?.packageName || 'Unknown Package'}
+                          {customerPackage.packageName || 'Unknown Package'}
                         </h5>
                         <Badge variant="primary">
                           {CUSTOMER_PT_PACKAGE_STATUS_LABELS[customerPackage.status] || customerPackage.status}
