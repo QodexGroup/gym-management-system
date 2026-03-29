@@ -17,7 +17,7 @@ import { CUSTOMER_MEMBERSHIP_STATUS } from '../../../constants/customerMembershi
 import { CUSTOMER_PT_PACKAGE_STATUS, CUSTOMER_PT_PACKAGE_STATUS_LABELS, CUSTOMER_PT_PACKAGE_STATUS_VARIANTS } from '../../../constants/ptConstants';
 import { usePermissions } from '../../../hooks/usePermissions';
 import { Alert, Toast } from '../../../utils/alert';
-import { formatCurrency, formatDate } from '../../../utils/formatters';
+import { formatCurrency, formatDate, formatPlanIntervalLabel } from '../../../utils/formatters';
 import { billsTableColumns } from '../tables/billsTable.config';
 
 const BillsTab = ({ member, onCustomerUpdate }) => {
@@ -284,8 +284,12 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
                   {currentMembership.membershipPlan?.planName || 'N/A'}
                 </div>
                 {currentMembership.membershipPlan && (
-                  <div>
-                    {formatCurrency(currentMembership.membershipPlan.price)} • {currentMembership.membershipPlan.planPeriod} {currentMembership.membershipPlan.planInterval}
+                  <div title="Billing period from the membership plan (not the current promo window)">
+                    {formatCurrency(currentMembership.membershipPlan.price)} •{' '}
+                    {formatPlanIntervalLabel(
+                      currentMembership.membershipPlan.planPeriod,
+                      currentMembership.membershipPlan.planInterval
+                    )}
                   </div>
                 )}
                 <div className="flex items-center gap-3 pt-1">

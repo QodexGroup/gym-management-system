@@ -142,6 +142,22 @@ export const formatCurrency = (amount, options = {}) => {
  * @param {number|string} amount - Amount to format
  * @returns {string} - Formatted currency string without decimals
  */
+/** Billing cadence from plan_period + plan_interval (independent of plan display name). */
+export const formatPlanIntervalLabel = (planPeriod, planInterval) => {
+  if (planPeriod == null || planInterval == null) return '';
+  const n = Number(planPeriod);
+  if (Number.isNaN(n)) return `${planPeriod} ${planInterval}`;
+  const key = String(planInterval).toLowerCase();
+  const singular = {
+    days: 'day',
+    weeks: 'week',
+    months: 'month',
+    years: 'year',
+  };
+  const unit = singular[key] ?? String(planInterval).replace(/s$/i, '');
+  return `${n} ${n === 1 ? unit : `${unit}s`}`;
+};
+
 export const formatCurrencyWhole = (amount) => {
   return formatCurrency(amount, {
     minimumFractionDigits: 0,
