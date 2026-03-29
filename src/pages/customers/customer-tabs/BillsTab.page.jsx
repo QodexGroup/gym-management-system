@@ -319,9 +319,8 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
             {customerPtPackages.length > 0 ? (
               <div className="space-y-2">
                 {customerPtPackages.slice(0, 2).map((customerPackage) => {
-                  const ptPackage = customerPackage.ptPackage;
-                  const sessionsRemaining = customerPackage.numberOfSessionsRemaining || customerPackage.classesRemaining || 0;
-                  const sessionsTotal = ptPackage?.numberOfSessions || customerPackage.classesTotal || 0;
+                  const sessionsRemaining = customerPackage.numberOfSessionsRemaining ?? customerPackage.classesRemaining ?? 0;
+                  const sessionsTotal = customerPackage.totalSessions ?? customerPackage.classesTotal ?? 0;
                   const progressPercentage = sessionsTotal > 0 ? ((sessionsTotal - sessionsRemaining) / sessionsTotal) * 100 : 0;
 
                   return (
@@ -340,7 +339,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
                       </div>
                       <div className="flex items-center gap-2 text-xs text-dark-400">
                         <span>{sessionsRemaining}/{sessionsTotal} sessions</span>
-                        <span>{formatCurrency(ptPackage?.price || 0)}</span>
+                        <span>{formatCurrency(customerPackage.packagePrice ?? 0)}</span>
                         <span>•</span>
                         <span className="flex items-center gap-1">
                           <User className="w-3 h-3" />
