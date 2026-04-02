@@ -108,8 +108,12 @@ const MembershipPlans = () => {
   const handleDelete = async (id) => {
     const result = await Alert.confirmDelete();
     if (!result.isConfirmed) return;
-    await deleteMutation.mutateAsync(id);
-    await fetchUserData();
+    try {
+      await deleteMutation.mutateAsync(id);
+      await fetchUserData();
+    } catch {
+      // error is already surfaced via Toast in useDeleteMembershipPlan's onError
+    }
   };
 
   const handleViewDetails = (plan) => {

@@ -97,6 +97,7 @@ export const useDeleteMembershipPlan = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: membershipPlanKeys.lists() });
+      Toast.success('Membership plan deleted successfully');
     },
     onError: (error) => {
       Toast.error(error.message || 'Failed to delete membership plan');

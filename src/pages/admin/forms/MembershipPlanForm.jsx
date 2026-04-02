@@ -22,12 +22,10 @@ const MembershipPlanForm = ({
   const submitting = isSubmitting || isLocked;
 
   useEffect(() => {
-    if (isOpen) {
-      setIsLocked(false);
-    }
-  }, [isOpen]);
+    if (!isOpen) return;
 
-  useEffect(() => {
+    setIsLocked(false);
+
     if (!selectedPlan) {
       setFormData(emptyForm);
       return;
@@ -40,7 +38,7 @@ const MembershipPlanForm = ({
       planInterval: `${selectedPlan.durationUnit}s`,
       features: selectedPlan.features.join('\n'),
     });
-  }, [selectedPlan]);
+  }, [isOpen, selectedPlan]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
