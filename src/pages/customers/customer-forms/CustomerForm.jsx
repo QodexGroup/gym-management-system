@@ -7,6 +7,7 @@ import { useCreateCustomer, useUpdateCustomer } from '../../../hooks/useCustomer
 import { useMembershipPlans } from '../../../hooks/useMembershipPlans';
 import { useCoaches } from '../../../hooks/useUsers';
 import { normalizePhoneNumber, normalizeDate } from '../../../utils/formatters'; // make sure these exist
+import { isValidEmail, normalizeEmail } from '../../../utils/validators/email';
 
 const CustomerForm = ({
   isOpen,
@@ -29,12 +30,6 @@ const CustomerForm = ({
     if (coachesError) Toast.error('Failed to load coaches');
   }, [coachesError]);
 
-  const validateEmail = (email) => {
-    if (!email?.trim()) return true;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email.trim());
-  };
-
   const validateRequiredField = (value, fieldName) => {
     if (!value || (typeof value === 'string' && !value.trim())) return `${fieldName} is required`;
     return '';
@@ -54,7 +49,8 @@ const CustomerForm = ({
       if (error) newErrors[key] = error;
     });
 
-    if (formData.email && !validateEmail(formData.email)) {
+    const email = normalizeEmail(formData.email);
+    if (email && !isValidEmail(email)) {
       newErrors.email = 'Please enter a valid email address';
     }
 
@@ -78,6 +74,10 @@ const CustomerForm = ({
         return [key, value ?? null];
       })
     );
+
+    if (normalizedCustomerData.email) {
+      normalizedCustomerData.email = normalizeEmail(normalizedCustomerData.email);
+    }
 
     if (!selectedCustomer) {
       normalizedCustomerData.membershipPlanId = formData.membershipPlanId
