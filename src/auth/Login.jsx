@@ -5,6 +5,7 @@ import { initializeFirebaseServices } from '../services/firebaseService';
 import { useAuth } from '../context/AuthContext';
 import { Toast } from '../utils/alert';
 import { ACCOUNT_STATE } from '../constants/accountState';
+import { isValidEmail, normalizeEmail } from '../utils/validators/email';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -62,8 +63,13 @@ const Login = () => {
       return;
     }
 
-    if (!email || !password) {
+    const normalizedEmail = normalizeEmail(email);
+    if (!normalizedEmail || !password) {
       Toast.error('Please enter both email and password.');
+      return;
+    }
+    if (!isValidEmail(normalizedEmail)) {
+      Toast.error('Please enter a valid email address.');
       return;
     }
 
@@ -71,7 +77,7 @@ const Login = () => {
 
     try {
       // Sign in with Firebase
-      const userCredential = await signInWithEmailAndPassword(firebaseAuth, email, password);
+      const userCredential = await signInWithEmailAndPassword(firebaseAuth, normalizedEmail, password);
       const user = userCredential.user;
 
       // Get the ID token

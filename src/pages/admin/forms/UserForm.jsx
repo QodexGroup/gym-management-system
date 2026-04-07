@@ -7,6 +7,7 @@ import {
   getInitialUserFormData, 
   mapUserToFormData,
 } from '../../../models/userModel';
+import { isValidEmail, normalizeEmail } from '../../../utils/validators/email';
 
 const UserForm = ({
   selectedUser,
@@ -39,6 +40,16 @@ const UserForm = ({
     const isEdit = !!selectedUser;
 
     try {
+      if (!isEdit) {
+        const email = normalizeEmail(formData.email);
+        if (!email) {
+          throw new Error('Email is required.');
+        }
+        if (!isValidEmail(email)) {
+          throw new Error('Please enter a valid email address.');
+        }
+      }
+
       // Normalize all fields
       let normalizedUserData = Object.fromEntries(
         Object.entries(formData).map(([key, value]) => {
@@ -53,6 +64,9 @@ const UserForm = ({
       if (isEdit) {
         const { email, password, ...updateData } = normalizedUserData;
         normalizedUserData = updateData;
+      }
+      if (!isEdit && normalizedUserData.email) {
+        normalizedUserData.email = normalizeEmail(normalizedUserData.email);
       }
 
       // Set permissions based on role
@@ -69,6 +83,10 @@ const UserForm = ({
     } catch (error) {
       // Error handling is done by the mutation
       console.error('Error submitting user:', error);
+      if (error?.message) {
+        // keep UX consistent with other forms
+        Toast.error(error.message);
+      }
     }
   };
 

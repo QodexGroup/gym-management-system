@@ -5,6 +5,7 @@ import { initializeFirebaseServices } from '../services/firebaseService';
 import { authService } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 import { Toast } from '../utils/alert';
+import { isValidEmail, normalizeEmail } from '../utils/validators/email';
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -80,8 +81,13 @@ const SignUp = () => {
       Toast.error('First name and last name are required.');
       return;
     }
-    if (!formData.email.trim()) {
+    const email = normalizeEmail(formData.email);
+    if (!email) {
       Toast.error('Email is required.');
+      return;
+    }
+    if (!isValidEmail(email)) {
+      Toast.error('Please enter a valid email address.');
       return;
     }
     if (formData.password !== formData.confirmPassword) {
@@ -107,8 +113,13 @@ const SignUp = () => {
       Toast.error('Billing name is required.');
       return;
     }
-    if (!formData.billingEmail.trim()) {
+    const billingEmail = normalizeEmail(formData.billingEmail);
+    if (!billingEmail) {
       Toast.error('Billing email is required.');
+      return;
+    }
+    if (!isValidEmail(billingEmail)) {
+      Toast.error('Please enter a valid email address.');
       return;
     }
     if (!formData.billingPhone.trim()) {
@@ -140,7 +151,7 @@ const SignUp = () => {
     try {
       const userCredential = await createUserWithEmailAndPassword(
         firebaseAuth,
-        formData.email,
+        normalizeEmail(formData.email),
         formData.password
       );
 
@@ -154,10 +165,10 @@ const SignUp = () => {
         accountName: formData.accountName,
         firstname: formData.firstname,
         lastname: formData.lastname,
-        email: formData.email,
+        email: normalizeEmail(formData.email),
         phone: formData.phone || null,
         billingName: formData.billingName,
-        billingEmail: formData.billingEmail,
+        billingEmail: normalizeEmail(formData.billingEmail),
         billingPhone: formData.billingPhone,
         billingAddress: formData.billingAddress,
         billingCity: formData.billingCity,
