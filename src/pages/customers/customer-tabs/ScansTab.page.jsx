@@ -13,6 +13,7 @@ import { SCAN_TYPE } from '../../../constants/scanTypeConstant';
 
 const ScansTab = ({ member }) => {
   const { hasPermission } = usePermissions();
+  const canViewScans = hasPermission('scans_view');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedScan, setSelectedScan] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -103,38 +104,46 @@ const ScansTab = ({ member }) => {
 
   return (
     <div className="space-y-6">
-      {/* Stats */}
-      <StatsCards stats={stats} dark={true} size="sm" iconPosition="left" iconColor="light" columns={3} />
-
-      {/* Upload Button */}
-      {hasPermission('scans_create') && (
-        <div className="flex justify-end">
-          <button
-            onClick={() => { setSelectedScan(null); setShowModal(true); }}
-            className="btn-primary flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Upload Scan
-          </button>
+      {!canViewScans ? (
+        <div className="card text-center py-12 text-dark-300">
+          You do not have permission to view scan list.
         </div>
-      )}
+      ) : (
+        <>
+          {/* Stats */}
+          <StatsCards stats={stats} dark={true} size="sm" iconPosition="left" iconColor="light" columns={3} />
 
-      {/* Table */}
-      <div className="card">
-        <DataTable columns={columns} data={scans} loading={isLoading} />
-      </div>
+          {/* Upload Button */}
+          {hasPermission('scans_create') && (
+            <div className="flex justify-end">
+              <button
+                onClick={() => { setSelectedScan(null); setShowModal(true); }}
+                className="btn-primary flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Upload Scan
+              </button>
+            </div>
+          )}
 
-      {/* Pagination */}
-      {pagination && pagination.lastPage > 1 && (
-        <Pagination
-          currentPage={currentPage}
-          lastPage={pagination.lastPage}
-          from={pagination.from}
-          to={pagination.to}
-          total={pagination.total}
-          onPrev={() => setCurrentPage(p => Math.max(p - 1, 1))}
-          onNext={() => setCurrentPage(p => Math.min(p + 1, pagination.lastPage))}
-        />
+          {/* Table */}
+          <div className="card">
+            <DataTable columns={columns} data={scans} loading={isLoading} />
+          </div>
+
+          {/* Pagination */}
+          {pagination && pagination.lastPage > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              lastPage={pagination.lastPage}
+              from={pagination.from}
+              to={pagination.to}
+              total={pagination.total}
+              onPrev={() => setCurrentPage(p => Math.max(p - 1, 1))}
+              onNext={() => setCurrentPage(p => Math.min(p + 1, pagination.lastPage))}
+            />
+          )}
+        </>
       )}
 
       {/* Scan Form Modal */}

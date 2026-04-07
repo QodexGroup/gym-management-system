@@ -5,6 +5,7 @@ import { formatDate } from '../../../utils/formatters';
 import { getDataSourceBadge } from '../../../utils/uiHelpers';
 import { getFileUrl } from '../../../services/firebaseUrlService';
 import PhotoThumbnail from '../../../components/common/PhotoThumbnail';
+import { usePermissions } from '../../../hooks/usePermissions';
 
 const ProgressViewModal = ({ 
   isOpen, 
@@ -14,6 +15,8 @@ const ProgressViewModal = ({
   onImageClick 
 }) => {
   const [photoUrls, setPhotoUrls] = useState({});
+  const { hasPermission } = usePermissions();
+  const canEditProgress = hasPermission('progress_tracking_update');
 
   useEffect(() => {
     if (viewLog && isOpen) {
@@ -169,16 +172,18 @@ const ProgressViewModal = ({
           >
             Close
           </button>
-          <button 
-            onClick={() => {
-              onClose();
-              onEdit?.(viewLog);
-            }} 
-            className="flex-1 btn-primary"
-          >
-            <Edit className="w-4 h-4 inline mr-2" />
-            Edit
-          </button>
+          {canEditProgress && (
+            <button 
+              onClick={() => {
+                onClose();
+                onEdit?.(viewLog);
+              }} 
+              className="flex-1 btn-primary"
+            >
+              <Edit className="w-4 h-4 inline mr-2" />
+              Edit
+            </button>
+          )}
         </div>
       </div>
     </Modal>

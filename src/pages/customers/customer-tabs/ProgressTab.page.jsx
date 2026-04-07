@@ -16,6 +16,8 @@ import { progressTableColumns } from '../tables/progressTable.config';
 
 const ProgressTab = ({ member }) => {
   const { hasPermission } = usePermissions();
+  const canViewProgressTracking = hasPermission('progress_tracking_view');
+  const canViewLogs = hasPermission('progress_tracking_view_logs');
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedLog, setSelectedLog] = useState(null);
@@ -95,9 +97,11 @@ const ProgressTab = ({ member }) => {
   const columns = useMemo(
     () =>
       progressTableColumns({
+        canViewLogs,
         canEdit: hasPermission('progress_tracking_update'),
         canDelete: hasPermission('progress_tracking_delete'),
         onEdit: (log, options) => {
+          if (options?.view && !canViewLogs) return;
           if (options?.view) {
             setViewLog(log);
             setShowViewModal(true);
@@ -140,10 +144,11 @@ const ProgressTab = ({ member }) => {
           setLightboxImage(validUrls[currentIndex >= 0 ? currentIndex : 0]);
         },
       }),
-    [hasPermission, progressLogs]
+    [hasPermission, canViewLogs]
   );
   /* ---------------- Handlers ---------------- */
   const handleRowClick = (row) => {
+    if (!canViewLogs) return;
     setViewLog(row);
     setShowViewModal(true);
   };
@@ -203,6 +208,12 @@ const ProgressTab = ({ member }) => {
 
   return (
     <div className="space-y-6">
+      {!canViewProgressTracking ? (
+        <div className="card text-center py-12 text-dark-300">
+          You do not have permission to view progress tracking list.
+        </div>
+      ) : (
+        <>
       {/* Stats */}
       <StatsCards stats={stats} dark={true} size="sm" iconPosition="left" iconColor='light' />
 
@@ -271,6 +282,8 @@ const ProgressTab = ({ member }) => {
         onPrevious={handleLightboxPrevious}
         onNext={handleLightboxNext}
       />
+        </>
+      )}
     </div>
   );
 };

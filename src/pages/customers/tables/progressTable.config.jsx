@@ -4,6 +4,7 @@ import { getDataSourceBadge } from '../../../utils/uiHelpers';
 import PhotoThumbnail from '../../../components/common/PhotoThumbnail';
 
 export const progressTableColumns = ({
+  canViewLogs = true,
   canEdit,
   canDelete,
   onEdit,
@@ -16,9 +17,11 @@ export const progressTableColumns = ({
     align: 'right',
     render: (row) => (
       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        <button onClick={() => onEdit?.(row, { view: true })} title="View">
-          <ChevronRight className="w-4 h-4" />
-        </button>
+        {canViewLogs && (
+          <button onClick={() => onEdit?.(row, { view: true })} title="View">
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        )}
 
         {canEdit && (
           <button onClick={() => onEdit(row)} title="Edit">

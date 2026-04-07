@@ -157,6 +157,13 @@ const Login = () => {
       console.error('Login error:', error);
       
       let errorMessage = 'Login failed. Please try again.';
+
+      if (error?.message?.toLowerCase().includes('deactivated')) {
+        setDeactivatedMessage(error.message);
+        setTrialExpiredMessage('');
+        setLoading(false);
+        return;
+      }
       
       switch (error.code) {
         case 'auth/user-not-found':

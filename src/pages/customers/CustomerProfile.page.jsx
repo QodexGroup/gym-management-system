@@ -17,6 +17,7 @@ import ScansTab from './customer-tabs/ScansTab.page';
 import PtSessionsTab from './customer-tabs/PtSessionsTab.page';
 import ClassAttendanceTab from './customer-tabs/ClassAttendanceTab.page';
 import WalkinCustomerTab from './customer-tabs/WalkinCustomerTab.page';
+import { usePermissions } from '../../hooks/usePermissions';
 
 /* --------------------------- Tab Config --------------------------- */
 const customerTabs = [
@@ -29,7 +30,7 @@ const customerTabs = [
 ];
 
 /* --------------------------- Profile Header --------------------------- */
-const ProfileHeader = ({ member, onEdit, onViewCard }) => (
+const ProfileHeader = ({ member, onEdit, onViewCard, canEdit }) => (
   <div className="card mb-4">
     <div className="flex items-center justify-between gap-6">
       <div className="flex items-center gap-4 flex-1">
@@ -74,9 +75,11 @@ const ProfileHeader = ({ member, onEdit, onViewCard }) => (
             <QrCode className="w-4 h-4" />
             View Card
           </button>
-          <button onClick={onEdit} className="btn-secondary flex items-center gap-2 text-sm py-2 px-4">
-            Edit
-          </button>
+          {canEdit && (
+            <button onClick={onEdit} className="btn-secondary flex items-center gap-2 text-sm py-2 px-4">
+              Edit
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -124,6 +127,8 @@ const CustomerProfile = () => {
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [showQRCard, setShowQRCard] = useState(false);
+  const { hasPermission } = usePermissions();
+  const canEditMember = hasPermission('members_list_update');
 
   const { data: customer, isLoading: loading, refetch: refetchCustomer } = useCustomer(id);
   const [formData, setFormData] = useState(null);
@@ -164,6 +169,7 @@ const CustomerProfile = () => {
         member={member} 
         onEdit={() => setShowEditModal(true)}
         onViewCard={() => setShowQRCard(true)}
+        canEdit={canEditMember}
       />
       <ProfileStats member={member} />
 
@@ -198,7 +204,7 @@ const CustomerProfile = () => {
       )}
 
       {/* Edit Modal */}
-      {formData && (
+      {formData && canEditMember && (
         <CustomerForm
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
