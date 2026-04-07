@@ -3,6 +3,7 @@
  * Defines the structure and initial state for user form data and data transformations
  */
 
+import { USER_ROLES } from '../constants/userRoles';
 
 /**
  * Get initial user form data
@@ -13,7 +14,7 @@ export const getInitialUserFormData = () => ({
   lastname: '',
   email: '',
   phone: '',
-  role: '',
+  role: USER_ROLES.ADMIN,
   password: '',
   permissions: [],
 });
@@ -31,7 +32,7 @@ export const mapUserToFormData = (user) => {
     lastname: user.lastname || '',
     email: user.email || '',
     phone: user.phone || '',
-    role: user.role || '',
+    role: user.role || USER_ROLES.ADMIN,
     password: '', // Never include password in form data
     permissions: user.permissions || [],
   };
