@@ -217,6 +217,21 @@ export const authService = {
     return json.success ? json.data : null;
   },
 
+  async sendVerificationEmail(idToken) {
+    const response = await fetch(`${API_BASE_URL}/auth/send-verification-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`,
+      },
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(json.message || 'Failed to send verification email.');
+    }
+    return json;
+  },
+
   async getCurrentUser() {
     try {
       const response = await authenticatedFetch(`${API_BASE_URL}/auth/me`, {

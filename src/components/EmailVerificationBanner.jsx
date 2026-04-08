@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { initializeFirebaseServices } from '../services/firebaseService';
-import { sendEmailVerification } from 'firebase/auth';
+import { authService, getAuthToken } from '../services/authService';
 import { Toast } from '../utils/alert';
 import { Mail, X } from 'lucide-react';
 
@@ -15,13 +14,13 @@ const EmailVerificationBanner = () => {
   const handleResend = async () => {
     setSending(true);
     try {
-      const { auth } = await initializeFirebaseServices();
-      if (auth?.currentUser) {
-        await sendEmailVerification(auth.currentUser);
-        Toast.success('Verification email sent. Check your inbox.');
-      } else {
+      const token = getAuthToken();
+      if (!token) {
         Toast.error('Please sign in again to resend.');
+        return;
       }
+      await authService.sendVerificationEmail(token);
+      Toast.success('Verification email sent. Check your inbox.');
     } catch (err) {
       Toast.error(err.message || 'Failed to send verification email.');
     } finally {
