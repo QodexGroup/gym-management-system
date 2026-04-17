@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { X } from 'lucide-react';
 
-const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
+const Modal = ({ isOpen, onClose, title, children, size = 'md', closable = true }) => {
   useEffect(() => {
     if (!isOpen) return;
     
@@ -40,7 +40,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-dark-900/50 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
+        onClick={closable ? onClose : undefined}
       />
 
       {/* Modal */}
@@ -51,12 +51,14 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-dark-700 flex-shrink-0">
             <h2 className="text-lg font-semibold text-dark-50">{title}</h2>
-            <button
-              onClick={onClose}
-              className="p-2 text-dark-400 hover:text-dark-200 hover:bg-dark-700 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            {closable && (
+              <button
+                onClick={onClose}
+                className="p-2 text-dark-400 hover:text-dark-200 hover:bg-dark-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
           </div>
 
           {/* Content - Scrollable if needed */}

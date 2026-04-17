@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { initializeFirebaseServices } from '../services/firebaseService';
 import { useAuth } from '../context/AuthContext';
+import { setLoggingIn } from '../services/authService';
 import { Toast } from '../utils/alert';
 import { ACCOUNT_STATE } from '../constants/accountState';
 import { isValidEmail, normalizeEmail } from '../utils/validators/email';
@@ -14,7 +15,7 @@ const Login = () => {
   const [deactivatedMessage, setDeactivatedMessage] = useState('');
   const [trialExpiredMessage, setTrialExpiredMessage] = useState('');
   const [firebaseAuth, setFirebaseAuth] = useState(null);
-  const { login, isAuthenticated, user, token, loading: authLoading } = useAuth();
+  const { login, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already authenticated
@@ -24,18 +25,6 @@ const Login = () => {
     }
   }, [isAuthenticated, authLoading, navigate]);
   
-  useEffect(() => {
-    const storedToken = localStorage.getItem('firebase_token');
-    const hasToken = token || storedToken;
-    const hasUser = user;
-    
-    if (!authLoading && hasUser && hasToken) {
-      // We have user and token, so we should be authenticated
-      // Navigate to dashboard
-      navigate('/dashboard', { replace: true });
-    }
-  }, [user, token, authLoading, navigate]);
-
   useEffect(() => {
     // Initialize Firebase Auth
     const initAuth = async () => {
@@ -73,44 +62,40 @@ const Login = () => {
       return;
     }
 
+    // Set the module-level flag BEFORE signInWithEmailAndPassword so that
+    // onAuthStateChanged (which fires immediately on sign-in) knows a login
+    // is in progress and won't sign the user back out due to a stale localStorage.
+    setLoggingIn(true);
     setLoading(true);
 
     try {
-      // Sign in with Firebase
       const userCredential = await signInWithEmailAndPassword(firebaseAuth, normalizedEmail, password);
-      const user = userCredential.user;
+      const firebaseUser = userCredential.user;
 
-      // Get the ID token
-      const idToken = await user.getIdToken();
+      const idToken = await firebaseUser.getIdToken();
 
-      // Store token in localStorage
-      localStorage.setItem('firebase_token', idToken);
-      localStorage.setItem('firebase_uid', user.uid);
+      // Call login function from AuthContext which stores the token and fetches user data
+      const userData = await login(idToken, firebaseUser.uid);
 
-      // Call login function from AuthContext which will fetch user data from backend
-      const userData = await login(idToken, user.uid);
-      
       if (!userData) {
         throw new Error('Failed to fetch user data from server');
       }
 
-      // Check if account is deactivated
+      // Block non-owners on deactivated accounts
       if (userData.account?.status === ACCOUNT_STATE.DEACTIVATED && !userData.isAccountOwner) {
-        // Non-owners are blocked when deactivated.
         localStorage.removeItem('firebase_token');
         localStorage.removeItem('firebase_uid');
         setDeactivatedMessage('Your account is deactivated. Please contact GymHubPH Tech Support to reactivate your account.');
         return;
       }
 
-      // Check if trial is expired and user is not account owner
+      // Block non-owners when trial has expired
       const activePlan = userData.account?.activeAccountSubscriptionPlan;
       const trialEndsAt = activePlan?.trialEndsAt ? new Date(activePlan.trialEndsAt) : null;
       const subscriptionStartsAt = activePlan?.subscriptionStartsAt ? new Date(activePlan.subscriptionStartsAt) : null;
       const isTrialExpired = trialEndsAt && trialEndsAt < new Date() && !subscriptionStartsAt;
-      
+
       if (isTrialExpired && !userData.isAccountOwner) {
-        // Clear session data
         localStorage.removeItem('firebase_token');
         localStorage.removeItem('firebase_uid');
         setTrialExpiredMessage('Your trial period has ended. Please contact the account owner to subscribe to a plan to continue using the app.');
@@ -118,47 +103,8 @@ const Login = () => {
       }
 
       Toast.success('Login successful!');
-      
-      // Wait for React to process state updates
-      // Poll for isAuthenticated to become true (max 2 seconds)
-      // Check localStorage directly since state updates are asynchronous
-      let attempts = 0;
-      const maxAttempts = 20;
-      
-      const waitForAuth = () => {
-        return new Promise((resolve) => {
-          const checkAuth = () => {
-            attempts++;
-            // Check localStorage directly for token since state might not be updated yet
-            const storedToken = localStorage.getItem('firebase_token');
-            const storedSessionStartTime = localStorage.getItem('session_start_time');
-            const hasToken = !!storedToken;
-            const hasUser = !!user || !!userData;
-            const hasSessionStartTime = !!storedSessionStartTime;
-            
-            // Check if we have all required data
-            const currentAuth = isAuthenticated || (hasUser && hasToken && hasSessionStartTime);
-            
-            if (currentAuth || attempts >= maxAttempts) {
-              resolve(currentAuth);
-            } else {
-              setTimeout(checkAuth, 100);
-            }
-          };
-          checkAuth();
-        });
-      };
-      
-      await waitForAuth();
-      
+      // login() has already set user + token state — navigate directly.
       navigate('/dashboard', { replace: true });
-      
-      // Final fallback: if still on login page after 2 seconds, force redirect
-      setTimeout(() => {
-        if (window.location.pathname === '/login' || window.location.pathname === '/') {
-          window.location.href = '/dashboard';
-        }
-      }, 2000);
     } catch (error) {
       console.error('Login error:', error);
       
@@ -194,6 +140,8 @@ const Login = () => {
       }
       
       Toast.error(errorMessage);
+      // Ensure the module-level flag is cleared on any error
+      setLoggingIn(false);
     } finally {
       setLoading(false);
     }

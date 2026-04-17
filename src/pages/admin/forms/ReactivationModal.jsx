@@ -16,7 +16,6 @@ const REACTIVATION_FEE_PHP = 1200;
  */
 const ReactivationModal = () => {
   const { account } = useAuth();
-  const [isOpen, setIsOpen] = useState(true);
   const [file, setFile] = useState(null);
   const [paymentType, setPaymentType] = useState(SUBSCRIPTION_PAYMENT_TYPE.GCASH);
   const [uploading, setUploading] = useState(false);
@@ -38,7 +37,6 @@ const ReactivationModal = () => {
     try {
       setUploading(true);
 
-      // Upload receipt using the dedicated function
       const { receiptUrl, receiptFileName } = await uploadReceipt(file, account.id);
 
       await createPaymentRequest.mutateAsync({
@@ -56,17 +54,11 @@ const ReactivationModal = () => {
     }
   };
 
-  const handleClose = () => {
-    if (uploading || createPaymentRequest.isPending) return;
-    setIsOpen(false);
-    setFile(null);
-    setPaymentType(SUBSCRIPTION_PAYMENT_TYPE.GCASH);
-  };
-
   return (
     <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
+      isOpen={true}
+      onClose={() => {}}
+      closable={false}
       title="Account Locked – Reactivation Required"
       size="md"
     >
@@ -105,23 +97,13 @@ const ReactivationModal = () => {
           />
         </div>
 
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={handleClose}
-            disabled={uploading || createPaymentRequest.isPending}
-            className="w-1/2 btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={uploading || createPaymentRequest.isPending || !file}
-            className="w-1/2 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {uploading || createPaymentRequest.isPending ? 'Submitting...' : 'Submit Reactivation Payment'}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={uploading || createPaymentRequest.isPending || !file}
+          className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {uploading || createPaymentRequest.isPending ? 'Submitting...' : 'Submit Reactivation Payment'}
+        </button>
 
         <p className="text-xs text-dark-400">
           If you need help, please contact GymHubPH Tech Support and include your gym name and invoice

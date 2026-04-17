@@ -27,6 +27,12 @@ export const setLoggingIn = (value) => {
 };
 
 /**
+ * Get the current value of the logging in flag
+ * @returns {boolean}
+ */
+export const getIsLoggingIn = () => isLoggingIn;
+
+/**
  * Get the Firebase token from localStorage
  * @returns {string|null}
  */

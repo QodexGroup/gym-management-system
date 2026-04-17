@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { initializeFirebaseServices } from '../services/firebaseService';
-import { authService, setLogoutFunction, setLoggingIn } from '../services/authService';
+import { authService, setLogoutFunction, setLoggingIn, getIsLoggingIn } from '../services/authService';
 import { Alert } from '../utils/alert';
 import { getPhilippinesTime } from '../utils/philippinesTime';
 import { USER_ROLES, isAdminRole, isStaffRole, isCoachRole } from '../constants/userRoles';
@@ -195,28 +195,10 @@ export const AuthProvider = ({ children }) => {
           return;
         }
 
-        // Check if 24-hour session duration exceeded FIRST
+        // Only enforce the 24-hour hard session limit here.
+        // Do NOT check isTokenExpired() before onAuthStateChanged — Firebase will
+        // refresh the ID token automatically via getIdToken(true) in the callback.
         if (isSessionDurationExceeded()) {
-          // Session expired - check if token also expired
-          if (isTokenExpired()) {
-            // Both expired - redirect to login
-            clearSession();
-            Alert.error('Session Expired', 'Your session has expired. Please login again.', {
-              showCancelButton: false,
-              showDenyButton: false,
-              confirmButtonText: 'OK',
-            }).then(() => {
-              window.location.href = '/login';
-            });
-            setLoading(false);
-            return;
-          }
-          // Session expired but token still valid - allow user to continue until token expires
-          // Don't redirect yet
-        }
-
-        // Check if token is expired (only if session is still valid)
-        if (!isSessionDurationExceeded() && isTokenExpired()) {
           clearSession();
           Alert.error('Session Expired', 'Your session has expired. Please login again.', {
             showCancelButton: false,
@@ -238,44 +220,23 @@ export const AuthProvider = ({ children }) => {
         // Listen to auth state changes
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
           if (firebaseUser) {
-            // Check if token was manually cleared from localStorage
+            // Check if token was manually cleared from localStorage.
+            // Skip this check if a login is in progress — the token hasn't been
+            // written to localStorage yet when onAuthStateChanged fires.
             const storedToken = localStorage.getItem('firebase_token');
-            if (!storedToken) {
-              // Token was cleared from localStorage, sign out from Firebase
+            if (!storedToken && !getIsLoggingIn()) {
               clearSession();
               await firebaseSignOut(auth);
               setLoading(false);
               return;
             }
 
-            // Check if 24-hour session duration exceeded FIRST
+            // Enforce the 24-hour hard session limit.
+            // Do NOT check isTokenExpired() here — let getIdToken(true) refresh it.
             if (isSessionDurationExceeded()) {
-              // Session expired - check if token also expired
-              if (isTokenExpired()) {
-                // Both expired - redirect to login
-                clearSession();
-                await firebaseSignOut(auth);
-                Alert.error('Session Expired', 'Your session has expired. Please login again.', {
-                  showCancelButton: false,
-                  showDenyButton: false,
-                  confirmButtonText: 'OK',
-                }).then(() => {
-                  window.location.href = '/login';
-                });
-                setLoading(false);
-                return;
-              }
-              // Session expired but token still valid - don't refresh token, just continue
-              // Don't redirect yet, wait for token to expire
-              setLoading(false);
-              return;
-            }
-
-            // Check if token is expired (only if session is still valid)
-            if (isTokenExpired()) {
               clearSession();
               await firebaseSignOut(auth);
-              Alert.error('Session Expired', 'Your session has expired. Please login again.',{
+              Alert.error('Session Expired', 'Your session has expired. Please login again.', {
                 showCancelButton: false,
                 showDenyButton: false,
                 confirmButtonText: 'OK',
@@ -285,10 +246,9 @@ export const AuthProvider = ({ children }) => {
               setLoading(false);
               return;
             }
-            
+
             try {
-              // Only refresh token if session is still valid
-              // Force refresh token to get a fresh one (even if current is still valid)
+              // Force-refresh the Firebase ID token (handles expired stored tokens automatically)
               const idToken = await firebaseUser.getIdToken(true);
               setToken(idToken);
               localStorage.setItem('firebase_token', idToken);
@@ -302,6 +262,11 @@ export const AuthProvider = ({ children }) => {
               await fetchUserData(idToken);
             } catch (error) {
               console.error('Error getting token or fetching user data:', error);
+              // Don't clear/null the user if login() is handling this concurrently
+              if (getIsLoggingIn()) {
+                setLoading(false);
+                return;
+              }
               if (error.message.includes('Invalid token') || error.code === 'auth/user-token-expired') {
                 clearSession();
                 Alert.error('Session Expired', 'Your session has expired. Please login again.', {
@@ -353,30 +318,11 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      // Check if 24-hour session duration exceeded FIRST
+      // Only enforce the 24-hour hard session limit.
+      // Token expiry is handled by Firebase inside fetchUserData / onAuthStateChanged.
       if (isSessionDurationExceeded()) {
-        // Session expired - check if token also expired
-        if (isTokenExpired()) {
-          // Both expired - redirect to login
-          clearSession();
-          Alert.error('Session Expired', 'Your session has expired. Please login again.',{
-            showCancelButton: false,
-            showDenyButton: false,
-            confirmButtonText: 'OK',
-          }).then(() => {
-            window.location.href = '/login';
-          });
-          return;
-        }
-        // Session expired but token still valid - allow user to continue until token expires
-        // Don't redirect yet
-        return;
-      }
-
-      // Check if token is expired (only if session is still valid)
-      if (isTokenExpired()) {
         clearSession();
-        Alert.error('Session Expired', 'Your session has expired. Please login again.',{
+        Alert.error('Session Expired', 'Your session has expired. Please login again.', {
           showCancelButton: false,
           showDenyButton: false,
           confirmButtonText: 'OK',
@@ -433,32 +379,16 @@ export const AuthProvider = ({ children }) => {
 
     const refreshToken = async () => {
       try {
-        // Check if 24-hour session duration exceeded FIRST
+        // Stop refreshing if the 24-hour session limit has been reached.
+        // The sessionCheckInterval will handle the logout.
         if (isSessionDurationExceeded()) {
-          // Session expired - stop refreshing token, but don't logout yet
-          // Wait for token to expire naturally
-          console.log('Session expired - stopping token refresh');
-          return;
-        }
-
-        // Check if token is expired (only if session is still valid)
-        if (isTokenExpired()) {
-          clearSession();
-          Alert.error('Session Expired', 'Your session has expired. Please login again.', {
-            showCancelButton: false,
-            showDenyButton: false,
-            confirmButtonText: 'OK',
-          }).then(() => {
-            window.location.href = '/login';
-          });
-          await logout();
           return;
         }
 
         const { auth } = await initializeFirebaseServices();
         if (!auth || !auth.currentUser) return;
 
-        // Refresh Firebase token (force refresh to get new token)
+        // Force-refresh the token — Firebase handles expired tokens automatically
         const newToken = await auth.currentUser.getIdToken(true);
         setToken(newToken);
         localStorage.setItem('firebase_token', newToken);
@@ -494,32 +424,13 @@ export const AuthProvider = ({ children }) => {
       }
     }, TOKEN_REFRESH_INTERVAL);
 
-    // Check session and token expiration every 5 minutes
+    // Check 24-hour session limit every 5 minutes
     const sessionCheckInterval = setInterval(() => {
-      // If session expired, check if token also expired
       if (isSessionDurationExceeded()) {
-        if (isTokenExpired()) {
-          // Both expired - logout now
-          clearInterval(refreshInterval);
-          clearInterval(sessionCheckInterval);
-          clearSession();
-          Alert.error('Session Expired', 'Your session has expired. Please login again.',{
-            showCancelButton: false,
-            showDenyButton: false,
-            confirmButtonText: 'OK',
-          }).then(() => {
-            window.location.href = '/login';
-          });
-          logout();
-        }
-        // If session expired but token not expired yet, just stop refreshing
-        // (already handled by refreshInterval check above)
-      } else if (isTokenExpired()) {
-        // Session valid but token expired - should not happen if refresh works
         clearInterval(refreshInterval);
         clearInterval(sessionCheckInterval);
         clearSession();
-        Alert.error('Session Expired', 'Your session has expired. Please login again.',{
+        Alert.error('Session Expired', 'Your session has expired. Please login again.', {
           showCancelButton: false,
           showDenyButton: false,
           confirmButtonText: 'OK',
@@ -542,7 +453,10 @@ export const AuthProvider = ({ children }) => {
   const isAccountOwner = !!user?.isAccountOwner;
 
   // Derived auth/account flags
-  const isAuthenticated = !!user && !!token && !isTokenExpired() && !isSessionDurationExceeded();
+  // isAuthenticated is true as long as we have a user and token in state.
+  // Token validity is managed by the 50-minute refresh interval and Firebase onAuthStateChanged.
+  // 24-hour session enforcement is handled by the session check interval.
+  const isAuthenticated = !!user && !!token;
 
   const activePlan = account?.activeAccountSubscriptionPlan || null;
   const trialEndsAt = activePlan?.trialEndsAt ? new Date(activePlan.trialEndsAt) : null;

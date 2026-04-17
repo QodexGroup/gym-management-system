@@ -110,7 +110,12 @@ const AccountStateGuard = ({ children }) => {
   const { isLocked, isTrialExpired, isAccountOwner } = useAuth();
   const location = useLocation();
 
-  // Always force trial-expired owners to My Account plan tab
+  // Locked owners must stay on /my-account — block all other routes
+  if (isLocked && isAccountOwner && !location.pathname.startsWith('/my-account')) {
+    return <Navigate to="/my-account?tab=my-plan" replace />;
+  }
+
+  // Trial-expired owners must go to My Account plan tab
   if (isTrialExpired && isAccountOwner && !location.pathname.startsWith('/my-account')) {
     return <Navigate to="/my-account?tab=my-plan" replace />;
   }
