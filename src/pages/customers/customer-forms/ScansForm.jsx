@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { FileText, Upload, X } from 'lucide-react';
@@ -17,6 +17,7 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const uploadPromiseRef = useRef(null);
 
   const queryClient = useQueryClient();
   const createMutation = useCreateCustomerScan();
@@ -69,7 +70,10 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
     setUploadProgress(0);
 
     try {
-      const upload = await uploadFile(file, 1, member.id, (progress) => setUploadProgress(progress));
+      const uploadPromise = uploadFile(file, 1, member.id, (progress) => setUploadProgress(progress));
+      uploadPromiseRef.current = uploadPromise;
+
+      const upload = await uploadPromise;
       const url = await getFileUrl(upload.fileUrl);
 
       setUploadedFiles(prev => [
@@ -89,6 +93,7 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
       console.error(err);
       Toast.error(err.message || 'Failed to upload file');
     } finally {
+      uploadPromiseRef.current = null;
       setUploadingFile(false);
       setUploadProgress(0);
       e.target.value = '';
@@ -127,12 +132,23 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!member?.id) return Toast.error('Customer ID is required');
+    if (!formData.scanType) return Alert.error('Validation Error', 'Please select a scan type');
+
+    if (uploadPromiseRef.current) {
+      try {
+        await uploadPromiseRef.current;
+      } catch {
+        return; // upload error toast is handled by upload flow
+      }
+    }
+
+    if (uploadingFile) {
+      return Toast.info('Please wait for the upload to finish');
+    }
+
     if (isLocked) return; // 🚫 prevent double click
     setIsLocked(true);
-
-    if (!member?.id) return;
-
-    if (!formData.scanType) return Alert.error('Validation Error', 'Please select a scan type');
 
     const scanData = {
       customerId: member.id,
@@ -179,7 +195,7 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
   return (
     <Modal
       isOpen={isOpen}
-      onClose={isSubmitting ? null : onClose}
+      onClose={(isSubmitting || uploadingFile) ? null : onClose}
       title={selectedScan ? 'Edit Body Composition Scan' : 'Upload Body Composition Scan'}
       size="md"
     >
@@ -217,8 +233,16 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
         {/* Upload Files */}
         <div>
           <label className="label">Upload File (Optional)</label>
-          <div className="border-2 border-dashed border-dark-200 rounded-xl p-8 text-center hover:border-primary-500 cursor-pointer transition-colors">
-            <label htmlFor="scan-upload" className="cursor-pointer block">
+          <div
+            className={[
+              'border-2 border-dashed border-dark-200 rounded-xl p-8 text-center transition-colors',
+              uploadingFile ? 'cursor-not-allowed opacity-80' : 'hover:border-primary-500 cursor-pointer',
+            ].join(' ')}
+          >
+            <label
+              htmlFor="scan-upload"
+              className={['block', uploadingFile ? 'cursor-not-allowed' : 'cursor-pointer'].join(' ')}
+            >
               {uploadingFile ? (
                 <>
                   <Upload className="w-12 h-12 text-primary-500 mx-auto mb-3 animate-pulse" />
@@ -295,18 +319,20 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
             type="button"
             className="flex-1 btn-secondary"
             onClick={onClose}
-            disabled={isSubmitting}
+            disabled={isSubmitting || uploadingFile}
           >
             Cancel
           </button>
           <button
             type="submit"
             className="flex-1 btn-primary"
-            disabled={isSubmitting}
+            disabled={isSubmitting || uploadingFile}
           >
-            {isSubmitting
-              ? selectedScan ? 'Updating...' : 'Uploading...'
-              : selectedScan ? 'Update Scan' : 'Upload Scan'}
+            {uploadingFile
+              ? 'Uploading file...'
+              : isSubmitting
+                ? selectedScan ? 'Updating...' : 'Saving...'
+                : selectedScan ? 'Update Scan' : 'Upload Scan'}
           </button>
         </div>
       </form>
