@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { initializeFirebaseServices } from '../services/firebaseService';
 import { authService } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
@@ -155,8 +155,6 @@ const SignUp = () => {
         formData.password
       );
 
-      await sendEmailVerification(userCredential.user);
-
       const idToken = await userCredential.user.getIdToken();
       localStorage.setItem('firebase_token', idToken);
       localStorage.setItem('firebase_uid', userCredential.user.uid);
@@ -176,6 +174,10 @@ const SignUp = () => {
         billingZip: formData.billingZip,
         billingCountry: formData.billingCountry.toUpperCase(),
       });
+
+      authService.sendVerificationEmail(idToken).catch((err) =>
+        console.error('Verification email send failed:', err)
+      );
 
       await login(idToken, userCredential.user.uid);
       Toast.success('Account created! Check your email to verify your address. Your 7-day free trial has started.');
