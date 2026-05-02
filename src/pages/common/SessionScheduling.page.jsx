@@ -22,9 +22,9 @@ import {
 import { BOOKING_STATUS } from '../../constants/classSessionBookingConstants';
 import { useCoaches } from '../../hooks/useUsers';
 import { useCustomers } from '../../hooks/useCustomers';
-import { useClassScheduleSessions, useUpdateClassScheduleSession } from '../../hooks/useClassScheduleSessions';
+import { useClassScheduleSessions, useUpdateClassScheduleSession, useCancelClassScheduleSession } from '../../hooks/useClassScheduleSessions';
 import { useBookingSessions, useUpdateAttendanceStatus } from '../../hooks/useClassSessionBookings';
-import { useCreatePtBooking, useUpdatePtBooking, usePtBookings, usePtBookingsByCoach, useCancelPtBooking } from '../../hooks/usePtBookings';
+import { useCreatePtBooking, useUpdatePtBooking, usePtBookings, usePtBookingsByCoach, useCancelPtBooking, useCoachCancelPtBooking } from '../../hooks/usePtBookings';
 import { useAuth } from '../../context/AuthContext';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { mapClassScheduleSessionsToComponent } from '../../models/classScheduleSessionModel';
@@ -145,10 +145,12 @@ const SessionScheduling = () => {
 
   /* ------------------------------- mutations ------------------------------- */
   const updateClassScheduleSessionMutation = useUpdateClassScheduleSession();
+  const cancelClassScheduleSessionMutation = useCancelClassScheduleSession();
   const updateAttendanceStatusMutation = useUpdateAttendanceStatus();
   const createPtBookingMutation = useCreatePtBooking();
   const updatePtBookingMutation = useUpdatePtBooking();
   const cancelPtBookingMutation = useCancelPtBooking();
+  const coachCancelPtBookingMutation = useCoachCancelPtBooking();
 
   const classScheduleSessions = useMemo(() => {
     const sessions = mapClassScheduleSessionsToComponent(classSessionsData?.data || []);
@@ -246,21 +248,31 @@ const SessionScheduling = () => {
     if (!result.isConfirmed) return;
     
     try {
-      // Check if it's a PT booking by looking for it in ptBookingsData
       const ptBookings = ptBookingsData || [];
       const ptBooking = ptBookings.find(b => b.id === sessionId);
-      
+
       if (ptBooking) {
-        // It's a PT booking
+        // Standalone PT booking cancelled by client (no linked class schedule session)
         await cancelPtBookingMutation.mutateAsync(sessionId);
       } else {
-        // It's a class schedule session (not yet implemented)
-        console.log('Cancel class schedule session', sessionId);
+        // Class schedule session — find the linked PT booking via scheduleId
+        const classSession = classScheduleSessions.find(s => s.sessionId === sessionId);
+        const linkedPtBooking = classSession
+          ? ptBookings.find(b => b.classScheduleId === classSession.scheduleId)
+          : null;
+
+        if (linkedPtBooking) {
+          // PT session cancelled by coach — use COACH_CANCELLED status
+          await coachCancelPtBookingMutation.mutateAsync(linkedPtBooking.id);
+        } else {
+          // Group class session cancelled by coach — cancel session + mark all member bookings as COACH_CANCELLED
+          await cancelClassScheduleSessionMutation.mutateAsync(sessionId);
+        }
       }
     } catch (err) {
       console.error(err);
     }
-  }, [ptBookingsData, cancelPtBookingMutation]);
+  }, [ptBookingsData, classScheduleSessions, cancelPtBookingMutation, coachCancelPtBookingMutation, cancelClassScheduleSessionMutation]);
 
   const handlePtSessionSubmit = useCallback(async (formData) => {
     try {
@@ -281,8 +293,7 @@ const SessionScheduling = () => {
       setShowModal(false);
       setSelectedSession(null);
     } catch (error) {
-      console.error('Failed to save PT booking:', error);
-      // Error is handled by the mutation's onError callback (shows toast)
+
     }
   }, [selectedSession, createPtBookingMutation, updatePtBookingMutation]);
 
@@ -290,10 +301,14 @@ const SessionScheduling = () => {
   const sessions = useMemo(() => {
     const allSessions = [...classScheduleSessions, ...memberGroupClassSessions, ...ptSessions];
 
-    // For trainers, filter to only show their own sessions
+    // For trainers, filter to only show their own sessions and hide member-perspective views
     let filtered = allSessions;
     if (isTrainer && user?.id) {
-      filtered = filtered.filter(session => session.coachId === user.id);
+      filtered = filtered.filter(session =>
+        session.coachId === user.id &&
+        session.type !== SESSION_TYPES.MEMBER_GROUP_CLASS &&
+        session.type !== SESSION_TYPES.MEMBER_PT
+      );
     }
 
     // For PT sessions: if coach PT filter is enabled, show coach PT sessions
@@ -351,13 +366,12 @@ const SessionScheduling = () => {
   ]);
 
   // Prepare type filters for CalendarToolbar
-  // For trainers, exclude COACH_GROUP_CLASS and COACH_PT filters since they only see their own schedule
+  // For trainers (coaches), hide Member Group Class and Member PT filters — those are admin/staff only
   const typeFiltersArray = useMemo(() => {
     return Object.entries(SESSION_TYPE_LABELS)
       .filter(([key]) => {
-        // For trainers, exclude coach-specific filters
         if (isTrainer) {
-          return key !== SESSION_TYPES.COACH_GROUP_CLASS && key !== SESSION_TYPES.COACH_PT;
+          return key !== SESSION_TYPES.MEMBER_GROUP_CLASS && key !== SESSION_TYPES.MEMBER_PT;
         }
         return true;
       })

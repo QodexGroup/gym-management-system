@@ -141,6 +141,27 @@ export const useCancelPtBooking = () => {
 };
 
 /**
+ * Hook to cancel a PT booking initiated by the coach/admin
+ */
+export const useCoachCancelPtBooking = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id) => {
+      return await ptBookingService.markAsCoachCancelled(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ptBookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['classScheduleSessions'] });
+      Toast.success('PT session cancelled successfully');
+    },
+    onError: (error) => {
+      Toast.error(error.message || 'Failed to cancel PT session');
+    },
+  });
+};
+
+/**
  * Hook to mark a PT booking as attended
  */
 export const useMarkPtBookingAsAttended = () => {

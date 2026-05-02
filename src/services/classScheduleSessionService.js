@@ -42,12 +42,30 @@ export const classScheduleSessionService = {
   },
 
   /**
-   * Update a class schedule session
+   * Cancel a class schedule session and all its member bookings
    * @param {number} id - Session ID
-   * @param {Object} data - Update data (startTime, endTime, duration)
-   * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
+  async cancel(id) {
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/class-schedule-sessions/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('Cannot connect to API. Please check if the server is running and CORS is configured.');
+      }
+      throw error;
+    }
+  },
+
   async update(id, data, idempotencyKey = null) {
     try {
       const options = idempotencyKey ? { idempotencyKey } : {};

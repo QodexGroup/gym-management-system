@@ -25,6 +25,25 @@ export const useClassScheduleSessions = (options = {}) => {
 };
 
 /**
+ * Hook to cancel a class schedule session and all its member bookings.
+ */
+export const useCancelClassScheduleSession = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => classScheduleSessionService.cancel(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: classScheduleSessionKeys.all });
+      queryClient.invalidateQueries({ queryKey: classSessionBookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: ptBookingKeys.all });
+      Toast.success('Session cancelled successfully');
+    },
+    onError: (error) => {
+      Toast.error(error.message || 'Failed to cancel session');
+    },
+  });
+};
+
+/**
  * Hook to update a class schedule session
  */
 export const useUpdateClassScheduleSession = () => {

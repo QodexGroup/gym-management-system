@@ -107,7 +107,7 @@ export const transformPtBookingToApiFormat = (formData) => {
  */
 export const mapPtBookingsToSessions = (ptBookingsData = []) => {
   return ptBookingsData
-    .filter((booking) => booking.status !== BOOKING_STATUS.CANCELLED)
+    .filter((booking) => booking.status !== BOOKING_STATUS.CANCELLED && booking.status !== BOOKING_STATUS.COACH_CANCELLED)
     .map((booking) => {
       const customer = booking.customer || {};
       const coach = booking.coach || {};

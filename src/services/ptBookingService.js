@@ -153,6 +153,24 @@ export const ptBookingService = {
     }
   },
 
+  async markAsCoachCancelled(id) {
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/pt-bookings/${id}/coach-cancel`, {
+        method: 'PUT',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to coach-cancel PT booking');
+      }
+
+      const data = await response.json();
+      return data.success ? data.data : null;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   /**
    * Mark a PT booking as attended
    * @param {number} id - Booking ID
