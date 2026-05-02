@@ -8,6 +8,7 @@ import {
   mapUserToFormData,
 } from '../../../models/userModel';
 import { isValidEmail, normalizeEmail } from '../../../utils/validators/email';
+import { sanitizePhoneInput, validatePhPhone, PH_PHONE_INPUT_MAX } from '../../../utils/validators/phone';
 
 const UserForm = ({
   selectedUser,
@@ -90,6 +91,8 @@ const UserForm = ({
     }
   };
 
+  const phoneError = validatePhPhone(formData.phone);
+
   return (
     <Modal
       isOpen={isOpen}
@@ -160,11 +163,17 @@ const UserForm = ({
         <label className="block text-sm font-medium text-dark-200 mb-2">Phone</label>
         <input
           type="tel"
-          className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 rounded-lg focus:bg-dark-600 focus:border-primary-500 outline-none transition-colors"
-          placeholder="+1 234 567 8900"
+          maxLength={PH_PHONE_INPUT_MAX}
+          className={`w-full px-4 py-2.5 bg-dark-700 border text-dark-50 rounded-lg focus:bg-dark-600 focus:border-primary-500 outline-none transition-colors ${
+            validatePhPhone(formData.phone) ? 'border-danger-500' : 'border-dark-600'
+          }`}
+          placeholder="09171234567"
           value={formData.phone}
-          onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+          onChange={(e) => setFormData(prev => ({ ...prev, phone: sanitizePhoneInput(e.target.value) }))}
         />
+        {validatePhPhone(formData.phone) && (
+          <p className="text-danger-500 text-xs mt-1">{validatePhPhone(formData.phone)}</p>
+        )}
       </div>
       <div>
         <label className="block text-sm font-medium text-dark-200 mb-2">
@@ -252,7 +261,7 @@ const UserForm = ({
         <button
           type="submit"
           className="flex-1 btn-primary"
-          disabled={updateUserMutation.isPending || createUserMutation.isPending}
+          disabled={updateUserMutation.isPending || createUserMutation.isPending || !!phoneError}
         >
           {selectedUser
             ? (updateUserMutation.isPending ? 'Saving...' : 'Save Changes')

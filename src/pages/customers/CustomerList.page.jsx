@@ -86,7 +86,7 @@ const CustomerList = () => {
     if (!data) return [];
 
     return [
-      { title: 'Total Members', value: pagination?.total || customers.length || 0, color: 'primary', icon: Users },
+      { title: 'Total Clients', value: pagination?.total || customers.length || 0, color: 'primary', icon: Users },
       { title: 'Active', value: membershipStats?.active || 0, color: 'success', icon: CheckCircle },
       { title: 'Expiring Soon', value: membershipStats?.expiringSoon || 0, color: 'warning', icon: AlertTriangle },
       { title: 'Expired', value: membershipStats?.expired || 0, color: 'danger', icon: XCircle },
@@ -134,12 +134,12 @@ const CustomerList = () => {
 
     await deleteCustomerMutation.mutateAsync(id);
     await fetchUserData();
-    Alert.success('Deleted!', 'Member has been deleted.', { timer: 2000, showConfirmButton: false });
+    Alert.success('Deleted!', 'Client has been deleted.', { timer: 2000, showConfirmButton: false });
   }
 
   /* ------------------------------- render ------------------------------- */
   return (
-    <Layout title="Member Management" subtitle="Manage all gym members">
+    <Layout title="Clients Management" subtitle="Manage all clients with their membership details">
       {/* Stats Cards */}
       <StatsCards stats={stats} />
 
@@ -166,7 +166,7 @@ const CustomerList = () => {
                 className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <UserPlus className="w-4 h-4" />
-                Add Member
+                Add Client
               </button>
             </>
           )}

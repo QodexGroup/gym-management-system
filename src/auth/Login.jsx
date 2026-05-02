@@ -72,6 +72,13 @@ const Login = () => {
       const userCredential = await signInWithEmailAndPassword(firebaseAuth, normalizedEmail, password);
       const firebaseUser = userCredential.user;
 
+      // reloadUserInfo is populated directly from Firebase's sign-in API response here,
+      // making this the most reliable place to capture passwordUpdatedAt.
+      const pwUpdatedAt = firebaseUser.reloadUserInfo?.passwordUpdatedAt;
+      if (pwUpdatedAt) {
+        localStorage.setItem('password_updated_at', String(pwUpdatedAt));
+      }
+
       const idToken = await firebaseUser.getIdToken();
 
       // Call login function from AuthContext which stores the token and fetches user data

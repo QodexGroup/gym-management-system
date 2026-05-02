@@ -28,8 +28,8 @@ export const customerTableColumns = ({ canEdit, canDelete, onEdit, onDelete, onV
     ),
   },
   {
-    key: 'member',
-    label: 'Member',
+    key: 'client',
+    label: 'Client',
     render: (c) => {
       const fullName = `${c.firstName || ''} ${c.lastName || ''}`.trim();
 
@@ -91,15 +91,6 @@ export const customerTableColumns = ({ canEdit, canDelete, onEdit, onDelete, onV
       ) : (
         '-'
       ),
-  },
-  {
-    key: 'trainer',
-    label: 'Trainer',
-    render: (c) =>
-      c.currentTrainer
-        ? c.currentTrainer.fullname ||
-          `${c.currentTrainer.firstname || ''} ${c.currentTrainer.lastname || ''}`
-        : '-',
   },
   {
     key: 'balance',

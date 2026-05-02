@@ -1,5 +1,5 @@
 import { Avatar } from '../../../components/common';
-import { Edit } from 'lucide-react';
+import { sanitizePhoneInput, validatePhPhone, PH_PHONE_INPUT_MAX } from '../../../utils/validators/phone';
 
 const MyAccountProfileForm = ({
   user,
@@ -11,17 +11,25 @@ const MyAccountProfileForm = ({
 }) => {
   if (!user) return null;
 
+  const phoneError = validatePhPhone(formData.phone);
+
+  const handlePhoneChange = (e) => {
+    onChange({ target: { name: 'phone', value: sanitizePhoneInput(e.target.value) } });
+  };
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="flex justify-center mb-4">
         <div className="relative">
           <Avatar src={user.avatar} name={user.fullname} size="xl" />
+          {/* Avatar upload not implemented yet — re-enable once backend support is added.
           <button
             type="button"
             className="absolute bottom-0 right-0 p-2 bg-primary-500 text-white rounded-full hover:bg-primary-600 transition-colors"
           >
             <Edit className="w-4 h-4" />
           </button>
+          */}
         </div>
       </div>
 
@@ -67,11 +75,13 @@ const MyAccountProfileForm = ({
         <input
           type="tel"
           name="phone"
-          className="input"
+          maxLength={PH_PHONE_INPUT_MAX}
+          className={`input ${phoneError ? 'border-danger-500 focus:border-danger-500' : ''}`}
           value={formData.phone}
-          onChange={onChange}
-          placeholder="+1 234 567 8900"
+          onChange={handlePhoneChange}
+          placeholder="09171234567"
         />
+        {phoneError && <p className="text-danger-600 text-xs mt-1">{phoneError}</p>}
       </div>
 
       <div className="flex gap-3 pt-4">
@@ -86,7 +96,7 @@ const MyAccountProfileForm = ({
         <button
           type="submit"
           className="flex-1 btn-primary"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !!phoneError}
         >
           {isSubmitting ? 'Saving...' : 'Save Changes'}
         </button>

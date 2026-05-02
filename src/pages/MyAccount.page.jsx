@@ -8,6 +8,7 @@ import MyAccountChangePasswordForm from './common/forms/MyAccountChangePasswordF
 import { useAuth } from '../context/AuthContext';
 import { userService } from '../services/userService';
 import { Toast } from '../utils/alert';
+import { formatRelativeTime } from '../utils/formatters';
 import { initializeFirebaseServices } from '../services/firebaseService';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 
@@ -17,6 +18,10 @@ const MyAccount = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordUpdatedAt, setPasswordUpdatedAt] = useState(
+    () => localStorage.getItem('password_updated_at')
+  );
+
 
   // Form state
   const [formData, setFormData] = useState({
@@ -157,6 +162,11 @@ const MyAccount = () => {
       // Update password in Firebase
       await updatePassword(currentUser, passwordData.newPassword);
 
+      // Track the change time in localStorage (cleared on logout/session expiry)
+      const now = String(Date.now());
+      localStorage.setItem('password_updated_at', now);
+      setPasswordUpdatedAt(now);
+
       Toast.success('Password changed successfully!');
       setShowPasswordModal(false);
       setPasswordData({
@@ -236,7 +246,7 @@ const MyAccount = () => {
                 </div>
                 <div>
                   <p className="text-sm text-dark-400">Phone</p>
-                  <p className="font-semibold text-dark-50">+1 234 567 8900</p>
+                  <p className="font-semibold text-dark-50">{user.phone || 'Not set'}</p>
                 </div>
               </div>
             </div>
@@ -257,7 +267,7 @@ const MyAccount = () => {
                   </div>
                   <div>
                     <h4 className="font-semibold text-dark-50">Password</h4>
-                    <p className="text-sm text-dark-500">Last changed 30 days ago</p>
+                    <p className="text-sm text-dark-500">{formatRelativeTime(passwordUpdatedAt, { prefix: 'Last changed', fallback: 'Password change date not available' })}</p>
                   </div>
                 </div>
                 <button

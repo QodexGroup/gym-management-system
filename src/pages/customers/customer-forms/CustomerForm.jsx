@@ -6,7 +6,7 @@ import { Toast } from '../../../utils/alert';
 import { useCreateCustomer, useUpdateCustomer } from '../../../hooks/useCustomers';
 import { useMembershipPlans } from '../../../hooks/useMembershipPlans';
 import { useCoaches } from '../../../hooks/useUsers';
-import { normalizePhoneNumber, normalizeDate } from '../../../utils/formatters'; // make sure these exist
+import { normalizePhoneNumber, normalizeDate } from '../../../utils/formatters';
 import { isValidEmail, normalizeEmail } from '../../../utils/validators/email';
 
 const CustomerForm = ({
@@ -38,10 +38,10 @@ const CustomerForm = ({
   const validateForm = () => {
     const newErrors = {};
     const requiredFields = [
-      { key: 'firstName', label: 'First name' },
-      { key: 'lastName', label: 'Last name' },
-      { key: 'phoneNumber', label: 'Phone number' },
-      { key: 'dateOfBirth', label: 'Date of birth' },
+      { key: 'firstName', label: 'First Name' },
+      { key: 'lastName', label: 'Last Name' },
+      { key: 'phoneNumber', label: 'Phone Number' },
+      { key: 'dateOfBirth', label: 'Date of Birth' },
     ];
 
     requiredFields.forEach(({ key, label }) => {
@@ -51,17 +51,22 @@ const CustomerForm = ({
 
     const email = normalizeEmail(formData.email);
     if (email && !isValidEmail(email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = 'Invalid email address';
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) {
-      Toast.error('Please fix the errors in the form');
+    const formErrors = validateForm();
+    if (Object.keys(formErrors).length > 0) {
+      // Scroll to the first field with an error so the user can see the inline messages
+      setTimeout(() => {
+        const firstError = document.querySelector('.border-danger-500');
+        if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
       return;
     }
 
@@ -103,10 +108,10 @@ const CustomerForm = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={selectedCustomer ? 'Edit Member' : 'Add New Member'}
+      title={selectedCustomer ? 'Edit Client' : 'Add New Client'}
       size="full"
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} noValidate className="space-y-6">
 
         {/* Personal Information */}
         <div className="border-b border-dark-200 pb-6">
@@ -131,7 +136,6 @@ const CustomerForm = ({
                     const error = validateRequiredField(formData.firstName, 'First name');
                     if (error) setErrors({ ...errors, firstName: error });
                   }}
-                  required
                 />
                 {errors.firstName && <p className="text-danger-600 text-xs mt-1">{errors.firstName}</p>}
               </div>
@@ -151,7 +155,6 @@ const CustomerForm = ({
                     const error = validateRequiredField(formData.lastName, 'Last name');
                     if (error) setErrors({ ...errors, lastName: error });
                   }}
-                  required
                 />
                 {errors.lastName && <p className="text-danger-600 text-xs mt-1">{errors.lastName}</p>}
               </div>
@@ -209,10 +212,9 @@ const CustomerForm = ({
                   if (errors.phoneNumber) setErrors({ ...errors, phoneNumber: '' });
                 }}
                 onBlur={() => {
-                  const error = validateRequiredField(formData.phoneNumber, 'Phone number');
+                  const error = validateRequiredField(formData.phoneNumber, 'Phone Number');
                   if (error) setErrors({ ...errors, phoneNumber: error });
                 }}
-                required
               />
               {errors.phoneNumber && <p className="text-danger-600 text-xs mt-1">{errors.phoneNumber}</p>}
             </div>
@@ -463,7 +465,7 @@ const CustomerForm = ({
               ? 'Saving...'
               : selectedCustomer
                 ? 'Save Changes'
-                : 'Add Member'}
+                : 'Add Client'}
           </button>
         </div>
       </form>

@@ -87,7 +87,7 @@ const AdminDashboard = () => {
   // Prepare stats array for StatsCards component
   const dashboardStats = [
     {
-      title: 'Total Members',
+      title: 'Total Clients',
       value: stats.totalMembers,
       icon: Users,
       trend: 'up',

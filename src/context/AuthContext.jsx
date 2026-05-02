@@ -63,6 +63,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('firebase_uid');
     localStorage.removeItem('token_expiration');
     localStorage.removeItem('session_start_time');
+    localStorage.removeItem('password_updated_at');
   };
 
   // Fetch user data from backend

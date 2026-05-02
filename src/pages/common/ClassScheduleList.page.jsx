@@ -13,7 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAccountLimit } from '../../hooks/useAccountLimit';
 import ClassScheduleForm from './forms/ClassScheduleForm';
 import { formatDate, formatTimeFromDate } from '../../utils/formatters';
-import { SCHEDULE_TYPE_LABELS, RECURRING_INTERVAL_LABELS, getCapacityStatus } from '../../constants/classScheduleConstants';
+import { SCHEDULE_TYPE_LABELS, RECURRING_INTERVAL_LABELS, getCapacityStatus, CLASS_SCHEDULE_TYPE, CLASS_SCHEDULE_TYPE_LABELS } from '../../constants/classScheduleConstants';
 import { usePagination } from '../../hooks/usePagination';
 
 const ClassScheduleList = () => {
@@ -192,6 +192,13 @@ const ClassScheduleList = () => {
           }}
           badges={[
             {
+              variant: 'primary',
+              getValue: (schedule) =>
+                schedule.classType === CLASS_SCHEDULE_TYPE.PERSONAL_TRAINING
+                  ? CLASS_SCHEDULE_TYPE_LABELS[CLASS_SCHEDULE_TYPE.PERSONAL_TRAINING]
+                  : null,
+            },
+            {
               variant: 'default',
               getValue: (schedule) => SCHEDULE_TYPE_LABELS[schedule.scheduleType] || 'One-time',
             },
@@ -206,10 +213,11 @@ const ClassScheduleList = () => {
               },
             },
           ]}
-          actions={{
-            onEdit: handleOpenModal,
-            onDelete: handleDeleteSchedule,
-          }}
+          actions={(schedule) =>
+            schedule.classType === CLASS_SCHEDULE_TYPE.PERSONAL_TRAINING
+              ? {}
+              : { onEdit: handleOpenModal, onDelete: handleDeleteSchedule }
+          }
           emptyStateMessage="No class schedules found"
           emptyStateIcon={Calendar}
         />

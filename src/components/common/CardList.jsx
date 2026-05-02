@@ -54,17 +54,18 @@ const CardList = ({
 
   // Default action buttons renderer
   const defaultRenderActions = (card) => {
-    if (!showActions || !actions || Object.keys(actions).length === 0) {
+    const resolvedActions = typeof actions === 'function' ? actions(card) : actions;
+    if (!showActions || !resolvedActions || Object.keys(resolvedActions).length === 0) {
       return null;
     }
 
     const actionButtons = [];
     
-    if (actions.onView) {
+    if (resolvedActions.onView) {
       actionButtons.push(
         <button
           key="view"
-          onClick={() => actions.onView(card)}
+          onClick={() => resolvedActions.onView(card)}
           className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
           title="View"
         >
@@ -72,12 +73,12 @@ const CardList = ({
         </button>
       );
     }
-    
-    if (actions.onEdit) {
+
+    if (resolvedActions.onEdit) {
       actionButtons.push(
         <button
           key="edit"
-          onClick={() => actions.onEdit(card)}
+          onClick={() => resolvedActions.onEdit(card)}
           className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
           title="Edit"
         >
@@ -85,12 +86,12 @@ const CardList = ({
         </button>
       );
     }
-    
-    if (actions.onDelete) {
+
+    if (resolvedActions.onDelete) {
       actionButtons.push(
         <button
           key="delete"
-          onClick={() => actions.onDelete(card.id || card.key)}
+          onClick={() => resolvedActions.onDelete(card.id || card.key)}
           className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
           title="Delete"
         >
@@ -99,11 +100,11 @@ const CardList = ({
       );
     }
 
-    if (actions.onCancel) {
+    if (resolvedActions.onCancel) {
       actionButtons.push(
         <button
           key="cancel"
-          onClick={() => actions.onCancel(card.id || card.key)}
+          onClick={() => resolvedActions.onCancel(card.id || card.key)}
           className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
           title="Cancel"
         >

@@ -309,6 +309,57 @@ export const normalizeDate = (dateValue) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
-  
+
   return `${year}-${month}-${day}`;
+};
+
+/**
+ * Format a date/timestamp as a human-readable relative time string.
+ *
+ * @param {string|number|Date} value - Unix ms timestamp, ISO string, or Date object
+ * @param {Object} [options]
+ * @param {string} [options.fallback='N/A'] - Text returned when value is falsy or invalid
+ * @param {string} [options.prefix=''] - Text prepended before the time unit, e.g. 'Last changed'
+ * @param {string} [options.justNowLabel] - Override label when diff < 1 minute
+ * @returns {string}
+ *
+ * @example
+ * formatRelativeTime(Date.now() - 5000)                        // 'Just now'
+ * formatRelativeTime(someIso, { prefix: 'Last changed' })      // 'Last changed 3 days ago'
+ * formatRelativeTime(null, { fallback: 'Never' })              // 'Never'
+ */
+export const formatRelativeTime = (value, options = {}) => {
+  const { fallback = 'N/A', prefix = '', justNowLabel } = options;
+
+  if (!value) return fallback;
+
+  const date = value instanceof Date
+    ? value
+    : typeof value === 'number' || (typeof value === 'string' && /^\d+$/.test(value))
+      ? new Date(Number(value))
+      : new Date(value);
+
+  if (isNaN(date.getTime())) return fallback;
+
+  const diffMs = Date.now() - date.getTime();
+  const tag = (n, unit) => {
+    const label = `${n} ${unit}${n === 1 ? '' : 's'} ago`;
+    return prefix ? `${prefix} ${label}` : label;
+  };
+
+  if (diffMs < 60_000) return justNowLabel ?? (prefix ? `${prefix} just now` : 'Just now');
+
+  const minutes = Math.floor(diffMs / 60_000);
+  if (minutes < 60) return tag(minutes, 'minute');
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return tag(hours, 'hour');
+
+  const days = Math.floor(hours / 24);
+  if (days < 30) return tag(days, 'day');
+
+  const months = Math.floor(days / 30);
+  if (months < 12) return tag(months, 'month');
+
+  return tag(Math.floor(months / 12), 'year');
 };

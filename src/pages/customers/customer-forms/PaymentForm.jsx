@@ -14,13 +14,14 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false })
     return remaining > 0 ? remaining : 0;
   }, [bill]);
 
-  const [amount, setAmount] = useState(remainingAmount);
+  const [amount, setAmount] = useState(String(remainingAmount));
   const [paymentDate, setPaymentDate] = useState(new Date());
   const [referenceNumber, setReferenceNumber] = useState('');
   const [remarks, setRemarks] = useState('');
   const [method, setMethod] = useState(PAYMENT_METHOD.CASH);
 
-  const isAmountInvalid = amount <= 0 || amount > remainingAmount;
+  const parsedAmount = parseFloat(amount);
+  const isAmountInvalid = !amount || isNaN(parsedAmount) || parsedAmount <= 0 || parsedAmount > remainingAmount;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -85,12 +86,14 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false })
             max={remainingAmount}
             step="0.01"
             onChange={(e) => {
-              const value = parseFloat(e.target.value) || 0;
-              if (value > remainingAmount) {
-                setAmount(remainingAmount);
-              } else {
-                setAmount(value);
+              const raw = e.target.value;
+              if (raw === '') {
+                setAmount('');
+                return;
               }
+              const value = parseFloat(raw);
+              if (isNaN(value)) return;
+              setAmount(value > remainingAmount ? String(remainingAmount) : raw);
             }}
             required
           />
