@@ -334,7 +334,6 @@ const CheckIn = () => {
                     const fullName = `${customer.firstName || ''} ${customer.lastName || ''}`.trim();
                     const membership = customer.currentMembership;
                     const membershipStatus = membership?.status || 'none';
-                    const isExpired = membershipStatus === 'expired' || !membership;
 
                     // Check if already checked in
                     const alreadyCheckedIn = walkinCustomers.find(
@@ -378,9 +377,9 @@ const CheckIn = () => {
                         </div>
                         <button
                           onClick={() => handleQuickCheckIn(customer)}
-                          disabled={isExpired || alreadyCheckedIn}
+                          disabled={!!alreadyCheckedIn}
                           className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                            isExpired || alreadyCheckedIn
+                            alreadyCheckedIn
                               ? 'bg-dark-600 text-dark-400 cursor-not-allowed'
                               : 'bg-success-500 text-white hover:bg-success-600'
                           }`}

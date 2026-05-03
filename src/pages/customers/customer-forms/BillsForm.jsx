@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useMembershipPlans } from '../../../hooks/useMembershipPlans';
@@ -33,7 +33,7 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
   const [formData, setFormData] = useState({
     billDate: initialData?.billDate ? new Date(initialData.billDate) : new Date(),
     billType: initialData?.billType || BILL_TYPE.CUSTOM_AMOUNT,
-    membershipPlanId: initialData?.membershipPlanId || activeMembershipPlan?.id || '',
+    billableId: initialData?.billableId || initialData?.membershipPlanId || activeMembershipPlan?.id || '',
     customService: initialData?.customService || '',
     grossAmount: initialData?.grossAmount || 0,
     discountPercentage: initialData?.discountPercentage || 0,
@@ -60,6 +60,8 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
 
     const billDate = new Date(initialData.billDate);
     const membershipStartDate = new Date(currentMembership.membershipStartDate);
+    billDate.setHours(0, 0, 0, 0);
+    membershipStartDate.setHours(0, 0, 0, 0);
     
     // If bill_date < current membership_start_date, it's a previous cycle bill (locked)
     return billDate < membershipStartDate;
@@ -67,8 +69,8 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
 
   // Selected membership plan
   const selectedPlan = useMemo(() => {
-    return membershipPlans.find(plan => plan.id === parseInt(formData.membershipPlanId));
-  }, [formData.membershipPlanId, membershipPlans]);
+    return membershipPlans.find(plan => plan.id === parseInt(formData.billableId));
+  }, [formData.billableId, membershipPlans]);
 
   // Net amount calculation
   const netAmount = useMemo(() => {
@@ -96,7 +98,7 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
       customerId: parseInt(customerId),
       billDate: formattedDate,
       billType: formData.billType,
-      membershipPlanId: formData.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION ? parseInt(formData.membershipPlanId) : null,
+      billableId: formData.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION ? parseInt(formData.billableId) : null,
       customService: formData.billType === BILL_TYPE.CUSTOM_AMOUNT ? formData.customService : null,
       grossAmount: parseFloat(formData.grossAmount),
       discountPercentage: parseFloat(formData.discountPercentage) || 0,
