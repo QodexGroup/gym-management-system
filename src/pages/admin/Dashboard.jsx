@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
 import { dashboardService } from '../../services/dashboardService';
+import DashboardUpcomingSessions from '../../components/dashboard/DashboardUpcomingSessions';
 import {
   LineChart,
   Line,
@@ -33,6 +34,9 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sessions, setSessions] = useState([]);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [sessionsError, setSessionsError] = useState(null);
 
   useEffect(() => {
     const fetchDashboardStats = async () => {
@@ -50,6 +54,31 @@ const AdminDashboard = () => {
     };
 
     fetchDashboardStats();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadSessions = async () => {
+      try {
+        setSessionsLoading(true);
+        const data = await dashboardService.getUpcomingSessions(10);
+        if (!cancelled) {
+          setSessions(data?.sessions || []);
+          setSessionsError(null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setSessionsError(err.message || 'Failed to load sessions');
+          setSessions([]);
+        }
+      } finally {
+        if (!cancelled) setSessionsLoading(false);
+      }
+    };
+    loadSessions();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (loading) {
@@ -131,6 +160,14 @@ const AdminDashboard = () => {
     <Layout title="Dashboard" subtitle="Welcome back! Here's what's happening today.">
       {/* Stats Grid - First Row */}
       <StatsCards stats={dashboardStats} columns={4} />
+
+      <div className="mb-8">
+        <DashboardUpcomingSessions
+          sessions={sessions}
+          loading={sessionsLoading}
+          error={sessionsError}
+        />
+      </div>
 
       {/* Revenue Stats - Commented out for future use */}
       {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

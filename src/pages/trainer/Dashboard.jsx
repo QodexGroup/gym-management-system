@@ -1,269 +1,297 @@
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
-import { StatCard, Avatar, Badge } from '../../components/common';
-import {
-  Users,
-  Calendar,
-  Clock,
-  DollarSign,
-  Target,
-  TrendingUp,
-  CheckCircle,
-  AlertCircle,
-} from 'lucide-react';
-import { mockMembers, mockAppointments, mockCheckIns } from '../../data/mockData';
-import { formatCurrency } from '../../utils/formatters';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+import DataTable from '../../components/DataTable';
+import { Avatar, Badge } from '../../components/common';
+import StatCard from '../../components/common/StatCard';
+import { Users, CalendarDays } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { dashboardService } from '../../services/dashboardService';
+import DashboardUpcomingSessions from '../../components/dashboard/DashboardUpcomingSessions';
+import { isToday, parseISO } from 'date-fns';
 
 const TrainerDashboard = () => {
   const navigate = useNavigate();
-  // Mock trainer-specific data
-  const trainerStats = {
-    assignedMembers: 15,
-    appointmentsToday: 5,
-    checkedInToday: 8,
-    pendingProgressLogs: 3,
-    monthlyCommission: 2500,
-    sessionsCompleted: 45,
-  };
+  const { user } = useAuth();
 
-  const commissionData = [
-    { week: 'Week 1', commission: 580 },
-    { week: 'Week 2', commission: 720 },
-    { week: 'Week 3', commission: 650 },
-    { week: 'Week 4', commission: 550 },
-  ];
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState(null);
 
-  // Filter appointments for trainer (Mike Johnson - trainerId: 1)
-  const myAppointments = mockAppointments.filter((apt) => apt.trainerId === 1);
-  const myMembers = mockMembers.filter((m) => m.trainer === 'Mike Johnson');
+  const [ptPayload, setPtPayload] = useState({ members: [], total: 0 });
+  const [ptLoading, setPtLoading] = useState(true);
+  const [ptError, setPtError] = useState(null);
+  const [ptRefresh, setPtRefresh] = useState(0);
+
+  const [sessions, setSessions] = useState([]);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [sessionsError, setSessionsError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        setStatsLoading(true);
+        const data = await dashboardService.getDashboardStats();
+        if (!cancelled) {
+          setStats(data);
+          setStatsError(null);
+        }
+      } catch (e) {
+        if (!cancelled) setStatsError(e.message || 'Failed to load dashboard');
+      } finally {
+        if (!cancelled) setStatsLoading(false);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadPt = async () => {
+      try {
+        setPtLoading(true);
+        setPtError(null);
+        const data = await dashboardService.getCoachPtClients(10);
+        if (!cancelled) {
+          setPtPayload({ members: data?.members || [], total: data?.total ?? 0 });
+          setPtError(null);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setPtError(e.message || 'Failed to load PT clients');
+          setPtPayload({ members: [], total: 0 });
+        }
+      } finally {
+        if (!cancelled) setPtLoading(false);
+      }
+    };
+    loadPt();
+    return () => {
+      cancelled = true;
+    };
+  }, [ptRefresh]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadSessions = async () => {
+      try {
+        setSessionsLoading(true);
+        const data = await dashboardService.getUpcomingSessions(10);
+        if (!cancelled) {
+          setSessions(data?.sessions || []);
+          setSessionsError(null);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setSessionsError(e.message || 'Failed to load sessions');
+          setSessions([]);
+        }
+      } finally {
+        if (!cancelled) setSessionsLoading(false);
+      }
+    };
+    loadSessions();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const sessionsTodayCount = useMemo(() => {
+    return sessions.filter((s) => {
+      if (!s.startTime) return false;
+      return isToday(parseISO(s.startTime));
+    }).length;
+  }, [sessions]);
+
+  const subtitle = user?.fullname
+    ? `Welcome back, ${user.fullname}! Here's your overview.`
+    : "Welcome back! Here's your overview.";
+
+  const expiringColumns = useMemo(
+    () => [
+      {
+        key: 'member',
+        label: 'Member',
+        render: (row) => (
+          <div className="flex items-center gap-3">
+            <Avatar src={row.avatar} name={row.name} size="sm" />
+            <div>
+              <p className="font-medium text-dark-800">{row.name}</p>
+              <p className="text-xs text-dark-500">{row.email}</p>
+            </div>
+          </div>
+        ),
+      },
+      { key: 'membership', label: 'Membership' },
+      { key: 'membershipExpiry', label: 'Expiry Date' },
+      {
+        key: 'membershipStatus',
+        label: 'Status',
+        render: (row) => (
+          <Badge
+            variant={
+              row.membershipStatus === 'expiring'
+                ? 'warning'
+                : row.membershipStatus === 'expired'
+                  ? 'danger'
+                  : 'success'
+            }
+          >
+            {row.membershipStatus}
+          </Badge>
+        ),
+      },
+    ],
+    []
+  );
+
+  if (statsLoading && !stats && !statsError) {
+    return (
+      <Layout title="My Dashboard" subtitle={subtitle}>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (statsError && !stats) {
+    return (
+      <Layout title="My Dashboard" subtitle={subtitle}>
+        <div className="card text-center py-12">
+          <p className="text-dark-600 mb-4">{statsError}</p>
+          <button type="button" onClick={() => window.location.reload()} className="btn-primary">
+            Retry
+          </button>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
-    <Layout title="My Dashboard" subtitle="Welcome back, Mike! Here's your overview.">
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <Layout title="My Dashboard" subtitle={subtitle}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <StatCard
-          title="My Members"
-          value={trainerStats.assignedMembers}
+          title="Assigned PT clients"
+          value={ptLoading ? '—' : ptError ? '—' : ptPayload.total}
           icon={Users}
           color="primary"
-          subtitle="Assigned to you"
+          subtitle="Active PT packages with you"
         />
         <StatCard
-          title="Today's Appointments"
-          value={trainerStats.appointmentsToday}
-          icon={Calendar}
+          title="Sessions today"
+          value={sessionsLoading ? '—' : sessionsTodayCount}
+          icon={CalendarDays}
           color="accent"
-          subtitle="5 scheduled"
+          subtitle="Your schedule"
         />
         <StatCard
-          title="Checked In Today"
-          value={trainerStats.checkedInToday}
-          icon={CheckCircle}
+          title="Upcoming (list)"
+          value={sessionsLoading ? '—' : sessions.length}
+          icon={CalendarDays}
           color="success"
-          subtitle="Your members"
-        />
-        <StatCard
-          title="Pending Progress"
-          value={trainerStats.pendingProgressLogs}
-          icon={AlertCircle}
-          color="warning"
-          subtitle="Logs to update"
+          subtitle="Next on your calendar"
         />
       </div>
 
-      {/* Commission Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <StatCard
-          title="Monthly Commission"
-          value={formatCurrency(trainerStats.monthlyCommission)}
-          icon={DollarSign}
-          trend="up"
-          trendValue="+12%"
-          color="success"
-        />
-        <StatCard
-          title="Sessions Completed"
-          value={trainerStats.sessionsCompleted}
-          icon={Target}
-          color="primary"
-          subtitle="This month"
-        />
-        <StatCard
-          title="Performance Score"
-          value="4.9/5"
-          icon={TrendingUp}
-          color="accent"
-          subtitle="Based on reviews"
+      <div className="mb-8">
+        <DashboardUpcomingSessions
+          sessions={sessions}
+          loading={sessionsLoading}
+          error={sessionsError}
         />
       </div>
 
-      {/* Charts and Lists */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Commission Chart */}
-        <div className="card">
-          <h3 className="text-lg font-semibold text-dark-800 mb-6">Weekly Commission</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={commissionData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="week" stroke="#64748b" fontSize={12} />
-                <YAxis stroke="#64748b" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    background: '#fff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="commission"
-                  stroke="#0ea5e9"
-                  strokeWidth={2}
-                  dot={{ fill: '#0ea5e9', strokeWidth: 2 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+      <div className="card mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-dark-800">Assigned PT clients</h3>
         </div>
-
-        {/* Today's Schedule */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-dark-800">Today's Schedule</h3>
+        {ptLoading ? (
+          <p className="text-center text-dark-500 py-8">Loading clients…</p>
+        ) : ptError ? (
+          <div className="text-center py-8">
+            <p className="text-danger-500 mb-4">{ptError}</p>
             <button
-              onClick={() => navigate('/calendar')}
-              className="text-sm text-primary-500 hover:text-primary-600 font-medium cursor-pointer"
+              type="button"
+              className="btn-secondary"
+              onClick={() => setPtRefresh((n) => n + 1)}
             >
-              View Calendar →
+              Retry
             </button>
           </div>
-          <div className="space-y-3">
-            {myAppointments
-              .filter((apt) => apt.date === '2024-12-09')
-              .map((appointment) => (
-                <div
-                  key={appointment.id}
-                  className="flex items-center justify-between p-4 bg-gradient-to-r from-dark-50 to-transparent rounded-xl border-l-4 border-primary-500"
+        ) : ptPayload.members.length === 0 ? (
+          <p className="text-center text-dark-500 py-8">No PT clients assigned</p>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {ptPayload.members.map((member) => (
+                <button
+                  type="button"
+                  key={member.id}
+                  onClick={() => navigate(`/members/${member.id}`)}
+                  className="flex items-center gap-4 p-4 bg-dark-50 rounded-xl hover:bg-dark-100 transition-colors text-left w-full border border-transparent hover:border-primary-200"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-primary-600">{appointment.time}</p>
-                      <p className="text-xs text-dark-400">{appointment.duration}min</p>
-                    </div>
-                    <div>
-                      <p className="font-medium text-dark-800">{appointment.member}</p>
-                      <p className="text-sm text-dark-500">{appointment.type}</p>
+                  <Avatar src={member.photo} name={member.name} size="lg" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-dark-800 truncate">{member.name}</p>
+                    <p className="text-sm text-dark-500">{member.membership}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge
+                        size="sm"
+                        variant={
+                          member.membershipStatus === 'active'
+                            ? 'success'
+                            : member.membershipStatus === 'expiring'
+                              ? 'warning'
+                              : 'danger'
+                        }
+                      >
+                        {member.membershipStatus}
+                      </Badge>
                     </div>
                   </div>
-                  <Badge
-                    variant={
-                      appointment.status === 'confirmed'
-                        ? 'success'
-                        : appointment.status === 'pending'
-                        ? 'warning'
-                        : 'default'
-                    }
-                  >
-                    {appointment.status}
-                  </Badge>
-                </div>
+                </button>
               ))}
-            {myAppointments.filter((apt) => apt.date === '2024-12-09').length === 0 && (
-              <p className="text-center text-dark-400 py-8">No appointments today</p>
+            </div>
+            {ptPayload.total > 10 && (
+              <div className="mt-6 flex justify-center">
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => navigate('/members?assignedPtCoach=self')}
+                >
+                  Load more
+                </button>
+              </div>
             )}
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
-      {/* My Members */}
-      <div className="card">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-dark-800">My Assigned Members</h3>
-          <button
-            onClick={() => navigate('/members')}
-            className="text-sm text-primary-500 hover:text-primary-600 font-medium cursor-pointer"
-          >
-            View All →
-          </button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {myMembers.slice(0, 6).map((member) => (
-            <div
-              key={member.id}
-              className="flex items-center gap-4 p-4 bg-dark-50 rounded-xl hover:bg-dark-100 transition-colors cursor-pointer"
-            >
-              <Avatar
-                src={member.avatar}
-                name={member.name}
-                size="lg"
-                status={member.membershipStatus === 'active' ? 'online' : 'offline'}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-dark-800 truncate">{member.name}</p>
-                <p className="text-sm text-dark-500">{member.membership}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge
-                    size="sm"
-                    variant={
-                      member.membershipStatus === 'active'
-                        ? 'success'
-                        : member.membershipStatus === 'expiring'
-                        ? 'warning'
-                        : 'danger'
-                    }
-                  >
-                    {member.membershipStatus}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Pending Progress Logs */}
-      <div className="card mt-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-dark-800">Pending Progress Updates</h3>
-          <button
-            onClick={() => navigate('/members')}
-            className="text-sm text-primary-500 hover:text-primary-600 font-medium cursor-pointer"
-          >
-            View All →
-          </button>
-        </div>
-        <div className="space-y-4">
-          {myMembers.slice(0, 3).map((member) => (
-            <div
-              key={member.id}
-              className="flex items-center justify-between p-4 bg-warning-50 border border-warning-100 rounded-xl"
-            >
-              <div className="flex items-center gap-3">
-                <Avatar src={member.avatar} name={member.name} size="md" />
-                <div>
-                  <p className="font-medium text-dark-800">{member.name}</p>
-                  <p className="text-sm text-dark-500">
-                    Last updated: {member.lastCheckIn?.split(' ')[0] || 'N/A'}
-                  </p>
-                </div>
-              </div>
-              <button className="btn-primary text-sm py-2 px-4">
-                Update Progress
+      {stats && (
+        <div className="card">
+          <DataTable
+            title="Memberships expiring soon"
+            actionButton={
+              <button
+                type="button"
+                onClick={() => navigate('/members')}
+                className="text-sm text-primary-500 hover:text-primary-600 font-medium cursor-pointer"
+              >
+                View all members →
               </button>
-            </div>
-          ))}
+            }
+            columns={expiringColumns}
+            data={stats.expiringMembersList || []}
+            onRowClick={(member) => navigate(`/members/${member.id}`)}
+            emptyMessage="No memberships expiring in the next 7 days"
+          />
         </div>
-      </div>
+      )}
     </Layout>
   );
 };

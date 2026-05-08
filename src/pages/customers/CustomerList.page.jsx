@@ -1,5 +1,5 @@
-import { useMemo, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import Layout from '../../components/layout/Layout';
 import DataTable from '../../components/DataTable';
@@ -21,6 +21,9 @@ import { usePagination } from '../../hooks/usePagination';
 
 const CustomerList = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const assignedPtCoach = searchParams.get('assignedPtCoach');
+  const assignedPtCoachIdParam = searchParams.get('assignedPtCoachId');
   const { fetchUserData } = useAuth();
   const { hasPermission } = usePermissions();
   const { canCreate: canAddMember, message: limitMessage } = useAccountLimit('customers');
@@ -35,11 +38,30 @@ const CustomerList = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [formData, setFormData] = useState(getInitialCustomerFormData());
 
+  const assignedPtCoachIdNumeric = useMemo(() => {
+    if (assignedPtCoachIdParam == null || assignedPtCoachIdParam === '') return null;
+    const n = Number.parseInt(assignedPtCoachIdParam, 10);
+    if (!Number.isFinite(n) || n <= 0) return null;
+    return n;
+  }, [assignedPtCoachIdParam]);
+
   // Memoize customer query options to prevent unnecessary refetches
-  const customerQueryOptions = useMemo(() => ({
-    pagelimit: pageSize,
-    sorts: [{ field: 'first_name', direction: 'asc' }],
-  }), [pageSize]);
+  const customerQueryOptions = useMemo(() => {
+    const opts = {
+      pagelimit: pageSize,
+      sorts: [{ field: 'first_name', direction: 'asc' }],
+    };
+    if (assignedPtCoach === 'self') {
+      opts.filters = { assignedPtCoachId: 'self' };
+    } else if (assignedPtCoachIdNumeric != null) {
+      opts.filters = { assignedPtCoachId: String(assignedPtCoachIdNumeric) };
+    }
+    return opts;
+  }, [pageSize, assignedPtCoach, assignedPtCoachIdNumeric]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [assignedPtCoach, assignedPtCoachIdParam, setCurrentPage]);
 
   // Fetch customers
   const { data, isLoading } = useCustomers(currentPage, customerQueryOptions);
@@ -140,6 +162,19 @@ const CustomerList = () => {
   /* ------------------------------- render ------------------------------- */
   return (
     <Layout title="Clients Management" subtitle="Manage all clients with their membership details">
+      {(assignedPtCoach === 'self' || assignedPtCoachIdNumeric != null) && (
+        <div className="mb-4 rounded-lg border border-primary-500/40 bg-primary-500/10 px-4 py-3 text-sm text-dark-200">
+          Showing clients with an active PT package assigned
+          {assignedPtCoach === 'self' ? ' to you' : ' to the selected coach'}.
+          <button
+            type="button"
+            className="ml-3 text-primary-400 hover:text-primary-300 font-medium"
+            onClick={() => navigate('/members')}
+          >
+            Clear filter
+          </button>
+        </div>
+      )}
       {/* Stats Cards */}
       <StatsCards stats={stats} />
 

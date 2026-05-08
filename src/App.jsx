@@ -87,10 +87,13 @@ const AdminProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Dashboard component that renders based on user role
+// Dashboard: coaches see coach dashboard; admin, staff, and other roles see admin-style dashboard
 const Dashboard = () => {
-  const { isAdmin } = useAuth();
-  return isAdmin ? <AdminDashboard /> : <TrainerDashboard />;
+  const { isTrainer } = useAuth();
+  if (isTrainer) {
+    return <TrainerDashboard />;
+  }
+  return <AdminDashboard />;
 };
 
 const KioskLockGuard = ({ children }) => {
