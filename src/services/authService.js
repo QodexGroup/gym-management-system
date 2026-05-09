@@ -238,6 +238,31 @@ export const authService = {
     return json;
   },
 
+  /**
+   * Request a password reset email (public; backend returns generic message with or without Firebase user).
+   * @returns {Promise<{ message?: string }>}
+   */
+  async forgotPassword(email) {
+    const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const msg =
+        json.message ||
+        json.error ||
+        (response.status === 422 && json.errors?.email?.[0]) ||
+        `Request failed (${response.status})`;
+      throw new Error(msg);
+    }
+    return json;
+  },
+
   async getCurrentUser() {
     try {
       const response = await authenticatedFetch(`${API_BASE_URL}/auth/me`, {
