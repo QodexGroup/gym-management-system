@@ -13,6 +13,7 @@ import {
 import { formatCurrency } from '../../utils/formatters';
 import { dashboardService } from '../../services/dashboardService';
 import DashboardUpcomingSessions from '../../components/dashboard/DashboardUpcomingSessions';
+import { useAuth } from '../../context/AuthContext';
 import {
   LineChart,
   Line,
@@ -31,6 +32,7 @@ import {
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const { user, isStaff } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -61,7 +63,7 @@ const AdminDashboard = () => {
     const loadSessions = async () => {
       try {
         setSessionsLoading(true);
-        const data = await dashboardService.getUpcomingSessions(10);
+        const data = await dashboardService.getUpcomingSessions(50);
         if (!cancelled) {
           setSessions(data?.sessions || []);
           setSessionsError(null);
@@ -81,9 +83,17 @@ const AdminDashboard = () => {
     };
   }, []);
 
+  const pageTitle = isStaff ? 'Staff dashboard' : 'Dashboard';
+  const pageSubtitle =
+    isStaff && user?.fullname
+      ? `Welcome, ${user.fullname}. Account overview and today's activity.`
+      : isStaff
+        ? `Welcome back. Account overview and today's activity.`
+        : "Welcome back! Here's what's happening today.";
+
   if (loading) {
     return (
-      <Layout title="Dashboard" subtitle="Welcome back! Here's what's happening today.">
+      <Layout title={pageTitle} subtitle={pageSubtitle}>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full"></div>
         </div>
@@ -93,7 +103,7 @@ const AdminDashboard = () => {
 
   if (error) {
     return (
-      <Layout title="Dashboard" subtitle="Welcome back! Here's what's happening today.">
+      <Layout title={pageTitle} subtitle={pageSubtitle}>
         <div className="card text-center py-12">
           <AlertTriangle className="w-16 h-16 text-danger-500 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-dark-50 mb-2">Failed to Load Dashboard</h3>
@@ -157,9 +167,9 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <Layout title="Dashboard" subtitle="Welcome back! Here's what's happening today.">
+    <Layout title={pageTitle} subtitle={pageSubtitle}>
       {/* Stats Grid - First Row */}
-      <StatsCards stats={dashboardStats} columns={4} />
+      <StatsCards stats={dashboardStats} columns={4} dark iconColor="light" />
 
       <div className="mb-8">
         <DashboardUpcomingSessions

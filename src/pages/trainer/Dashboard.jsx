@@ -4,7 +4,7 @@ import Layout from '../../components/layout/Layout';
 import DataTable from '../../components/DataTable';
 import { Avatar, Badge } from '../../components/common';
 import StatCard from '../../components/common/StatCard';
-import { Users, CalendarDays } from 'lucide-react';
+import { Users, CalendarDays, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { dashboardService } from '../../services/dashboardService';
 import DashboardUpcomingSessions from '../../components/dashboard/DashboardUpcomingSessions';
@@ -80,7 +80,7 @@ const TrainerDashboard = () => {
     const loadSessions = async () => {
       try {
         setSessionsLoading(true);
-        const data = await dashboardService.getUpcomingSessions(10);
+        const data = await dashboardService.getUpcomingSessions(50);
         if (!cancelled) {
           setSessions(data?.sessions || []);
           setSessionsError(null);
@@ -174,13 +174,15 @@ const TrainerDashboard = () => {
 
   return (
     <Layout title="My Dashboard" subtitle={subtitle}>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
         <StatCard
           title="Assigned PT clients"
           value={ptLoading ? '—' : ptError ? '—' : ptPayload.total}
           icon={Users}
           color="primary"
           subtitle="Active PT packages with you"
+          dark
+          size="sm"
         />
         <StatCard
           title="Sessions today"
@@ -188,6 +190,8 @@ const TrainerDashboard = () => {
           icon={CalendarDays}
           color="accent"
           subtitle="Your schedule"
+          dark
+          size="sm"
         />
         <StatCard
           title="Upcoming (list)"
@@ -195,10 +199,12 @@ const TrainerDashboard = () => {
           icon={CalendarDays}
           color="success"
           subtitle="Next on your calendar"
+          dark
+          size="sm"
         />
       </div>
 
-      <div className="mb-8">
+      <div className="mb-5">
         <DashboardUpcomingSessions
           sessions={sessions}
           loading={sessionsLoading}
@@ -206,15 +212,20 @@ const TrainerDashboard = () => {
         />
       </div>
 
-      <div className="card mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-dark-800">Assigned PT clients</h3>
+      <div className="card !p-3 sm:!p-4 mb-8">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-dark-50 sm:text-base">Assigned PT clients</h3>
+            <p className="mt-0.5 truncate text-[11px] text-dark-500">
+              Tap a row to open the member profile
+            </p>
+          </div>
         </div>
         {ptLoading ? (
-          <p className="text-center text-dark-500 py-8">Loading clients…</p>
+          <p className="py-5 text-center text-xs text-dark-400">Loading clients…</p>
         ) : ptError ? (
-          <div className="text-center py-8">
-            <p className="text-danger-500 mb-4">{ptError}</p>
+          <div className="py-6 text-center">
+            <p className="mb-3 text-danger-500 text-sm">{ptError}</p>
             <button
               type="button"
               className="btn-secondary"
@@ -224,24 +235,29 @@ const TrainerDashboard = () => {
             </button>
           </div>
         ) : ptPayload.members.length === 0 ? (
-          <p className="text-center text-dark-500 py-8">No PT clients assigned</p>
+          <p className="py-5 text-center text-xs text-dark-400">No PT clients assigned</p>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <ul
+              role="list"
+              className="overflow-hidden rounded-md border border-dark-600/70 bg-dark-900/20"
+            >
               {ptPayload.members.map((member) => (
-                <button
-                  type="button"
-                  key={member.id}
-                  onClick={() => navigate(`/members/${member.id}`)}
-                  className="flex items-center gap-4 p-4 bg-dark-50 rounded-xl hover:bg-dark-100 transition-colors text-left w-full border border-transparent hover:border-primary-200"
-                >
-                  <Avatar src={member.photo} name={member.name} size="lg" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-dark-800 truncate">{member.name}</p>
-                    <p className="text-sm text-dark-500">{member.membership}</p>
-                    <div className="flex items-center gap-2 mt-1">
+                <li key={member.id} className="border-b border-dark-700/50 last:border-b-0">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/members/${member.id}`)}
+                    className="group grid w-full grid-cols-[auto_1fr_auto] items-center gap-2 px-2 py-1 text-left transition-colors hover:bg-dark-700/40 sm:gap-3 sm:px-2.5 sm:py-1"
+                  >
+                    <Avatar src={member.photo} name={member.name} size="xs" />
+                    <div className="min-w-0 py-px">
+                      <p className="truncate text-[13px] font-medium leading-tight text-dark-50">{member.name}</p>
+                      <p className="truncate text-[11px] leading-tight text-dark-400">{member.membership}</p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
                       <Badge
                         size="sm"
+                        className="!px-1.5 !py-px text-[10px]"
                         variant={
                           member.membershipStatus === 'active'
                             ? 'success'
@@ -252,13 +268,17 @@ const TrainerDashboard = () => {
                       >
                         {member.membershipStatus}
                       </Badge>
+                      <ChevronRight
+                        className="size-3.5 text-dark-500 opacity-0 transition-opacity group-hover:opacity-80"
+                        aria-hidden
+                      />
                     </div>
-                  </div>
-                </button>
+                  </button>
+                </li>
               ))}
-            </div>
+            </ul>
             {ptPayload.total > 10 && (
-              <div className="mt-6 flex justify-center">
+              <div className="mt-4 flex justify-center">
                 <button
                   type="button"
                   className="btn-primary"
