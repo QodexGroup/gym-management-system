@@ -9,7 +9,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
  */
 export const reportService = {
   async getDashboardStats() {
-    return dashboardService.getDashboardStats();
+    return dashboardService.getAccountDashboardMetrics();
   },
 
   /**
@@ -55,7 +55,7 @@ export const reportService = {
     const { dateRange = 'this_month', customDateFrom, customDateTo } = options;
     const { start: dateFrom, end: dateTo } = getReportDateRange(dateRange, customDateFrom, customDateTo);
     const [stats, collectionResponse] = await Promise.all([
-      dashboardService.getDashboardStats(),
+      dashboardService.getAccountDashboardMetrics(),
       authenticatedFetch(`${API_BASE_URL}/reports/collection-data?${new URLSearchParams({ startDate: dateFrom, endDate: dateTo })}`),
     ]);
     if (!collectionResponse.ok) {
