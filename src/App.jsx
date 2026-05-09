@@ -10,6 +10,8 @@ import { isKioskLocked } from './constants/kiosk';
 import Login from './auth/Login';
 import SignUp from './auth/SignUp';
 import AuthAction from './auth/AuthAction';
+import ForgotPassword from './auth/ForgotPassword';
+import ResetPassword from './auth/ResetPassword';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -144,6 +146,8 @@ function App() {
                   {/* Auth Routes */}
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<SignUp />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/auth/action" element={<AuthAction />} />
 
                 {/* Protected Routes */}
