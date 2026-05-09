@@ -1,5 +1,6 @@
 const Avatar = ({ src, name, size = 'md', status }) => {
   const sizeClasses = {
+    xs: 'w-7 h-7',
     sm: 'w-8 h-8',
     md: 'w-10 h-10',
     lg: 'w-12 h-12',
@@ -32,7 +33,7 @@ const Avatar = ({ src, name, size = 'md', status }) => {
         />
       ) : (
         <div
-          className={`${sizeClasses[size]} rounded-full bg-primary-100 text-primary-600 font-semibold flex items-center justify-center`}
+          className={`${sizeClasses[size]} rounded-full bg-primary-100 text-primary-600 font-semibold flex items-center justify-center ${size === 'xs' ? 'text-[10px]' : ''}`}
         >
           {getInitials(name)}
         </div>

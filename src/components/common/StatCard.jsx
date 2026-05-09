@@ -136,11 +136,21 @@ const StatCard = (
           {trend && (
             <div className="flex items-center gap-1 mt-2">
               {trend === 'up' ? (
-                <TrendingUp className="w-4 h-4 text-success-500" />
+                <TrendingUp className={dark ? 'w-4 h-4 text-success-400' : 'w-4 h-4 text-success-500'} />
               ) : (
-                <TrendingDown className="w-4 h-4 text-danger-500" />
+                <TrendingDown className={dark ? 'w-4 h-4 text-danger-400' : 'w-4 h-4 text-danger-500'} />
               )}
-              <span className={`text-xs font-medium ${trend === 'up' ? 'text-success-600' : 'text-danger-600'}`}>
+              <span
+                className={`text-xs font-medium ${
+                  trend === 'up'
+                    ? dark
+                      ? 'text-success-400'
+                      : 'text-success-600'
+                    : dark
+                      ? 'text-danger-400'
+                      : 'text-danger-600'
+                }`}
+              >
                 {trendValue}
               </span>
               <span className="text-xs text-dark-400">vs last month</span>
