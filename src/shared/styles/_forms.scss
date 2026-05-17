@@ -1,0 +1,28 @@
+@layer components {
+  .input {
+    @apply w-full px-4 py-2.5 rounded-lg border border-dark-700 bg-dark-700 text-dark-50 placeholder-dark-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-200 outline-none;
+  }
+
+  .input-sm {
+    @apply px-3 py-1.5 rounded-lg border border-dark-700 bg-dark-700 text-dark-50 text-sm focus:border-primary-500 focus:outline-none transition-all duration-200;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-dark-300 mb-1.5;
+  }
+
+  /* Fix disabled/readonly input fields */
+  input[readonly],
+  input[disabled] {
+    @apply bg-dark-700 text-dark-50;
+  }
+
+  /* Fix select dropdowns for dark theme */
+  select {
+    @apply bg-dark-700 text-dark-50;
+  }
+
+  select option {
+    @apply bg-dark-700 text-dark-50;
+  }
+}

@@ -1,7 +1,7 @@
 import { Badge } from '../common/index';
 import { Calendar, Clock, User, Edit, X, Users, CheckCircle } from 'lucide-react';
-import { SESSION_TYPES, getSessionTypeColors } from '../../constants/sessionSchedulingConstants';
-import { BOOKING_STATUS_VARIANTS, BOOKING_STATUS } from '../../constants/classSessionBookingConstants';
+import { SESSION_TYPES, getSessionTypeColors } from '../../shared/constants/sessionSchedulingConstants';
+import { BOOKING_STATUS_VARIANTS, BOOKING_STATUS } from '../../shared/constants/classSessionBookingConstants';
 
 const CalendarListView = ({ sessions = [] }) => {
   if (sessions.length === 0) {

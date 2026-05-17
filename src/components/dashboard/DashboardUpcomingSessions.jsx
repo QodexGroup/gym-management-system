@@ -2,7 +2,7 @@ import { format, parseISO, isToday } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '../common';
 import { CalendarDays } from 'lucide-react';
-import { CLASS_SCHEDULE_TYPE } from '../../constants/classScheduleConstants';
+import { CLASS_SCHEDULE_TYPE } from '../../shared/constants/classScheduleConstants';
 
 /**
  * Compact dashboard list: dense rows, minimal chrome, scan-friendly hierarchy.

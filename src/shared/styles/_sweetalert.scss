@@ -1,0 +1,44 @@
+/* SweetAlert2 Button Styling Fix */
+html body .swal2-popup .swal2-actions button.swal2-confirm,
+html body .swal2-popup .swal2-actions button.swal2-cancel,
+html body .swal2-popup .swal2-actions button.swal2-deny,
+html body button.swal2-confirm,
+html body button.swal2-cancel,
+html body button.swal2-deny {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: inline-block !important;
+}
+
+html body .swal2-popup .swal2-confirm {
+  background-color: #3085d6 !important;
+  color: #ffffff !important;
+}
+
+html body .swal2-popup .swal2-cancel {
+  background-color: #d33 !important;
+  color: #ffffff !important;
+}
+
+html body .swal2-popup .swal2-confirm *,
+html body .swal2-popup .swal2-cancel *,
+html body .swal2-popup .swal2-deny * {
+  color: #ffffff !important;
+}
+
+html body .swal2-popup .swal2-actions {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+html body .swal2-popup .swal2-actions button {
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: #ffffff !important;
+}
+
+html body .swal2-popup .swal2-deny {
+  display: none !important;
+}

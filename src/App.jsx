@@ -1,45 +1,56 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider, useAuth } from './shared/context/AuthContext';
 import AlertProvider from './components/AlertProvider';
-import { queryClient } from './lib/queryClient';
-import { isKioskLocked } from './constants/kiosk';
+import { queryClient } from './shared/lib/queryClient';
+import { isKioskLocked } from './shared/constants/kiosk';
 
 // Auth Pages
-import Login from './auth/Login';
-import SignUp from './auth/SignUp';
-import AuthAction from './auth/AuthAction';
-import ForgotPassword from './auth/ForgotPassword';
-import ResetPassword from './auth/ResetPassword';
+import Login from './features/auth/Login';
+import SignUp from './features/auth/SignUp';
+import AuthAction from './features/auth/AuthAction';
+import ForgotPassword from './features/auth/ForgotPassword';
+import ResetPassword from './features/auth/ResetPassword';
 
-// Admin Pages
-import AdminDashboard from './pages/admin/Dashboard';
+// Dashboard Pages
+import { AdminDashboard, TrainerDashboard, PtMembers } from './features/dashboard';
 
-// Trainer Pages
-import TrainerDashboard from './pages/trainer/Dashboard';
-import PtMembers from './pages/trainer/PtMembers';
+// Customer Pages
+import CustomerList from './features/customers/CustomerList.page';
+import CustomerProfile from './features/customers/CustomerProfile.page';
 
-// Shared Pages
-import CheckIn from './pages/common/CheckIn.page';
-import QrScannerKiosk from './pages/common/QrScannerKiosk.page';
-import CustomerList from './pages/customers/CustomerList.page';
-import CustomerProfile from './pages/customers/CustomerProfile.page';
-import PtPackageList from './pages/admin/PtPackageList.page';
-import SessionScheduling from './pages/common/SessionScheduling.page';
-import ClassScheduleList from './pages/common/ClassScheduleList.page';
-import Expenses from './pages/common/Expenses.page';
-import SummaryReportPage from './pages/reports/SummaryReport.page';
-import CollectionReportPage from './pages/reports/CollectionReport.page';
-import ExpenseReportPage from './pages/reports/ExpenseReport.page';
-import MyCollectionPage from './pages/reports/MyCollection.page';
-import MembershipPlans from './pages/admin/MembershipPlans.page';
-import UserManagement from './pages/admin/UserManagement.page';
-import Notifications from './pages/Notifications';
-import MyAccount from './pages/MyAccount.page';
-import Settings from './pages/Settings';
-import Subscription from './pages/admin/subscription/Subscription.page';
-import ReactivationModal from './pages/admin/forms/ReactivationModal';
+// Check-In & Kiosk
+import { CheckIn } from './features/walkin';
+import { QrScannerKiosk } from './features/kiosk';
+
+// PT & Class Management
+import { PtPackageList, SessionScheduling } from './features/personal-training';
+import { ClassScheduleList } from './features/class-schedule';
+
+// Expenses
+import { Expenses } from './features/expenses';
+
+// Reports
+import {
+  SummaryReport as SummaryReportPage,
+  CollectionReport as CollectionReportPage,
+  ExpenseReport as ExpenseReportPage,
+  MyCollection as MyCollectionPage,
+} from './features/reports';
+
+// Admin Management
+import { MembershipPlans } from './features/membership-plans';
+import { UserManagement } from './features/users';
+
+// Account
+import {
+  MyAccount,
+  Notifications,
+  Settings,
+  AdminSubscriptionPage as Subscription,
+  ReactivationModal,
+} from './features/account';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {

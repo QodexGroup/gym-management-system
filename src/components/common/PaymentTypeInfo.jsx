@@ -1,6 +1,6 @@
 import { Copy } from 'lucide-react';
-import { SUBSCRIPTION_PAYMENT_TYPE } from '../../constants/subscriptionConstants';
-import { Toast } from '../../utils/alert';
+import { SUBSCRIPTION_PAYMENT_TYPE } from '../../shared/constants/subscriptionConstants';
+import { Toast } from '../../shared/utils/alert';
 
 const PAYMENT_OWNER_NAME = 'JOMILEN DELA TORRE';
 const PAYMENT_NUMBER = '09058024974';

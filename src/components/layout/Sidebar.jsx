@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { usePermissions } from '../../hooks/usePermissions';
+import { useAuth } from '../../shared/context/AuthContext';
+import { usePermissions } from '../../shared/hooks/usePermissions';
 import {
   LayoutDashboard,
   Users,

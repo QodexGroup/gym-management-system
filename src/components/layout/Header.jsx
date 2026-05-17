@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../shared/context/AuthContext';
 import NotificationBell from '../NotificationBell';
 import SearchableClientInput from '../common/SearchableClientInput';
 import {

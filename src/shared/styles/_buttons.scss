@@ -1,0 +1,17 @@
+@layer components {
+  .btn-primary {
+    @apply bg-primary-500 hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md;
+  }
+
+  .btn-secondary {
+    @apply bg-dark-700 hover:bg-dark-600 text-dark-50 font-medium py-2 px-4 rounded-lg transition-all duration-200;
+  }
+
+  .btn-success {
+    @apply bg-success-500 hover:bg-success-600 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200;
+  }
+
+  .btn-danger {
+    @apply bg-danger-500 hover:bg-danger-600 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200;
+  }
+}

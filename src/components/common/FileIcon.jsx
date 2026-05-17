@@ -1,6 +1,6 @@
 import { FileText } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { getFileUrl } from '../../services/firebaseUrlService';
+import { getFileUrl } from '../../shared/services/firebaseUrlService';
 
 const FileIcon = ({ file, className = "w-10 h-10 rounded-lg bg-dark-200 hover:bg-dark-300 flex items-center justify-center border-2 border-dark-200 hover:border-primary-500 transition-colors" }) => {
   const [fileUrl, setFileUrl] = useState(null);

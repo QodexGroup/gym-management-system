@@ -6,7 +6,7 @@ import {
   useUnreadCount,
   useMarkNotificationAsRead,
   useMarkAllNotificationsAsRead,
-} from '../hooks/useNotifications';
+} from '../shared/hooks/useNotifications';
 
 const BELL_LIST_LIMIT = 5;
 
