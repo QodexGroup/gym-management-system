@@ -6,6 +6,19 @@
 import { User, Users } from 'lucide-react';
 import { SESSION_TYPES, SESSION_TYPE_LABELS } from '../../../constants/sessionSchedulingConstants';
 
+const canManageGroupClassSession = (session, { isTrainer, userId }) => {
+  if (session.type === SESSION_TYPES.MEMBER_GROUP_CLASS) {
+    return !isTrainer;
+  }
+  if (session.type === SESSION_TYPES.COACH_GROUP_CLASS) {
+    return !isTrainer || (userId != null && session.coachId === userId);
+  }
+  if (session.type === SESSION_TYPES.COACH_PT && session.sessionId) {
+    return !isTrainer || (userId != null && session.coachId === userId);
+  }
+  return false;
+};
+
 /**
  * Transform sessions for CalendarView and CalendarListView
  * @param {Array} sessions - Array of filtered session objects
@@ -25,6 +38,7 @@ export const transformSessionsForCalendar = (sessions, handlers) => {
     onCancelSession,
     onCancelBooking,
     allowMemberAttendance = false,
+    sessionManagementContext = { isTrainer: false, userId: null },
   } = handlers;
 
   return sessions.map((session) => {
@@ -124,11 +138,13 @@ export const transformSessionsForCalendar = (sessions, handlers) => {
       actions.onClick = () => onSessionClick?.(session);
     }
 
-    if (isCoachGroupClass) {
+    const canManage = canManageGroupClassSession(session, sessionManagementContext);
+
+    if (isCoachGroupClass && canManage) {
       actions.onEdit = () => onEditGroupClassSession?.(session);
       actions.onMarkAttendance = () => onSessionClick?.(session);
       actions.onCancel = () => onCancelSession?.(session.sessionId);
-    } else if (isMemberGroupClass) {
+    } else if (isMemberGroupClass && canManage) {
       actions.onEdit = () => onEditGroupClassSession?.(session);
       if (allowMemberAttendance) {
         actions.onMarkAttendance = () => onSessionClick?.(session);
@@ -138,11 +154,11 @@ export const transformSessionsForCalendar = (sessions, handlers) => {
       }
     } else if (isCoachPT) {
       // For Coach PT sessions from class schedules (has sessionId), treat like group class
-      if (session.sessionId) {
+      if (session.sessionId && canManage) {
         actions.onEdit = () => onEditGroupClassSession?.(session);
         actions.onMarkAttendance = () => onSessionClick?.(session);
         actions.onCancel = () => onCancelSession?.(session.sessionId);
-      } else {
+      } else if (!session.sessionId) {
         // For PT bookings, use PT-specific handlers
         actions.onEdit = () => onEditPtSession?.(session);
         actions.onMarkAttendance = () => onSessionClick?.(session);

@@ -3,3 +3,6 @@ export const CUSTOMER_MEMBERSHIP_STATUS = {
   DEACTIVATED: 'deactivated',
   EXPIRED: 'expired',
 };
+
+export const isCustomerMembershipDeactivated = (customer) =>
+  customer?.currentMembership?.status === CUSTOMER_MEMBERSHIP_STATUS.DEACTIVATED;

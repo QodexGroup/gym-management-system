@@ -16,6 +16,7 @@ import { useSearchCustomers } from '../../hooks/useCustomers';
  * @param {string} placeholder - Placeholder text for the input
  * @param {string} className - Additional CSS classes
  * @param {boolean} disabled - Whether the input is disabled
+ * @param {Function} isCustomerDisabled - Optional function; if returns true, customer is non-selectable with "(Deactivated)" suffix
  */
 const SearchableClientInput = ({
   customers = [],
@@ -27,6 +28,7 @@ const SearchableClientInput = ({
   placeholder = 'Search client by name',
   className = '',
   disabled = false,
+  isCustomerDisabled,
 }) => {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -200,6 +202,26 @@ const SearchableClientInput = ({
                 const customerName = customer.name || 
                   (customer.firstName && customer.lastName ? `${customer.firstName} ${customer.lastName}` : 
                   customer.firstName || 'Unknown');
+                const customerDisabled = isCustomerDisabled?.(customer) ?? false;
+
+                if (customerDisabled) {
+                  return (
+                    <div
+                      key={customer.id}
+                      className="w-full text-left px-4 py-2 text-dark-400 cursor-not-allowed"
+                    >
+                      <div className="font-medium">{customerName} (Deactivated)</div>
+                      {(customer.email || customer.phoneNumber) && (
+                        <div className="text-xs text-dark-500">
+                          {customer.email && customer.phoneNumber 
+                            ? `${customer.email} • ${customer.phoneNumber}`
+                            : customer.email || customer.phoneNumber}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
                 return (
                   <button
                     key={customer.id}
