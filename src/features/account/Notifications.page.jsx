@@ -50,7 +50,7 @@ const Notifications = () => {
       const prefs = await notificationService.getPreferences();
       setPreferences(prefs);
     } catch (error) {
-      console.error('Error loading preferences:', error);
+      if (import.meta.env.DEV) console.error('Error loading preferences:', error);
     } finally {
       setLoadingPreferences(false);
     }
@@ -67,7 +67,7 @@ const Notifications = () => {
       setPreferences(newPreferences);
       await notificationService.updatePreferences(newPreferences);
     } catch (error) {
-      console.error('Error saving preferences:', error);
+      if (import.meta.env.DEV) console.error('Error saving preferences:', error);
       loadPreferences();
     } finally {
       setSavingPreferences(false);

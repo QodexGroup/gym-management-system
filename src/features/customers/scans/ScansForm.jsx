@@ -89,7 +89,7 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
 
       Toast.success('File uploaded successfully');
     } catch (err) {
-      console.error(err);
+      if (import.meta.env.DEV) console.error(err);
       Toast.error(err.message || 'Failed to upload file');
     } finally {
       uploadPromiseRef.current = null;
@@ -119,7 +119,7 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
         Toast.success('File removed');
         queryClient.invalidateQueries({ queryKey: customerScanKeys.lists() });
       } catch (err) {
-        console.error(err);
+        if (import.meta.env.DEV) console.error(err);
         Toast.error(err.message || 'Failed to remove file');
       }
     } else {
@@ -178,7 +178,7 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
 
     mutation.mutate(payload, {
       onSuccess: async (data) => {
-        try { await saveFiles(data.id); } catch (err) { console.error(err); }
+        try { await saveFiles(data.id); } catch (err) { if (import.meta.env.DEV) console.error(err); }
         queryClient.invalidateQueries({ queryKey: customerScanKeys.lists() });
         onClose();
         onSuccess?.();

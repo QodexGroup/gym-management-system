@@ -1,14 +1,9 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Layout from '../../layout/Layout';
-import { Modal } from '../../components/common';
 import CalendarView from '../../components/Calendar/CalendarView';
 import CalendarListView from '../../components/Calendar/CalendarListView';
 import CalendarToolbar from '../../components/Calendar/CalendarToolbar';
-import PtSessionForm from './PtSessionForm';
-import PtAttendanceForm from './PtAttendanceForm';
-import ClassAttendanceForm from '../class-schedule/ClassAttendanceForm';
-import GroupClassBookingForm from '../class-schedule/GroupClassBookingForm';
-import ClassScheduleSessionForm from '../class-schedule/ClassScheduleSessionForm';
+import SessionModals from './SessionModals';
 import { Plus, User } from 'lucide-react';
 import { Alert } from '../../shared/utils/alert';
 import { SESSION_STATUS } from '../../shared/constants/ptConstants';
@@ -233,7 +228,7 @@ const SessionScheduling = () => {
     try {
       await updateAttendanceStatusMutation.mutateAsync({ bookingId, status: BOOKING_STATUS.CANCELLED });
     } catch (err) {
-      console.error(err);
+      if (import.meta.env.DEV) console.error(err);
     }
   }, [updateAttendanceStatusMutation]);
 
@@ -270,7 +265,7 @@ const SessionScheduling = () => {
         }
       }
     } catch (err) {
-      console.error(err);
+      if (import.meta.env.DEV) console.error(err);
     }
   }, [ptBookingsData, classScheduleSessions, cancelPtBookingMutation, coachCancelPtBookingMutation, cancelClassScheduleSessionMutation]);
 
@@ -462,103 +457,39 @@ const SessionScheduling = () => {
       </div>
 
       {/* Modals */}
-      <Modal
-        isOpen={showModal}
-        onClose={() => {
-          setShowModal(false);
-          setSelectedSession(null);
+      <SessionModals
+        modals={{
+          showModal,
+          showAttendanceModal,
+          showGroupClassModal,
+          showGroupClassEditModal,
+          showPtAttendanceModal,
         }}
-        title={selectedSession ? 'Edit PT Session' : 'Book PT Session'}
-        size="md"
-      >
-        <PtSessionForm
-          session={selectedSession}
-          customers={customers}
-          onSubmit={handlePtSessionSubmit}
-          onCancel={() => {
-            setShowModal(false);
-            setSelectedSession(null);
-          }}
-          isSubmitting={createPtBookingMutation.isPending || updatePtBookingMutation.isPending}
-        />
-      </Modal>
-
-      <Modal isOpen={showAttendanceModal} onClose={() => setShowAttendanceModal(false)} title={`Mark Attendance - ${selectedClassSession?.className || 'Class'}`} size="lg">
-        <ClassAttendanceForm
-          classSession={selectedClassSession}
-          onCancel={() => setShowAttendanceModal(false)}
-          onSubmit={() => setShowAttendanceModal(false)}
-          isSubmitting={false}
-        />
-      </Modal>
-
-      <Modal
-        isOpen={showGroupClassModal}
-        onClose={() => {
-          setShowGroupClassModal(false);
-          setSelectedBooking(null);
+        selected={{
+          session: selectedSession,
+          classSession: selectedClassSession,
+          booking: selectedBooking,
+          ptSession: selectedPtSession,
         }}
-        title={selectedBooking ? 'Edit Group Class Booking' : 'Book Group Class Session'}
-        size="lg"
-      >
-        <GroupClassBookingForm
-          booking={selectedBooking}
-          customers={customers}
-          classSessions={classScheduleSessions}
-          onSubmit={() => {
-            setShowGroupClassModal(false);
-            setSelectedBooking(null);
-          }}
-          onCancel={() => {
-            setShowGroupClassModal(false);
-            setSelectedBooking(null);
-          }}
-          isSubmitting={false}
-        />
-      </Modal>
-
-      <Modal isOpen={showGroupClassEditModal} onClose={() => setShowGroupClassEditModal(false)} title={`Edit Session - ${selectedClassSession?.className || 'Class'}`} size="md">
-        <ClassScheduleSessionForm
-          session={selectedClassSession}
-          onSubmit={() => {
-            setShowGroupClassEditModal(false);
-            setSelectedClassSession(null);
-          }}
-          onCancel={() => {
-            setShowGroupClassEditModal(false);
-            setSelectedClassSession(null);
-          }}
-          isSubmitting={false}
-        />
-      </Modal>
-
-      <Modal
-        isOpen={showPtAttendanceModal}
-        onClose={() => {
-          setShowPtAttendanceModal(false);
-          setSelectedPtSession(null);
+        onClose={{
+          closeModal: () => { setShowModal(false); setSelectedSession(null); },
+          closeAttendanceModal: () => setShowAttendanceModal(false),
+          closeGroupClassModal: () => { setShowGroupClassModal(false); setSelectedBooking(null); },
+          closeGroupClassEditModal: () => { setShowGroupClassEditModal(false); setSelectedClassSession(null); },
+          closePtAttendanceModal: () => { setShowPtAttendanceModal(false); setSelectedPtSession(null); },
         }}
-        title={`Mark Attendance - ${
-          selectedPtSession?.className ||
-          (selectedPtSession?.customer
-            ? `${selectedPtSession.customer.firstName || ''} ${selectedPtSession.customer.lastName || ''}`.trim()
-            : SESSION_TYPE_LABELS[SESSION_TYPES.COACH_PT]?.replace(' Schedule', '') || 'PT Session')
-        }`}
-        size="lg"
-      >
-        <PtAttendanceForm
-          ptSession={selectedPtSession}
-          onCancel={() => {
-            setShowPtAttendanceModal(false);
-            setSelectedPtSession(null);
-          }}
-          onSubmit={() => {
-            setShowPtAttendanceModal(false);
-            setSelectedPtSession(null);
-          }}
-          isSubmitting={false}
-        />
-      </Modal>
+        data={{
+          customers,
+          classScheduleSessions,
+        }}
+        handlers={{
+          onPtSessionSubmit: handlePtSessionSubmit,
+        }}
+        isPending={{
+          createPt: createPtBookingMutation.isPending,
+          updatePt: updatePtBookingMutation.isPending,
+        }}
+      />
     </Layout>
   );
 };

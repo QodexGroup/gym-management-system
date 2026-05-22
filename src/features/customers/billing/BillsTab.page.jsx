@@ -20,6 +20,25 @@ import { Alert, Toast } from '../../../shared/utils/alert';
 import { formatCurrency, formatDate, formatPlanIntervalLabel } from '../../../shared/utils/formatters';
 import { billsTableColumns } from './billsTable.config';
 
+// ---------------------------------------------------------------------------
+// Local hook — computes billing stats from a bills array
+// ---------------------------------------------------------------------------
+const useBillsStats = (bills) => {
+  return useMemo(() => {
+    const totalPaid = bills.filter(b => b?.billStatus === BILL_STATUS.PAID)
+                      .reduce((sum, b) => sum + (parseFloat(b?.paidAmount) || 0), 0);
+    const openBills = bills.filter(b => b?.billStatus === BILL_STATUS.ACTIVE || b?.billStatus === BILL_STATUS.PARTIAL).length;
+    const balanceDue = bills.filter(b => b?.billStatus !== BILL_STATUS.PAID && b?.billStatus !== BILL_STATUS.VOIDED)
+                       .reduce((sum, b) => sum + (parseFloat(b?.netAmount) || 0) - (parseFloat(b?.paidAmount) || 0), 0);
+
+    return [
+      { title: 'Total Paid', value: formatCurrency(totalPaid), color: 'success', icon: CheckCircle },
+      { title: 'Open Bills', value: openBills, color: 'warning', icon: Clock },
+      { title: 'Balance Due', value: formatCurrency(balanceDue), color: 'danger', icon: AlertCircle },
+    ];
+  }, [bills]);
+};
+
 const BillsTab = ({ member, onCustomerUpdate }) => {
   const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
@@ -51,19 +70,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
   const customerPtPackages = customerPtPackagesData || [];
 
   /* ---------------- Stats ---------------- */
-  const stats = useMemo(() => {
-    const totalPaid = bills.filter(b => b?.billStatus === BILL_STATUS.PAID)
-                      .reduce((sum, b) => sum + (parseFloat(b?.paidAmount) || 0), 0);
-    const openBills = bills.filter(b => b?.billStatus === BILL_STATUS.ACTIVE || b?.billStatus === BILL_STATUS.PARTIAL).length;
-    const balanceDue = bills.filter(b => b?.billStatus !== BILL_STATUS.PAID && b?.billStatus !== BILL_STATUS.VOIDED)
-                       .reduce((sum, b) => sum + (parseFloat(b?.netAmount) || 0) - (parseFloat(b?.paidAmount) || 0), 0);
-
-    return [
-      { title: 'Total Paid', value: formatCurrency(totalPaid), color: 'success', icon: CheckCircle },
-      { title: 'Open Bills', value: openBills, color: 'warning', icon: Clock },
-      { title: 'Balance Due', value: formatCurrency(balanceDue), color: 'danger', icon: AlertCircle },
-    ];
-  }, [bills]);
+  const stats = useBillsStats(bills);
 
   /* ---------------- Handlers ---------------- */
   const handleEdit = useCallback((bill) => {
@@ -91,7 +98,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
       Toast.success('Bill deleted successfully');
       onCustomerUpdate?.();
     } catch (error) {
-      console.error(error);
+      if (import.meta.env.DEV) console.error(error);
       Toast.error(error?.message || 'Failed to delete bill');
     }
   }, [deleteBillMutation, member?.id, onCustomerUpdate]);
@@ -125,7 +132,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
       setPaymentBill(null);
       onCustomerUpdate?.();
     } catch (error) {
-      console.error(error);
+      if (import.meta.env.DEV) console.error(error);
     }
   }, [paymentBill, createPaymentMutation, member.id, onCustomerUpdate]);
 
@@ -140,7 +147,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
       setSelectedBill(null);
       onCustomerUpdate?.();
     } catch (error) {
-      console.error(error);
+      if (import.meta.env.DEV) console.error(error);
     }
   }, [selectedBill, createBillMutation, updateBillMutation, onCustomerUpdate]);
 
@@ -150,7 +157,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
       setShowMembershipModal(false);
       onCustomerUpdate?.();
     } catch (error) {
-      console.error(error);
+      if (import.meta.env.DEV) console.error(error);
     }
   }, [membershipMutation, member.id, onCustomerUpdate]);
 
@@ -161,7 +168,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
       queryClient.invalidateQueries({ queryKey: customerBillKeys.byCustomer(member.id) });
       onCustomerUpdate?.();
     } catch (error) {
-      console.error(error);
+      if (import.meta.env.DEV) console.error(error);
     }
   }, [assignPtPackageMutation, member.id, onCustomerUpdate, queryClient]);
 
@@ -180,7 +187,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
       queryClient.invalidateQueries({ queryKey: customerBillKeys.byCustomer(member.id) });
       onCustomerUpdate?.();
     } catch (error) {
-      console.error(error);
+      if (import.meta.env.DEV) console.error(error);
     }
   }, [cancelPtPackageMutation, member.id, onCustomerUpdate, queryClient]);
 

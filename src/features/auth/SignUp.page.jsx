@@ -44,7 +44,7 @@ const SignUp = () => {
         if (auth) setFirebaseAuth(auth);
         else Toast.error('Failed to initialize Firebase.');
       } catch (error) {
-        console.error('Firebase init error:', error);
+        if (import.meta.env.DEV) console.error('Firebase init error:', error);
         Toast.error('Failed to initialize Firebase authentication.');
       }
     };
@@ -171,14 +171,14 @@ const SignUp = () => {
       });
 
       authService.sendVerificationEmail(idToken).catch((err) =>
-        console.error('Verification email send failed:', err)
+        { if (import.meta.env.DEV) console.error('Verification email send failed:', err); }
       );
 
       await login(idToken, userCredential.user.uid);
       Toast.success('Account created! Check your email to verify your address. Your 7-day free trial has started.');
       navigate('/dashboard', { replace: true });
     } catch (error) {
-      console.error('Sign-up error:', error);
+      if (import.meta.env.DEV) console.error('Sign-up error:', error);
       let msg = 'Sign-up failed. Please try again.';
       if (error.code === 'auth/email-already-in-use') msg = 'This email is already registered.';
       else if (error.code === 'auth/weak-password') msg = 'Password is too weak.';

@@ -7,7 +7,7 @@ import {
   UserCog,
   CheckCircle,
 } from 'lucide-react';
-import { Alert, Toast } from '../../../shared/utils/alert';
+import { useConfirmAction } from '../../../shared/hooks/useConfirmAction';
 import { BOOKING_STATUS, BOOKING_STATUS_LABELS, BOOKING_STATUS_VARIANTS } from '../../../shared/constants/classSessionBookingConstants';
 import { formatDate, formatTime } from '../../../shared/utils/formatters';
 import PtSessionForm from '../../personal-training/PtSessionForm';
@@ -119,29 +119,14 @@ const PtSessionsTab = ({ member }) => {
 
       handleCloseModal();
     } catch (error) {
-      console.error('Failed to save PT session:', error);
+      if (import.meta.env.DEV) console.error('Failed to save PT session:', error);
     }
   };
 
-  const handleCancelSession = async (sessionId) => {
-    const result = await Alert.confirm({
-      title: 'Cancel Session?',
-      text: 'Are you sure you want to cancel this session?',
-      icon: 'warning',
-      confirmButtonText: 'Yes, cancel it',
-      cancelButtonText: 'No',
-    });
-
-    if (!result.isConfirmed) {
-      return;
-    }
-
-    try {
-      await cancelPtBookingMutation.mutateAsync(sessionId);
-    } catch (error) {
-      console.error('Failed to cancel session:', error);
-    }
-  };
+  const handleCancelSession = useConfirmAction(
+    (sessionId) => cancelPtBookingMutation.mutateAsync(sessionId),
+    { title: 'Cancel Session?', text: 'Are you sure you want to cancel this session?', icon: 'warning', confirmText: 'Yes, cancel it' }
+  );
 
   const handleHistoryPageChange = (newPage) => {
     setHistoryPage(newPage);

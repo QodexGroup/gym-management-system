@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../shared/context/AuthContext';
 import { usePermissions } from '../shared/hooks/usePermissions';
@@ -17,24 +17,63 @@ import {
   FileBarChart,
 } from 'lucide-react';
 
-const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
+const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile = false }) => {
   const { isAdmin, isTrainer, isPlatformAdmin } = useAuth();
   const { hasPermission } = usePermissions();
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState([]);
 
-  // Keep Reports open when on any report route
+  // Flyout state for icon-only mode (collapsed desktop + all mobile)
+  // { key, top } — `top` is viewport-relative so we use position:fixed
+  const [flyout, setFlyout] = useState(null);
+  const flyoutRef = useRef(null);
+
+  // Keep Reports open when on any report route (desktop expanded only)
   useEffect(() => {
     if (location.pathname.startsWith('/reports')) {
       setExpandedMenus((prev) => (prev.includes('reports') ? prev : [...prev, 'reports']));
     }
+    // Close flyout on navigation
+    setFlyout(null);
   }, [location.pathname]);
+
+  // Close flyout when clicking outside
+  useEffect(() => {
+    if (!flyout) return;
+    const handler = (e) => {
+      if (flyoutRef.current && !flyoutRef.current.contains(e.target)) {
+        setFlyout(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [flyout]);
 
   const toggleMenu = (menu) => {
     setExpandedMenus((prev) =>
       prev.includes(menu) ? prev.filter((m) => m !== menu) : [...prev, menu]
     );
   };
+
+  // On mobile always icon-only; on desktop respects isCollapsed
+  const collapsed = isMobile || isCollapsed;
+
+  // Sidebar pixel width — used to position the fixed flyout
+  const sidebarWidth = isMobile ? 64 : isCollapsed ? 80 : 256;
+
+  const handleSubMenuClick = useCallback((e, item) => {
+    if (collapsed) {
+      // Flyout mode: use fixed positioning based on button's viewport position
+      if (flyout?.key === item.key) {
+        setFlyout(null);
+      } else {
+        const rect = e.currentTarget.getBoundingClientRect();
+        setFlyout({ key: item.key, top: rect.top, item });
+      }
+    } else {
+      toggleMenu(item.key);
+    }
+  }, [collapsed, flyout]);
 
   const allMenuItems = [
     {
@@ -73,9 +112,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const menuSections = useMemo(() => {
     return allMenuItems
       .filter((section) => {
-        if (section.section === 'ACCOUNT' && !isAdmin && !isTrainer) {
-          return false;
-        }
+        if (section.section === 'ACCOUNT' && !isAdmin && !isTrainer) return false;
         return true;
       })
       .map((section) => ({
@@ -114,141 +151,137 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   };
 
   return (
-    <aside
-      className={`fixed left-0 top-0 z-40 h-screen bg-dark-800 border-r border-dark-700 flex flex-col transition-all duration-300 ${
-        isCollapsed ? 'w-20' : 'w-64'
-      }`}
-    >
-      {/* Logo */}
-      <div
-        className={`flex items-center border-b border-dark-700 ${
-          isCollapsed ? 'px-2 py-4 justify-center' : 'px-4 py-5 justify-center'
+    <>
+      <aside
+        className={`fixed left-0 top-0 z-40 h-full bg-dark-800 border-r border-dark-700 flex flex-col transition-all duration-300 ${
+          isMobile ? 'w-16' : isCollapsed ? 'w-20' : 'w-64'
         }`}
       >
-        <div className={`flex items-center ${isCollapsed ? 'justify-center w-full' : 'justify-center w-full'}`}>
-          <div
-            className={`overflow-hidden flex items-center justify-center flex-shrink-0 bg-transparent ${
-              isCollapsed ? 'w-16 h-16 rounded-xl' : 'w-40 h-20 rounded-2xl'
-            }`}
-          >
-            <img
-              src="/img/gymhubph.png"
-              alt="GymHubPH Logo"
-              className="w-full h-full object-cover"
-            />
+        {/* Logo */}
+        <div
+          className={`flex items-center border-b border-dark-700 ${
+            collapsed ? 'px-2 py-4 justify-center' : 'px-4 py-5 justify-center'
+          }`}
+        >
+          <div className="flex items-center justify-center w-full">
+            <div
+              className={`overflow-hidden flex items-center justify-center flex-shrink-0 bg-transparent ${
+                collapsed ? 'w-10 h-10 rounded-xl' : 'w-40 h-20 rounded-2xl'
+              }`}
+            >
+              <img src="/img/gymhubph.png" alt="GymHubPH Logo" className="w-full h-full object-cover" />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Collapse Toggle */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-20 w-6 h-6 bg-dark-800 border border-dark-700 rounded-full flex items-center justify-center text-dark-400 hover:text-dark-200 hover:bg-dark-700 transition-colors shadow-sm"
-      >
-        {isCollapsed ? (
-          <ChevronRight className="w-4 h-4" />
-        ) : (
-          <ChevronLeft className="w-4 h-4" />
+        {/* Collapse Toggle — desktop only */}
+        {!isMobile && (
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="absolute -right-3 top-20 w-6 h-6 bg-dark-800 border border-dark-700 rounded-full flex items-center justify-center text-dark-400 hover:text-dark-200 hover:bg-dark-700 transition-colors shadow-sm"
+          >
+            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
         )}
-      </button>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto scrollbar-thin py-4 px-3">
-        {menuSections.map((section, sectionIndex) => (
-          <div key={section.section} className={sectionIndex > 0 ? 'mt-6' : ''}>
-            {!isCollapsed && (
-              <p className="px-4 mb-2 text-xs font-semibold text-dark-500 uppercase tracking-wider">
-                {section.section}
-              </p>
-            )}
-            {isCollapsed && sectionIndex > 0 && (
-              <div className="border-t border-dark-700 mb-4 mx-2" />
-            )}
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto scrollbar-thin py-4 px-2">
+          {menuSections.map((section, sectionIndex) => (
+            <div key={section.section} className={sectionIndex > 0 ? 'mt-6' : ''}>
+              {!collapsed && (
+                <p className="px-4 mb-2 text-xs font-semibold text-dark-500 uppercase tracking-wider">
+                  {section.section}
+                </p>
+              )}
+              {collapsed && sectionIndex > 0 && <div className="border-t border-dark-700 mb-4 mx-2" />}
 
-            <ul className="space-y-1">
-              {section.items.map((item, index) => (
-                <li key={index}>
-                  {item.path ? (
-                    <NavLink
-                      to={item.path}
-                      className={({ isActive }) =>
-                        `sidebar-item ${isActive ? 'active' : ''} ${
-                          isCollapsed ? 'justify-center px-2' : ''
-                        }`
-                      }
-                      title={isCollapsed ? item.label : ''}
-                    >
-                      <item.icon className="w-5 h-5 flex-shrink-0" />
-                      {!isCollapsed && <span className="font-medium">{item.label}</span>}
-                    </NavLink>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => toggleMenu(item.key)}
-                        className={`sidebar-item w-full ${
-                          isMenuActive(item) ? 'text-primary-600 bg-primary-50' : ''
-                        } ${isCollapsed ? 'justify-center px-2' : 'justify-between'}`}
-                        title={isCollapsed ? item.label : ''}
+              <ul className="space-y-1">
+                {section.items.map((item, index) => (
+                  <li key={index}>
+                    {item.path ? (
+                      <NavLink
+                        to={item.path}
+                        className={({ isActive }) =>
+                          `sidebar-item ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-2' : ''}`
+                        }
+                        title={item.label}
                       >
-                        <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
-                          <item.icon className="w-5 h-5 flex-shrink-0" />
-                          {!isCollapsed && <span className="font-medium">{item.label}</span>}
-                        </div>
-                        {!isCollapsed && (
-                          expandedMenus.includes(item.key) ? (
-                            <ChevronDown className="w-4 h-4" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4" />
-                          )
+                        <item.icon className="w-5 h-5 flex-shrink-0" />
+                        {!collapsed && <span className="font-medium">{item.label}</span>}
+                      </NavLink>
+                    ) : (
+                      <>
+                        <button
+                          onClick={(e) => handleSubMenuClick(e, item)}
+                          className={`sidebar-item w-full ${
+                            isMenuActive(item) ? 'text-primary-600 bg-primary-50' : ''
+                          } ${collapsed ? 'justify-center px-2' : 'justify-between'}`}
+                          title={item.label}
+                        >
+                          <div className={`flex items-center gap-3 ${collapsed ? 'justify-center' : ''}`}>
+                            <item.icon className="w-5 h-5 flex-shrink-0" />
+                            {!collapsed && <span className="font-medium">{item.label}</span>}
+                          </div>
+                          {!collapsed && (
+                            expandedMenus.includes(item.key)
+                              ? <ChevronDown className="w-4 h-4" />
+                              : <ChevronRight className="w-4 h-4" />
+                          )}
+                        </button>
+
+                        {/* Expanded desktop submenu (inline) */}
+                        {!collapsed && expandedMenus.includes(item.key) && (
+                          <ul className="mt-1 ml-4 pl-4 border-l border-dark-700 space-y-1">
+                            {item.children.map((child, childIndex) => (
+                              <li key={childIndex}>
+                                <NavLink
+                                  to={child.path}
+                                  className={({ isActive }) =>
+                                    `sidebar-item text-sm ${isActive ? 'active' : ''}`
+                                  }
+                                >
+                                  <span>{child.label}</span>
+                                </NavLink>
+                              </li>
+                            ))}
+                          </ul>
                         )}
-                      </button>
-                      {!isCollapsed && expandedMenus.includes(item.key) && (
-                        <ul className="mt-1 ml-4 pl-4 border-l border-dark-700 space-y-1">
-                          {item.children.map((child, childIndex) => (
-                            <li key={childIndex}>
-                              <NavLink
-                                to={child.path}
-                                className={({ isActive }) =>
-                                  `sidebar-item text-sm ${isActive ? 'active' : ''}`
-                                }
-                              >
-                                <span>{child.label}</span>
-                              </NavLink>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      {isCollapsed && expandedMenus.includes(item.key) && (
-                        <div className="absolute left-full ml-2 bg-dark-800 rounded-lg shadow-lg border border-dark-700 py-2 min-w-[180px] z-50">
-                          <p className="px-4 py-1 text-xs font-semibold text-dark-400 uppercase">
-                            {item.label}
-                          </p>
-                          {item.children.map((child, childIndex) => (
-                            <NavLink
-                              key={childIndex}
-                              to={child.path}
-                              className={({ isActive }) =>
-                                `block px-4 py-2 text-sm ${
-                                  isActive
-                                    ? 'text-primary-400 bg-primary-500/20'
-                                    : 'text-dark-300 hover:bg-dark-700'
-                                }`
-                              }
-                            >
-                              {child.label}
-                            </NavLink>
-                          ))}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </nav>
-    </aside>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
+      </aside>
+
+      {/* Flyout — rendered outside aside to escape overflow clipping */}
+      {flyout && (
+        <div
+          ref={flyoutRef}
+          className="fixed z-50 bg-dark-800 rounded-lg shadow-xl border border-dark-700 py-2 min-w-[190px]"
+          style={{ left: sidebarWidth + 8, top: flyout.top }}
+        >
+          <p className="px-4 py-1 text-xs font-semibold text-dark-400 uppercase tracking-wider">
+            {flyout.item.label}
+          </p>
+          {flyout.item.children.map((child, i) => (
+            <NavLink
+              key={i}
+              to={child.path}
+              className={({ isActive }) =>
+                `block px-4 py-2 text-sm transition-colors ${
+                  isActive ? 'text-primary-400 bg-primary-500/20' : 'text-dark-300 hover:bg-dark-700'
+                }`
+              }
+            >
+              {child.label}
+            </NavLink>
+          ))}
+        </div>
+      )}
+    </>
   );
 };
 

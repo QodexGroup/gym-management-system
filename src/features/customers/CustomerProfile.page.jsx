@@ -3,20 +3,18 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../layout/Layout';
 import { Avatar, Badge } from '../../components/common';
 import { ArrowLeft, Activity, FileText, CreditCard, CalendarDays, UserCheck, ClipboardClock, QrCode } from 'lucide-react';
-import MemberQRCard from './qr-card/MemberQRCard';
-
+import { MemberQRCard } from './qr-card';
 import CustomerForm from './CustomerForm';
 import { useCustomer } from '../../shared/hooks/useCustomers';
-import { mapCustomerToUI } from './customers.model';
+import { mapCustomerToUI } from '../../shared/models/customerModel';
 import { formatCurrency } from '../../shared/utils/formatters';
 import { CUSTOMER_MEMBERSHIP_STATUS } from '../../shared/constants/customerMembership';
-
-import ProgressTab from './progress/ProgressTab.page';
-import BillsTab from './billing/BillsTab.page';
-import ScansTab from './scans/ScansTab.page';
-import PtSessionsTab from './pt-sessions/PtSessionsTab.page';
-import ClassAttendanceTab from './class-attendance/ClassAttendanceTab.page';
-import WalkinCustomerTab from './walkin/WalkinCustomerTab.page';
+import { ProgressTab } from './progress';
+import { BillsTab } from './billing';
+import { ScansTab } from './scans';
+import { PtSessionsTab } from './pt-sessions';
+import { ClassAttendanceTab } from './class-attendance';
+import { WalkinCustomerTab } from './walkin';
 import { usePermissions } from '../../shared/hooks/usePermissions';
 
 /* --------------------------- Tab Config --------------------------- */

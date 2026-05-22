@@ -52,7 +52,7 @@ const PtAttendanceForm = ({
 
   const handleStatusChange = async (bookingId, newStatus) => {
     if (!bookingId) {
-      console.warn('No PT booking ID found');
+      if (import.meta.env.DEV) console.warn('No PT booking ID found');
       return;
     }
 
@@ -98,7 +98,7 @@ const PtAttendanceForm = ({
         await cancelMutation.mutateAsync(bookingId);
       }
     } catch (error) {
-      console.error('Failed to update status:', error);
+      if (import.meta.env.DEV) console.error('Failed to update status:', error);
     }
   };
 

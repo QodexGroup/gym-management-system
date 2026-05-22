@@ -125,7 +125,7 @@ const QrScannerKiosk = () => {
   }, [processing]);
 
   const handleError = useCallback((error) => {
-    console.error('QR scanner error:', error);
+    if (import.meta.env.DEV) console.error('QR scanner error:', error);
   }, []);
 
   const handleLock = () => {
@@ -150,7 +150,7 @@ const QrScannerKiosk = () => {
       Toast.success('Kiosk unlocked.');
       navigate('/dashboard');
     } catch (error) {
-      console.error('Unlock error:', error);
+      if (import.meta.env.DEV) console.error('Unlock error:', error);
       Toast.error(error.message || 'Unlock failed. Please try again.');
     } finally {
       setUnlocking(false);

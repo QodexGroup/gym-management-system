@@ -101,7 +101,7 @@ const ClassScheduleList = () => {
       await deleteMutation.mutateAsync(scheduleId);
       await fetchUserData();
     } catch (error) {
-      console.error('Error deleting schedule:', error);
+      if (import.meta.env.DEV) console.error('Error deleting schedule:', error);
     }
   };
 

@@ -72,7 +72,7 @@ const ProgressForm = ({
           const scans = await customerScanService.getByType(member.id, formData.dataSource);
           setAvailableScans(scans);
         } catch (error) {
-          console.error(error);
+          if (import.meta.env.DEV) console.error(error);
           Toast.error('Failed to load scans');
           setAvailableScans([]);
         } finally {
@@ -113,7 +113,7 @@ const ProgressForm = ({
 
     const imageUrls = await Promise.all(allImageFiles.map(async imgFile => {
       try { return await getFileUrl(imgFile.fileUrl); }
-      catch (e) { console.error(e); return null; }
+      catch (e) { if (import.meta.env.DEV) console.error(e); return null; }
     }));
 
     const validUrls = imageUrls.filter(Boolean);

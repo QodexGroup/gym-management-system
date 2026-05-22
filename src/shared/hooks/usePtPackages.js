@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { ptPackageService } from '../services/ptPackageService';
 import { Toast } from '../utils/alert';
+import { useMutationWithToast } from './useMutationWithToast';
 
 /**
  * Query keys for PT packages
@@ -103,19 +104,13 @@ export const useUpdatePtPackage = () => {
  * Hook to delete a PT package
  */
 export const useDeletePtPackage = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      return await ptPackageService.delete(id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ptPackageKeys.lists() });
-      Toast.success('PT Package deleted successfully');
-    },
-    onError: (error) => {
-      Toast.error(error.message || 'Failed to delete PT package');
-    },
-  });
+  return useMutationWithToast(
+    async (id) => ptPackageService.delete(id),
+    {
+      successMessage: 'PT Package deleted successfully',
+      errorMessage: 'Failed to delete PT package',
+      invalidateKeys: [ptPackageKeys.lists()],
+    }
+  );
 };
 

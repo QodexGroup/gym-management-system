@@ -99,7 +99,7 @@ const PtPackageList = () => {
       await deleteMutation.mutateAsync(packageId);
       await fetchUserData();
     } catch (error) {
-      console.error('Error deleting package:', error);
+      if (import.meta.env.DEV) console.error('Error deleting package:', error);
     }
   };
 

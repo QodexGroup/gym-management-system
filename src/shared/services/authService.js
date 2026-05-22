@@ -82,7 +82,7 @@ const handleInvalidToken = async () => {
     // Redirect to login AFTER user has dismissed the alert
     window.location.href = '/login';
   } catch (error) {
-    console.error('Error in handleInvalidToken:', error);
+    if (import.meta.env.DEV) console.error('Error in handleInvalidToken:', error);
     // Even if there's an error, still redirect
     window.location.href = '/login';
   } finally {

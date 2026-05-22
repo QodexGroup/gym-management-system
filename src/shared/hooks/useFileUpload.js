@@ -56,7 +56,7 @@ export const useFileUpload = ({ customerId, accountId = 1, onInvalidate }) => {
           try {
             await deleteFile(response.fileUrl);
           } catch (firebaseError) {
-            console.error('Failed to delete file from Firebase:', firebaseError);
+            if (import.meta.env.DEV) console.error('Failed to delete file from Firebase:', firebaseError);
             // Continue even if Firebase deletion fails
           }
         }
@@ -76,7 +76,7 @@ export const useFileUpload = ({ customerId, accountId = 1, onInvalidate }) => {
           });
         }
       } catch (error) {
-        console.error('Error removing file:', error);
+        if (import.meta.env.DEV) console.error('Error removing file:', error);
         Toast.error(error.message || 'Failed to remove file');
       }
     } else {
@@ -140,7 +140,7 @@ export const useFileUpload = ({ customerId, accountId = 1, onInvalidate }) => {
       setUploadProgress({});
       Toast.success(`${files.length} file(s) uploaded successfully`);
     } catch (error) {
-      console.error('File upload error:', error);
+      if (import.meta.env.DEV) console.error('File upload error:', error);
       Toast.error(error.message || 'Failed to upload files');
     } finally {
       setUploadingFiles(false);
@@ -177,7 +177,7 @@ export const useFileUpload = ({ customerId, accountId = 1, onInvalidate }) => {
       await Promise.all(filePromises);
       return filesToSave;
     } catch (error) {
-      console.error('Error saving files:', error);
+      if (import.meta.env.DEV) console.error('Error saving files:', error);
       throw error;
     }
   };

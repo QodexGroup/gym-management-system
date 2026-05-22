@@ -13,7 +13,7 @@ let firebaseAuth = null;
 async function getFirebaseConfig() {
     // VITE's way to check if running in a development server
     if (import.meta.env.DEV) { 
-        console.log("Using VITE environment variables for Firebase initialization.");
+        if (import.meta.env.DEV) console.log("Using VITE environment variables for Firebase initialization.");
         
         // Use your old VITE_ keys directly
         return {
@@ -27,7 +27,7 @@ async function getFirebaseConfig() {
         
        // Production: Use the statically imported config
         if (!productionConfig || !productionConfig.apiKey) {
-            console.error("CRITICAL ERROR: Production Firebase config file (firebaseConfig.js) not found or invalid. Did injectConfig.js fail?");
+            if (import.meta.env.DEV) console.error("CRITICAL ERROR: Production Firebase config file (firebaseConfig.js) not found or invalid. Did injectConfig.js fail?");
             return null;
         }
          return productionConfig;
@@ -44,7 +44,7 @@ async function initializeFirebaseApp() {
     const config = await getFirebaseConfig();
 
     if (!config || !config.apiKey) {
-        console.error("Firebase initialization skipped: Missing configuration.");
+        if (import.meta.env.DEV) console.error("Firebase initialization skipped: Missing configuration.");
         return { storage: null };
     }
 
@@ -55,7 +55,7 @@ async function initializeFirebaseApp() {
         
         return { storage: firebaseStorage, auth: firebaseAuth };
     } catch (err) {
-        console.error("Failed to initialize Firebase:", err);
+        if (import.meta.env.DEV) console.error("Failed to initialize Firebase:", err);
         return { storage: null };
     }
 }

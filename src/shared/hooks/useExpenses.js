@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { expenseService } from '../services/expenseService';
 import { expenseCategoryService } from '../services/expenseCategoryService';
 import { Toast } from '../utils/alert';
+import { useMutationWithToast } from './useMutationWithToast';
 
 /**
  * Query keys for expenses
@@ -114,38 +115,26 @@ export const useUpdateExpense = () => {
  * Hook to post an expense
  */
 export const usePostExpense = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      return await expenseService.post(id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: expenseKeys.lists() });
-      Toast.success('Expense posted successfully');
-    },
-    onError: (error) => {
-      Toast.error(error.message || 'Failed to post expense');
-    },
-  });
+  return useMutationWithToast(
+    async (id) => expenseService.post(id),
+    {
+      successMessage: 'Expense posted successfully',
+      errorMessage: 'Failed to post expense',
+      invalidateKeys: [expenseKeys.lists()],
+    }
+  );
 };
 
 /**
  * Hook to delete an expense
  */
 export const useDeleteExpense = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      return await expenseService.delete(id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: expenseKeys.lists() });
-    },
-    onError: (error) => {
-      Toast.error(error.message || 'Failed to delete expense');
-    },
-  });
+  return useMutationWithToast(
+    async (id) => expenseService.delete(id),
+    {
+      errorMessage: 'Failed to delete expense',
+      invalidateKeys: [expenseKeys.lists()],
+    }
+  );
 };
 

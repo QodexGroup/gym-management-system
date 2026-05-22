@@ -86,7 +86,7 @@ const MyAccount = () => {
       Toast.success('Profile updated successfully!');
       setShowEditModal(false);
     } catch (error) {
-      console.error('Error updating profile:', error);
+      if (import.meta.env.DEV) console.error('Error updating profile:', error);
       Toast.error(error.message || 'Failed to update profile');
     } finally {
       setIsUpdating(false);
@@ -175,7 +175,7 @@ const MyAccount = () => {
         confirmPassword: '',
       });
     } catch (error) {
-      console.error('Error changing password:', error);
+      if (import.meta.env.DEV) console.error('Error changing password:', error);
 
       // Handle specific Firebase errors
       if (error.code === 'auth/wrong-password') {

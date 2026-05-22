@@ -99,7 +99,7 @@ const CustomerForm = ({
       onClose();
       if (onSaveSuccess) onSaveSuccess();
     } catch (error) {
-      console.error('Error saving customer:', error);
+      if (import.meta.env.DEV) console.error('Error saving customer:', error);
     }
   };
 

@@ -99,7 +99,7 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
         billId,
       });
     } catch (error) {
-      console.error('Failed to delete payment:', error);
+      if (import.meta.env.DEV) console.error('Failed to delete payment:', error);
     }
   };
 

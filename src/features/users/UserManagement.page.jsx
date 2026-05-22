@@ -24,7 +24,7 @@ import ResetPasswordForm from './ResetPasswordForm';
 import { USER_ROLES } from '../../shared/constants/userRoles';
 import { userTableColumns, getUserActionMenuItems } from './userTable.config';
 import { mapUsersData } from '../../shared/models/userModel';
-import { Alert } from '../../shared/utils/alert';
+import { useConfirmAction } from '../../shared/hooks/useConfirmAction';
 
 const UserManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,16 +79,10 @@ const UserManagement = () => {
     setShowUserModal(true);
   };
 
-  const handleDeleteUser = async (user) => {
-    const result = await Alert.confirmDelete({
-      title: 'Delete User?',
-      text: 'Are you sure you want to delete this user? This action cannot be undone.',
-    });
-
-    if (result.isConfirmed) {
-      await deleteUserMutation.mutateAsync(user.id);
-    }
-  };
+  const handleDeleteUser = useConfirmAction(
+    (user) => deleteUserMutation.mutateAsync(user.id),
+    { title: 'Delete User?', text: 'Are you sure you want to delete this user? This action cannot be undone.', icon: 'warning' }
+  );
 
   const handleDeactivateUser = async (user) => {
     await deactivateUserMutation.mutateAsync(user.id);

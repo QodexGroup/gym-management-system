@@ -47,7 +47,7 @@ const ReactivationModal = () => {
 
       Toast.success('Reactivation payment submitted. Please wait for admin approval.');
     } catch (err) {
-      console.error('Failed to submit reactivation payment:', err);
+      if (import.meta.env.DEV) console.error('Failed to submit reactivation payment:', err);
       Toast.error(err.message || 'Failed to upload receipt');
     } finally {
       setUploading(false);

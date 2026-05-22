@@ -81,7 +81,7 @@ const ClassAttendanceForm = ({
 
       await updateStatusMutation.mutateAsync({ bookingId, status: newStatus });
     } catch (error) {
-      console.error('Failed to update status:', error);
+      if (import.meta.env.DEV) console.error('Failed to update status:', error);
     }
   };
 
@@ -108,7 +108,7 @@ const ClassAttendanceForm = ({
     try {
       await markAllMutation.mutateAsync(sessionId);
     } catch (error) {
-      console.error('Failed to mark all as attended:', error);
+      if (import.meta.env.DEV) console.error('Failed to mark all as attended:', error);
     }
   };
 

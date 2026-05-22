@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { membershipPlanService } from '../services/membershipPlanService';
 import { Toast } from '../utils/alert';
+import { useMutationWithToast } from './useMutationWithToast';
 
 /**
  * Query keys for membership plans
@@ -89,19 +90,13 @@ export const useUpdateMembershipPlan = () => {
  * Hook to delete a membership plan
  */
 export const useDeleteMembershipPlan = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      return await membershipPlanService.delete(id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: membershipPlanKeys.lists() });
-      Toast.success('Membership plan deleted successfully');
-    },
-    onError: (error) => {
-      Toast.error(error.message || 'Failed to delete membership plan');
-    },
-  });
+  return useMutationWithToast(
+    async (id) => membershipPlanService.delete(id),
+    {
+      successMessage: 'Membership plan deleted successfully',
+      errorMessage: 'Failed to delete membership plan',
+      invalidateKeys: [membershipPlanKeys.lists()],
+    }
+  );
 };
 

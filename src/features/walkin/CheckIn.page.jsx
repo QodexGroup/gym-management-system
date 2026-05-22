@@ -23,6 +23,7 @@ import WalkinForm from './WalkinForm';
 import CheckInModal from './CheckInModal';
 import { walkinCustomerTableColumns } from './walkinCustomerTable.config';
 import { Alert } from '../../shared/utils/alert';
+import { useConfirmAction } from '../../shared/hooks/useConfirmAction';
 import { WALKIN_CUSTOMER_STATUS } from '../../shared/constants/walkinConstant';
 
 const CheckIn = () => {
@@ -123,41 +124,15 @@ const CheckIn = () => {
     await refetchWalkin();
   }, [refetchWalkin]);
 
-  const handleCheckOut = useCallback(async (walkinCustomerId) => {
-    const result = await Alert.confirm({
-      title: 'Check Out Customer',
-      text: 'Are you sure you want to check out this customer?',
-      icon: 'question',
-    });
-    if (!result.isConfirmed) return;
+  const handleCheckOut = useConfirmAction(
+    (walkinCustomerId) => checkOutMutation.mutateAsync({ id: walkinCustomerId, walkinId: todayWalkin?.id }),
+    { title: 'Check Out Customer', text: 'Are you sure you want to check out this customer?', icon: 'question' }
+  );
 
-    try {
-      await checkOutMutation.mutateAsync({
-        id: walkinCustomerId,
-        walkinId: todayWalkin?.id,
-      });
-    } catch (error) {
-      // Error is handled by the hook
-    }
-  }, [checkOutMutation, todayWalkin?.id]);
-
-  const handleCancel = useCallback(async (walkinCustomerId) => {
-    const result = await Alert.confirm({
-      title: 'Cancel Check-In',
-      text: 'Are you sure you want to cancel this check-in?',
-      icon: 'question',
-    });
-    if (!result.isConfirmed) return;
-
-    try {
-      await cancelMutation.mutateAsync({
-        id: walkinCustomerId,
-        walkinId: todayWalkin?.id,
-      });
-    } catch (error) {
-      // Error is handled by the hook
-    }
-  }, [cancelMutation, todayWalkin?.id]);
+  const handleCancel = useConfirmAction(
+    (walkinCustomerId) => cancelMutation.mutateAsync({ id: walkinCustomerId, walkinId: todayWalkin?.id }),
+    { title: 'Cancel Check-In', text: 'Are you sure you want to cancel this check-in?', icon: 'question' }
+  );
 
   const handleQuickCheckIn = useCallback((customer) => {
     if (!todayWalkin) {

@@ -109,7 +109,7 @@ const SubscriptionMyPlanTab = () => {
     } catch (error) {
       // Error toast is already handled inside the mutation
       // Just log for debugging
-      console.error('Failed to create subscription request:', error);
+      if (import.meta.env.DEV) console.error('Failed to create subscription request:', error);
     }
   };
 
@@ -136,7 +136,7 @@ const SubscriptionMyPlanTab = () => {
       setPendingUpgradePlan(null);
     } catch (err) {
       // Error toast is already handled inside the mutation
-      console.error('Failed to submit trial upgrade request:', err);
+      if (import.meta.env.DEV) console.error('Failed to submit trial upgrade request:', err);
     } finally {
       setUploading(false);
     }

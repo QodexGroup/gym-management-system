@@ -64,7 +64,7 @@ const ExpenseForm = ({
       onSuccess?.();
       onClose?.();
     } catch (error) {
-      console.error('Error saving expense:', error);
+      if (import.meta.env.DEV) console.error('Error saving expense:', error);
     }
   };
 

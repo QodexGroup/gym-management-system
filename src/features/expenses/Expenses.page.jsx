@@ -4,6 +4,7 @@ import { SearchAndFilter, Pagination } from '../../components/common';
 import DataTable from '../../components/DataTable';
 import { Plus, DollarSign } from 'lucide-react';
 import { Alert } from '../../shared/utils/alert';
+import { useConfirmAction } from '../../shared/hooks/useConfirmAction';
 import { EXPENSE_STATUS } from '../../shared/constants/expenseConstants';
 import {
   useExpenses,
@@ -100,25 +101,10 @@ const Expenses = () => {
     handleCloseModal();
   };
 
-  const handleDeleteExpense = async (expenseId) => {
-    const result = await Alert.confirmDelete();
-
-    if (!result.isConfirmed) {
-      return;
-    }
-
-    try {
-      await deleteMutation.mutateAsync(expenseId);
-      Alert.success('Deleted!', 'Expense has been deleted.', {
-        timer: 2000,
-        showConfirmButton: false
-      });
-      // React Query automatically invalidates and refetches
-    } catch (error) {
-      // Error already handled in mutation hook
-      console.error('Error deleting expense:', error);
-    }
-  };
+  const handleDeleteExpense = useConfirmAction(
+    (expenseId) => deleteMutation.mutateAsync(expenseId),
+    { title: 'Delete Expense?', text: 'This action cannot be undone.', icon: 'warning' }
+  );
 
   const handlePostExpense = async (expenseId) => {
     const result = await Alert.confirm({
@@ -139,7 +125,7 @@ const Expenses = () => {
       await postMutation.mutateAsync(expenseId);
     } catch (error) {
       // Error already handled in mutation hook
-      console.error('Error posting expense:', error);
+      if (import.meta.env.DEV) console.error('Error posting expense:', error);
     }
   };
 
@@ -167,7 +153,7 @@ const Expenses = () => {
       // React Query automatically invalidates and refetches
     } catch (error) {
       // Error already handled in mutation hook
-      console.error('Error voiding expense:', error);
+      if (import.meta.env.DEV) console.error('Error voiding expense:', error);
     }
   };
 

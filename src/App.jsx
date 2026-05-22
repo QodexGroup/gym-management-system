@@ -3,22 +3,18 @@ import { useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './shared/context/AuthContext';
 import AlertProvider from './components/AlertProvider';
+import ErrorBoundary from './components/ErrorBoundary';
 import { queryClient } from './shared/lib/queryClient';
 import { isKioskLocked } from './shared/constants/kiosk';
 
 // Auth Pages
-import Login from './features/auth/Login.page';
-import SignUp from './features/auth/SignUp.page';
-import AuthAction from './features/auth/AuthAction.page';
-import ForgotPassword from './features/auth/ForgotPassword.page';
-import ResetPassword from './features/auth/ResetPassword.page';
+import { Login, SignUp, AuthAction, ForgotPassword, ResetPassword } from './features/auth';
 
 // Dashboard Pages
 import { AdminDashboard, TrainerDashboard, PtMembers } from './features/dashboard';
 
 // Customer Pages
-import CustomerList from './features/customers/CustomerList.page';
-import CustomerProfile from './features/customers/CustomerProfile.page';
+import { CustomerList, CustomerProfile } from './features/customers';
 
 // Check-In & Kiosk
 import { CheckIn } from './features/walkin';
@@ -151,6 +147,7 @@ function App() {
       <AuthProvider>
         <AlertProvider>
             <Router>
+              <ErrorBoundary>
               <KioskLockGuard>
                 <AccountStateGuard>
                   <Routes>
@@ -213,6 +210,7 @@ function App() {
                   </Routes>
                 </AccountStateGuard>
               </KioskLockGuard>
+              </ErrorBoundary>
             </Router>
           </AlertProvider>
       </AuthProvider>

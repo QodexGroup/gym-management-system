@@ -33,7 +33,7 @@ const PhotoThumbnail = ({
           const url = await getFileUrl(photo.fileUrl);
           setImageUrl(url);
         } catch (error) {
-          console.error('Error loading image URL:', error);
+          if (import.meta.env.DEV) console.error('Error loading image URL:', error);
           setImageUrl(null);
         } finally {
           setLoading(false);

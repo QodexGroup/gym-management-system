@@ -36,7 +36,7 @@ const Login = () => {
           Toast.error('Failed to initialize Firebase. Please check your configuration.');
         }
       } catch (error) {
-        console.error('Firebase initialization error:', error);
+        if (import.meta.env.DEV) console.error('Firebase initialization error:', error);
         Toast.error('Failed to initialize Firebase authentication.');
       }
     };
@@ -106,7 +106,7 @@ const Login = () => {
       Toast.success('Login successful!');
       navigate('/dashboard', { replace: true });
     } catch (error) {
-      console.error('Login error:', error);
+      if (import.meta.env.DEV) console.error('Login error:', error);
 
       let errorMessage = 'Login failed. Please try again.';
 

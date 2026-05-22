@@ -39,7 +39,7 @@ export async function getFileUrl(fileUrl) {
 
     return downloadURL;
   } catch (error) {
-    console.error('Error getting file URL:', error);
+    if (import.meta.env.DEV) console.error('Error getting file URL:', error);
     throw new Error(`Failed to get file URL: ${error.message}`);
   }
 }

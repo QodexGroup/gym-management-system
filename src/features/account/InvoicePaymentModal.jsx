@@ -60,7 +60,7 @@ const InvoicePaymentModal = ({ invoice, isOpen, onClose }) => {
       setPaymentType(SUBSCRIPTION_PAYMENT_TYPE.GCASH);
       onClose();
     } catch (err) {
-      console.error('Failed to submit payment request:', err);
+      if (import.meta.env.DEV) console.error('Failed to submit payment request:', err);
       // Error toast is already handled in the hook
     } finally {
       setUploading(false);

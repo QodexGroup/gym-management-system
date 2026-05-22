@@ -5,7 +5,7 @@ import { Pagination, ImageLightbox } from '../../../components/common';
 import StatsCards from '../../../components/common/StatsCards';
 import { useCustomerScans, useDeleteCustomerScan } from '../../../shared/hooks/useCustomerScan';
 import { usePermissions } from '../../../shared/hooks/usePermissions';
-import { Alert } from '../../../shared/utils/alert';
+import { useConfirmAction } from '../../../shared/hooks/useConfirmAction';
 import { getFileUrl } from '../../../shared/services/firebaseUrlService';
 import ScansForm from './ScansForm';
 import { scanTableColumns } from './scanTable.config';
@@ -23,6 +23,11 @@ const ScansTab = ({ member }) => {
 
   const { data, isLoading } = useCustomerScans(member?.id, { page: currentPage, pagelimit: 50, relations: 'uploadedByUser,files' });
   const deleteMutation = useDeleteCustomerScan();
+
+  const handleDeleteScan = useConfirmAction(
+    (id) => deleteMutation.mutateAsync(id),
+    { title: 'Delete Scan?', text: 'This action cannot be undone.', icon: 'warning' }
+  );
 
   const scans = data?.data || [];
   const pagination = data?.pagination;
@@ -59,11 +64,7 @@ const ScansTab = ({ member }) => {
           setSelectedScan(scan);
           setShowModal(true);
         },
-        onDelete: async (id) => {
-          const result = await Alert.confirmDelete();
-          if (!result.isConfirmed) return;
-          await deleteMutation.mutateAsync(id);
-        },
+        onDelete: handleDeleteScan,
         onViewImage: async (file, row) => {
           if (!row) return;
 
@@ -80,7 +81,7 @@ const ScansTab = ({ member }) => {
           setLightboxImage(validUrls[currentIndex >= 0 ? currentIndex : 0]);
         },
       }),
-    [hasPermission, scans]
+    [hasPermission, scans, handleDeleteScan]
   );
 
   /* ---------------- Handlers ---------------- */

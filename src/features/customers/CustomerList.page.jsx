@@ -8,7 +8,7 @@ import { Pagination } from '../../components/common';
 import { Search, UserPlus, Users, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 
 import { Alert } from '../../shared/utils/alert';
-import { getInitialCustomerFormData, mapCustomerToFormData } from './customers.model';
+import { getInitialCustomerFormData, mapCustomerToFormData } from '../../shared/models/customerModel';
 import CustomerForm from './CustomerForm';
 
 import { useCustomers, useDeleteCustomer } from '../../shared/hooks/useCustomers';

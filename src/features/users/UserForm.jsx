@@ -83,7 +83,7 @@ const UserForm = ({
       onClose?.();
     } catch (error) {
       // Error handling is done by the mutation
-      console.error('Error submitting user:', error);
+      if (import.meta.env.DEV) console.error('Error submitting user:', error);
       if (error?.message) {
         // keep UX consistent with other forms
         Toast.error(error.message);

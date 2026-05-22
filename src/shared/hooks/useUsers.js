@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { userService } from '../services/userService';
 import { Toast } from '../utils/alert';
+import { useMutationWithToast } from './useMutationWithToast';
 
 /**
  * Query keys for users
@@ -89,80 +90,56 @@ export const useUpdateUser = () => {
  * Hook to delete a user
  */
 export const useDeleteUser = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      return await userService.delete(id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      Toast.success('User deleted successfully');
-    },
-    onError: (error) => {
-      Toast.error(error.message || 'Failed to delete user');
-    },
-  });
+  return useMutationWithToast(
+    async (id) => userService.delete(id),
+    {
+      successMessage: 'User deleted successfully',
+      errorMessage: 'Failed to delete user',
+      invalidateKeys: [userKeys.lists()],
+    }
+  );
 };
 
 /**
  * Hook to deactivate a user
  */
 export const useDeactivateUser = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      return await userService.deactivate(id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      Toast.success('User deactivated successfully');
-    },
-    onError: (error) => {
-      Toast.error(error.message || 'Failed to deactivate user');
-    },
-  });
+  return useMutationWithToast(
+    async (id) => userService.deactivate(id),
+    {
+      successMessage: 'User deactivated successfully',
+      errorMessage: 'Failed to deactivate user',
+      invalidateKeys: [userKeys.lists()],
+    }
+  );
 };
 
 /**
  * Hook to activate a user
  */
 export const useActivateUser = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id) => {
-      return await userService.activate(id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      Toast.success('User activated successfully');
-    },
-    onError: (error) => {
-      Toast.error(error.message || 'Failed to activate user');
-    },
-  });
+  return useMutationWithToast(
+    async (id) => userService.activate(id),
+    {
+      successMessage: 'User activated successfully',
+      errorMessage: 'Failed to activate user',
+      invalidateKeys: [userKeys.lists()],
+    }
+  );
 };
 
 /**
  * Hook to reset user password
  */
 export const useResetPassword = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, password }) => {
-      return await userService.resetPassword(id, password);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      Toast.success('Password reset successfully');
-    },
-    onError: (error) => {
-      Toast.error(error.message || 'Failed to reset password');
-    },
-  });
+  return useMutationWithToast(
+    async ({ id, password }) => userService.resetPassword(id, password),
+    {
+      successMessage: 'Password reset successfully',
+      errorMessage: 'Failed to reset password',
+      invalidateKeys: [userKeys.lists()],
+    }
+  );
 };
 
 /**

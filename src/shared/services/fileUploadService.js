@@ -81,7 +81,7 @@ export async function uploadFile(file, accountId, customerId, onProgress = null)
           }
         },
         (error) => {
-          console.error('Upload error:', error);
+          if (import.meta.env.DEV) console.error('Upload error:', error);
           reject(new Error(`Upload failed: ${error.message}`));
         },
         async () => {
@@ -102,7 +102,7 @@ export async function uploadFile(file, accountId, customerId, onProgress = null)
       );
     });
   } catch (error) {
-    console.error('File upload error:', error);
+    if (import.meta.env.DEV) console.error('File upload error:', error);
     throw error;
   }
 }
@@ -199,7 +199,7 @@ export async function deleteFile(fileUrl) {
     
     return true;
   } catch (error) {
-    console.error('File deletion error:', error);
+    if (import.meta.env.DEV) console.error('File deletion error:', error);
     // If file doesn't exist, consider it successful (already deleted)
     if (error.code === 'storage/object-not-found') {
       return true;
@@ -219,7 +219,7 @@ export async function deleteFiles(fileUrls) {
       await deleteFile(fileUrl);
       return { path: fileUrl, success: true };
     } catch (error) {
-      console.error(`Failed to delete file ${fileUrl}:`, error);
+      if (import.meta.env.DEV) console.error(`Failed to delete file ${fileUrl}:`, error);
       return { path: fileUrl, success: false, error: error.message };
     }
   });

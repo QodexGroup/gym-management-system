@@ -28,7 +28,7 @@ const MemberQRCard = ({ isOpen, onClose, member, customer }) => {
           setCardImageUrl(imageUrl);
           setIsGenerating(false);
         }).catch((error) => {
-          console.error('Error generating card image:', error);
+          if (import.meta.env.DEV) console.error('Error generating card image:', error);
           setIsGenerating(false);
         });
       }, 800);

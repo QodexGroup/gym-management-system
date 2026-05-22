@@ -135,7 +135,7 @@ export const useDeleteCustomerScan = () => {
           await deleteFiles(response.data.fileUrls);
           // Files deleted successfully (errors are logged in deleteFiles)
         } catch (error) {
-          console.error('Failed to delete files from Firebase:', error);
+          if (import.meta.env.DEV) console.error('Failed to delete files from Firebase:', error);
           // Don't show error to user since database deletion was successful
         }
       }

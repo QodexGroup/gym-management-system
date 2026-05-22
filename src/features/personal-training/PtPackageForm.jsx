@@ -50,7 +50,7 @@ const PtPackageForm = ({ package: pkg, onSubmit, onCancel }) => {
       }
       onSubmit();
     } catch (error) {
-      console.error('Error saving package:', error);
+      if (import.meta.env.DEV) console.error('Error saving package:', error);
     }
   };
 

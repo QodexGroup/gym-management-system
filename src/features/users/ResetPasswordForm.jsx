@@ -24,7 +24,7 @@ const ResetPasswordForm = ({
       e.target.reset();
     } catch (error) {
       // Error is handled by the mutation hook
-      console.error('Error resetting password:', error);
+      if (import.meta.env.DEV) console.error('Error resetting password:', error);
     }
   };
 

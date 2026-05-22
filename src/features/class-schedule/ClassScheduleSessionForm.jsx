@@ -47,7 +47,7 @@ const ClassScheduleSessionForm = ({
       onSubmit?.();
     } catch (error) {
       // Error is handled by the mutation hook (Toast will show)
-      console.error('Failed to update session:', error);
+      if (import.meta.env.DEV) console.error('Failed to update session:', error);
     }
   };
 

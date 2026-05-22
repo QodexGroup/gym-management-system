@@ -40,7 +40,7 @@ const AdminDashboard = () => {
         setStats(data);
         setError(null);
       } catch (err) {
-        console.error('Error fetching dashboard stats:', err);
+        if (import.meta.env.DEV) console.error('Error fetching dashboard stats:', err);
         setError(err.message || 'Failed to load dashboard data');
       } finally {
         setLoading(false);

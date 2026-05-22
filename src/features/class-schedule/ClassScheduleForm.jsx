@@ -59,7 +59,7 @@ const ClassScheduleForm = ({ schedule, onSubmit, onCancel }) => {
       }
       onSubmit();
     } catch (error) {
-      console.error('Error saving schedule:', error);
+      if (import.meta.env.DEV) console.error('Error saving schedule:', error);
     }
   };
 

@@ -7,7 +7,7 @@ import StatsCards from '../../../components/common/StatsCards';
 
 import { useCustomerProgress, useDeleteCustomerProgress } from '../../../shared/hooks/useCustomerProgress';
 import { usePermissions } from '../../../shared/hooks/usePermissions';
-import { Alert } from '../../../shared/utils/alert';
+import { useConfirmAction } from '../../../shared/hooks/useConfirmAction';
 import { getFileUrl } from '../../../shared/services/firebaseUrlService';
 
 import ProgressForm from './ProgressForm';
@@ -35,6 +35,11 @@ const ProgressTab = ({ member }) => {
   });
 
   const deleteMutation = useDeleteCustomerProgress();
+
+  const handleDeleteProgress = useConfirmAction(
+    (id) => deleteMutation.mutateAsync(id),
+    { title: 'Delete Progress Log?', text: 'This action cannot be undone.', icon: 'warning' }
+  );
 
   const progressLogs = data?.data || [];
   const pagination = data?.pagination;
@@ -111,11 +116,7 @@ const ProgressTab = ({ member }) => {
             setShowModal(true);
           }
         },
-        onDelete: async (id) => {
-          const result = await Alert.confirmDelete();
-          if (!result.isConfirmed) return;
-          await deleteMutation.mutateAsync(id);
-        },
+        onDelete: handleDeleteProgress,
         onImageClick: async (file, row) => {
           if (!row) return;
 
@@ -130,7 +131,7 @@ const ProgressTab = ({ member }) => {
               try {
                 return await getFileUrl(imgFile.fileUrl);
               } catch (error) {
-                console.error('Error loading image URL:', error);
+                if (import.meta.env.DEV) console.error('Error loading image URL:', error);
                 return null;
               }
             })
@@ -144,7 +145,7 @@ const ProgressTab = ({ member }) => {
           setLightboxImage(validUrls[currentIndex >= 0 ? currentIndex : 0]);
         },
       }),
-    [hasPermission, canViewLogs]
+    [hasPermission, canViewLogs, handleDeleteProgress]
   );
 
   /* ---------------- Handlers ---------------- */
@@ -175,7 +176,7 @@ const ProgressTab = ({ member }) => {
         try {
           return await getFileUrl(imgFile.fileUrl);
         } catch (error) {
-          console.error('Error loading image URL:', error);
+          if (import.meta.env.DEV) console.error('Error loading image URL:', error);
           return null;
         }
       })

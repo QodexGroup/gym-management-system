@@ -34,7 +34,7 @@ const UnlockKioskForm = ({ firebaseAuth, onSuccess, onCancel, isUnlocking }) => 
         onSuccess();
       }
     } catch (error) {
-      console.error('Unlock error:', error);
+      if (import.meta.env.DEV) console.error('Unlock error:', error);
       if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         setError('Incorrect password. Please try again.');
       } else if (error.code === 'auth/user-not-found') {

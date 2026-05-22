@@ -12,7 +12,7 @@ const GridDesign = ({
     try {
       // Validate inputs
       if (!Array.isArray(items)) {
-        console.warn('GridDesign: items must be an array');
+        if (import.meta.env.DEV) console.warn('GridDesign: items must be an array');
         return null;
       }
       
@@ -54,7 +54,7 @@ const GridDesign = ({
           return <GridDesignOne {...baseProps} />;
       }
     } catch (error) {
-      console.error('GridDesign error:', error);
+      if (import.meta.env.DEV) console.error('GridDesign error:', error);
       return (
         <div className="p-4 bg-red-50 border border-red-200 rounded">
           <p className="text-red-600">Error rendering grid: {error.message}</p>

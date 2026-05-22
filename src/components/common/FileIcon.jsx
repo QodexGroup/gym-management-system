@@ -12,7 +12,7 @@ const FileIcon = ({ file, className = "w-10 h-10 rounded-lg bg-dark-200 hover:bg
         const url = await getFileUrl(file.fileUrl);
         setFileUrl(url);
       } catch (error) {
-        console.error('Error loading file URL:', error);
+        if (import.meta.env.DEV) console.error('Error loading file URL:', error);
       } finally {
         setLoading(false);
       }
