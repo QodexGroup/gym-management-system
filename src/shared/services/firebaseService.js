@@ -3,7 +3,7 @@
 import { initializeApp } from "firebase/app";
 import { getStorage } from "firebase/storage";
 import { getAuth } from "firebase/auth";
-import { firebaseConfig as productionConfig } from '../firebaseConfig.js';
+import { firebaseConfig as productionConfig } from '../../firebaseConfig.js';
 
 let firebaseApp = null;
 let firebaseStorage = null;

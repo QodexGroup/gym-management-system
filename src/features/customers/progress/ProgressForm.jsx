@@ -4,7 +4,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { Camera, Upload } from 'lucide-react';
 import { Modal, ImageLightbox, PhotoThumbnail } from '../../../components/common';
 import { calculateBMI, calculateBodyFatMass, formatDateForInput, formatDate } from '../../../shared/utils/formatters';
-import { useCreateCustomerProgress, useUpdateCustomerProgress, customerProgressKeys } from './progress.hooks';
+import { useCreateCustomerProgress, useUpdateCustomerProgress, customerProgressKeys } from '../../../shared/hooks/useCustomerProgress';
 import { Toast } from '../../../shared/utils/alert';
 import { useQueryClient } from '@tanstack/react-query';
 import { getInitialProgressFormData, mapProgressToFormData } from '../../../shared/models/progressModel';

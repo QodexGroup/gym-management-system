@@ -3,7 +3,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Modal } from '../../components/common';
 import { Toast } from '../../shared/utils/alert';
-import { useCreateCustomer, useUpdateCustomer } from './customers.hooks';
+import { useCreateCustomer, useUpdateCustomer } from '../../shared/hooks/useCustomers';
 import { useMembershipPlans } from '../../shared/hooks/useMembershipPlans';
 import { useCoaches } from '../../shared/hooks/useUsers';
 import { normalizePhoneNumber, normalizeDate } from '../../shared/utils/formatters';

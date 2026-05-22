@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useMembershipPlans } from '../../../shared/hooks/useMembershipPlans';
-import { useCustomerPaymentsByBill, useDeleteCustomerPayment } from './billing.hooks';
+import { useCustomerPaymentsByBill, useDeleteCustomerPayment } from '../../../shared/hooks/useCustomerPayments';
 import { BILL_TYPE, BILL_TYPE_OPTIONS, BILL_STATUS } from '../../../shared/constants/billConstants';
 import { Alert } from '../../../shared/utils/alert';
 import { Info, Lock } from 'lucide-react';

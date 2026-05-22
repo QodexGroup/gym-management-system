@@ -5,7 +5,7 @@ import DataTable from '../../../components/DataTable';
 import { Pagination, ImageLightbox } from '../../../components/common';
 import StatsCards from '../../../components/common/StatsCards';
 
-import { useCustomerProgress, useDeleteCustomerProgress } from './progress.hooks';
+import { useCustomerProgress, useDeleteCustomerProgress } from '../../../shared/hooks/useCustomerProgress';
 import { usePermissions } from '../../../shared/hooks/usePermissions';
 import { Alert } from '../../../shared/utils/alert';
 import { getFileUrl } from '../../../shared/services/firebaseUrlService';

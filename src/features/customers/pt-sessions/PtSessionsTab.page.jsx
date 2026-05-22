@@ -18,7 +18,7 @@ import {
   useUpdatePtBooking,
   useCancelPtBooking,
 } from '../../../shared/hooks/usePtBookings';
-import { useCustomerPtPackages } from '../billing/billing.hooks';
+import { useCustomerPtPackages } from '../../../shared/hooks/useCustomerPtPackages';
 import { transformPtBookingToApiFormat, mapPtBookingToFormData } from '../../../shared/models/ptBookingModel';
 
 const PtSessionsTab = ({ member }) => {

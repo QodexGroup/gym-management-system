@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import Layout from '../../components/layout/Layout';
+import Layout from '../../layout/Layout';
 import DataTable from '../../components/DataTable';
 import StatsCards from '../../components/common/StatsCards';
 import { Pagination } from '../../components/common';
@@ -11,7 +11,8 @@ import { Alert } from '../../shared/utils/alert';
 import { getInitialCustomerFormData, mapCustomerToFormData } from './customers.model';
 import CustomerForm from './CustomerForm';
 
-import { useCustomers, useDeleteCustomer, useCustomerSearch } from './customers.hooks';
+import { useCustomers, useDeleteCustomer } from '../../shared/hooks/useCustomers';
+import { useCustomerSearch } from '../../shared/hooks/useCustomerSearch';
 import { usePermissions } from '../../shared/hooks/usePermissions';
 import { useAccountLimit } from '../../shared/hooks/useAccountLimit';
 import { useAuth } from '../../shared/context/AuthContext';

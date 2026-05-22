@@ -1,7 +1,6 @@
 export { default as StatCard } from './StatsCards';
 export { default as StatsCards } from './StatsCards';
 export { default as StatsList } from './StatsList';
-export { default as DataTable } from './DataTable';
 export { default as Modal } from './Modal';
 export { default as Badge } from './Badge';
 export { default as Avatar } from './Avatar';
@@ -13,6 +12,9 @@ export { default as CalendarListView } from '../Calendar/CalendarListView';
 export { default as SearchableClientInput } from './SearchableClientInput';
 export { default as Pagination } from './Pagination';
 export { default as SearchAndFilter } from './SearchAndFilter';
+export { default as SearchInput } from './SearchInput';
+export { default as SectionCard } from './SectionCard';
+export { default as TableCard } from './TableCard';
 export { default as CardList } from './CardList';
 export { default as DateRangeExportBar } from './DateRangeExportBar';
 export { default as PrintArea } from './PrintArea';

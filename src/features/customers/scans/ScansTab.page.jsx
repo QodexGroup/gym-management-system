@@ -3,7 +3,7 @@ import { Plus, FileText, Activity, Calendar } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
 import { Pagination, ImageLightbox } from '../../../components/common';
 import StatsCards from '../../../components/common/StatsCards';
-import { useCustomerScans, useDeleteCustomerScan } from './scans.hooks';
+import { useCustomerScans, useDeleteCustomerScan } from '../../../shared/hooks/useCustomerScan';
 import { usePermissions } from '../../../shared/hooks/usePermissions';
 import { Alert } from '../../../shared/utils/alert';
 import { getFileUrl } from '../../../shared/services/firebaseUrlService';

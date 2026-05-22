@@ -6,7 +6,7 @@
 // Import the generated config (will be undefined if appConfig doesn't exist yet)
 let appConfigModule;
 try {
-    appConfigModule = await import('../firebaseConfig.js');
+    appConfigModule = await import('../../firebaseConfig.js');
 } catch {
     // firebaseConfig.js might not exist in some cases
     appConfigModule = null;

@@ -1,3 +1,3 @@
-export { default as AdminDashboard } from './AdminDashboard';
-export { default as TrainerDashboard } from './TrainerDashboard';
-export { default as PtMembers } from './PtMembers';
+export { default as AdminDashboard } from './AdminDashboard.page';
+export { default as TrainerDashboard } from './TrainerDashboard.page';
+export { default as PtMembers } from './PtMembers.page';

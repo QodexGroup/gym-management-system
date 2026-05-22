@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import Layout from '../../components/layout/Layout';
+import Layout from '../../layout/Layout';
 import { Avatar, Badge } from '../../components/common';
 import { ArrowLeft, Activity, FileText, CreditCard, CalendarDays, UserCheck, ClipboardClock, QrCode } from 'lucide-react';
 import MemberQRCard from './qr-card/MemberQRCard';
 
 import CustomerForm from './CustomerForm';
-import { useCustomer } from './customers.hooks';
+import { useCustomer } from '../../shared/hooks/useCustomers';
 import { mapCustomerToUI } from './customers.model';
 import { formatCurrency } from '../../shared/utils/formatters';
 import { CUSTOMER_MEMBERSHIP_STATUS } from '../../shared/constants/customerMembership';

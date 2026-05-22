@@ -7,11 +7,11 @@ import { queryClient } from './shared/lib/queryClient';
 import { isKioskLocked } from './shared/constants/kiosk';
 
 // Auth Pages
-import Login from './features/auth/Login';
-import SignUp from './features/auth/SignUp';
-import AuthAction from './features/auth/AuthAction';
-import ForgotPassword from './features/auth/ForgotPassword';
-import ResetPassword from './features/auth/ResetPassword';
+import Login from './features/auth/Login.page';
+import SignUp from './features/auth/SignUp.page';
+import AuthAction from './features/auth/AuthAction.page';
+import ForgotPassword from './features/auth/ForgotPassword.page';
+import ResetPassword from './features/auth/ResetPassword.page';
 
 // Dashboard Pages
 import { AdminDashboard, TrainerDashboard, PtMembers } from './features/dashboard';

@@ -3,7 +3,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { FileText, Upload, X } from 'lucide-react';
 import { Modal } from '../../../components/common';
-import { useCreateCustomerScan, useUpdateCustomerScan, customerScanKeys } from './scans.hooks';
+import { useCreateCustomerScan, useUpdateCustomerScan, customerScanKeys } from '../../../shared/hooks/useCustomerScan';
 import { formatDateForInput } from '../../../shared/utils/formatters';
 import { Alert, Toast } from '../../../shared/utils/alert';
 import { uploadFile, deleteFile } from '../../../shared/services/fileUploadService';

@@ -8,18 +8,10 @@ import BillsForm from './BillsForm';
 import PaymentForm from './PaymentForm';
 import MembershipPlanForm from './MembershipPlanForm';
 import PtPackageAssignmentForm from './PtPackageAssignmentForm';
-import {
-  useCustomerBills,
-  useCreateCustomerBill,
-  useUpdateCustomerBill,
-  useDeleteCustomerBill,
-  customerBillKeys,
-  useCreateCustomerPayment,
-  useCreateOrUpdateCustomerMembership,
-  useCustomerPtPackages,
-  useAssignPtPackage,
-  useCancelPtPackage,
-} from './billing.hooks';
+import { useCustomerBills, useCreateCustomerBill, useUpdateCustomerBill, useDeleteCustomerBill, customerBillKeys } from '../../../shared/hooks/useCustomerBills';
+import { useCreateCustomerPayment } from '../../../shared/hooks/useCustomerPayments';
+import { useCreateOrUpdateCustomerMembership } from '../../../shared/hooks/useCustomerMembership';
+import { useCustomerPtPackages, useAssignPtPackage, useCancelPtPackage } from '../../../shared/hooks/useCustomerPtPackages';
 import { BILL_STATUS, BILL_TYPE } from '../../../shared/constants/billConstants';
 import { CUSTOMER_MEMBERSHIP_STATUS } from '../../../shared/constants/customerMembership';
 import { CUSTOMER_PT_PACKAGE_STATUS, CUSTOMER_PT_PACKAGE_STATUS_LABELS, CUSTOMER_PT_PACKAGE_STATUS_VARIANTS } from '../../../shared/constants/ptConstants';
