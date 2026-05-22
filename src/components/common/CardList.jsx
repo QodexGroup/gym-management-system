@@ -48,7 +48,7 @@ const CardList = ({
   }
 
   if (!renderTitle || typeof renderTitle !== 'function') {
-    console.warn('CardList: renderTitle prop is required and must be a function');
+    if (import.meta.env.DEV) console.warn('CardList: renderTitle prop is required and must be a function');
     return null;
   }
 

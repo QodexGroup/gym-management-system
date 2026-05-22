@@ -1,5 +1,5 @@
 import { forwardRef } from 'react';
-import { APP_NAME } from '../../constants/appConfig';
+import { APP_NAME } from '../../shared/constants/appConfig';
 
 /**
  * Reusable print-only block. Use with useReactToPrint contentRef.

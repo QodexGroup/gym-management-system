@@ -1,0 +1,150 @@
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import { customerProgressService } from '../services/customerProgressService';
+import { deleteFiles } from '../services/fileUploadService';
+import { Toast } from '../utils/alert';
+
+/**
+ * Query keys for customer progress
+ */
+export const customerProgressKeys = {
+  all: ['customerProgress'],
+  lists: () => [...customerProgressKeys.all, 'list'],
+  list: (customerId, options) => [...customerProgressKeys.lists(), customerId, options],
+  details: () => [...customerProgressKeys.all, 'detail'],
+  detail: (id) => [...customerProgressKeys.details(), id],
+};
+
+/**
+ * Hook to fetch progress records for a customer with pagination
+ */
+export const useCustomerProgress = (customerId, options = {}) => {
+  return useQuery({
+    queryKey: customerProgressKeys.list(customerId, options),
+    queryFn: async () => {
+      return await customerProgressService.getByCustomerId(customerId, options);
+    },
+    enabled: !!customerId, // Only run query if customerId exists
+    placeholderData: keepPreviousData, // Keep previous page data while loading new page
+  });
+};
+
+/**
+ * Hook to create a new progress record
+ */
+export const useCreateCustomerProgress = () => {
+  const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
+
+  return useMutation({
+    mutationFn: async ({ customerId, progressData }) => {
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await customerProgressService.create(customerId, progressData, idempotencyKeyRef.current);
+    },
+    onSuccess: (data, variables) => {
+      idempotencyKeyRef.current = null; // Reset after success
+      // Invalidate and refetch progress list for this customer
+      queryClient.invalidateQueries({ 
+        queryKey: customerProgressKeys.lists(),
+      });
+      Toast.success('Progress record created successfully');
+    },
+    onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
+      Toast.error(error.message || 'Failed to create progress record');
+    },
+  });
+};
+
+/**
+ * Hook to update a progress record
+ */
+export const useUpdateCustomerProgress = () => {
+  const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
+
+  return useMutation({
+    mutationFn: async ({ id, progressData }) => {
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await customerProgressService.update(id, progressData, idempotencyKeyRef.current);
+    },
+    onSuccess: async (updatedProgress, variables) => {
+      idempotencyKeyRef.current = null; // Reset after success
+      // Update the cache with the returned data immediately
+      if (updatedProgress) {
+        queryClient.setQueryData(
+          customerProgressKeys.detail(variables.id),
+          updatedProgress
+        );
+      }
+      
+      // Invalidate to mark as stale and trigger refetch if query is active
+      queryClient.invalidateQueries({ 
+        queryKey: customerProgressKeys.detail(variables.id),
+        exact: true
+      });
+      
+      // Also invalidate the list to keep it in sync
+      queryClient.invalidateQueries({ 
+        queryKey: customerProgressKeys.lists(),
+      });
+      
+      Toast.success('Progress record updated successfully');
+    },
+    onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
+      Toast.error(error.message || 'Failed to update progress record');
+    },
+  });
+};
+
+/**
+ * Hook to delete a progress record
+ */
+export const useDeleteCustomerProgress = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id) => {
+      return await customerProgressService.delete(id);
+    },
+    onSuccess: async (response, variables) => {
+      // Remove the deleted item from cache
+      queryClient.removeQueries({
+        queryKey: customerProgressKeys.detail(variables),
+        exact: true
+      });
+      
+      // Invalidate progress list for this customer
+      queryClient.invalidateQueries({ 
+        queryKey: customerProgressKeys.lists(),
+      });
+      
+      // Delete files from Firebase Storage if database deletion was successful
+      if (response?.data?.fileUrls && response.data.fileUrls.length > 0) {
+        try {
+          await deleteFiles(response.data.fileUrls);
+          // Files deleted successfully (errors are logged in deleteFiles)
+        } catch (error) {
+          if (import.meta.env.DEV) console.error('Failed to delete files from Firebase:', error);
+          // Don't show error to user since database deletion was successful
+        }
+      }
+      
+      Toast.success('Progress record deleted successfully');
+    },
+    onError: (error) => {
+      Toast.error(error.message || 'Failed to delete progress record');
+    },
+  });
+};
+

@@ -1,0 +1,140 @@
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import { expenseService } from '../services/expenseService';
+import { expenseCategoryService } from '../services/expenseCategoryService';
+import { Toast } from '../utils/alert';
+import { useMutationWithToast } from './useMutationWithToast';
+
+/**
+ * Query keys for expenses
+ */
+export const expenseKeys = {
+  all: ['expenses'],
+  lists: () => [...expenseKeys.all, 'list'],
+  list: (options) => [...expenseKeys.lists(), options],
+  details: () => [...expenseKeys.all, 'detail'],
+  detail: (id) => [...expenseKeys.details(), id],
+};
+
+/**
+ * Query keys for expense categories
+ */
+export const expenseCategoryKeys = {
+  all: ['expenseCategories'],
+  lists: () => [...expenseCategoryKeys.all, 'list'],
+  list: () => [...expenseCategoryKeys.lists()],
+};
+
+/**
+ * Hook to fetch all expenses with pagination
+ * @param {Object} options - Query options (page, pagelimit, sort, filters, relations)
+ */
+export const useExpenses = (options = {}) => {
+  return useQuery({
+    queryKey: expenseKeys.list(options),
+    queryFn: async () => {
+      return await expenseService.getAll(options);
+    },
+    placeholderData: keepPreviousData, // Keep previous page data while loading new page
+  });
+};
+
+/**
+ * Hook to fetch all expense categories with pagination
+ * @param {Object} options - Query options (page, pagelimit, sort, filters, relations)
+ */
+export const useExpenseCategories = (options = {}) => {
+  return useQuery({
+    queryKey: expenseCategoryKeys.list(options),
+    queryFn: async () => {
+      return await expenseCategoryService.getAll(options);
+    },
+    placeholderData: keepPreviousData, // Keep previous page data while loading new page
+  });
+};
+
+/**
+ * Hook to create a new expense
+ */
+export const useCreateExpense = () => {
+  const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
+
+  return useMutation({
+    mutationFn: async (expenseData) => {
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await expenseService.create(expenseData, idempotencyKeyRef.current);
+    },
+    onSuccess: () => {
+      idempotencyKeyRef.current = null; // Reset after success
+      queryClient.invalidateQueries({ queryKey: expenseKeys.lists() });
+      Toast.success('Expense created successfully');
+    },
+    onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
+      Toast.error(error.message || 'Failed to create expense');
+    },
+  });
+};
+
+/**
+ * Hook to update an expense
+ */
+export const useUpdateExpense = () => {
+  const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
+
+  return useMutation({
+    mutationFn: async ({ id, data }) => {
+      // Generate key once per mutation instance
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      
+      return await expenseService.update(id, data, idempotencyKeyRef.current);
+    },
+    onSuccess: (data, variables) => {
+      idempotencyKeyRef.current = null; // Reset after success
+      queryClient.invalidateQueries({ queryKey: expenseKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: expenseKeys.detail(variables.id) });
+      Toast.success('Expense updated successfully');
+    },
+    onError: (error) => {
+      idempotencyKeyRef.current = null; // Reset on error
+      Toast.error(error.message || 'Failed to update expense');
+    },
+  });
+};
+
+/**
+ * Hook to post an expense
+ */
+export const usePostExpense = () => {
+  return useMutationWithToast(
+    async (id) => expenseService.post(id),
+    {
+      successMessage: 'Expense posted successfully',
+      errorMessage: 'Failed to post expense',
+      invalidateKeys: [expenseKeys.lists()],
+    }
+  );
+};
+
+/**
+ * Hook to delete an expense
+ */
+export const useDeleteExpense = () => {
+  return useMutationWithToast(
+    async (id) => expenseService.delete(id),
+    {
+      errorMessage: 'Failed to delete expense',
+      invalidateKeys: [expenseKeys.lists()],
+    }
+  );
+};
+

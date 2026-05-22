@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { authService, getAuthToken } from '../services/authService';
-import { Toast } from '../utils/alert';
+import { useAuth } from '../shared/context/AuthContext';
+import { authService, getAuthToken } from '../shared/services/authService';
+import { Toast } from '../shared/utils/alert';
 import { Mail, X } from 'lucide-react';
 
 const EmailVerificationBanner = () => {

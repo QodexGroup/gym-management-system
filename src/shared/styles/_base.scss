@@ -1,0 +1,17 @@
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-dark-900 text-dark-50 antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-dark-50;
+  }
+
+  p, span, div {
+    color: inherit;
+  }
+}
