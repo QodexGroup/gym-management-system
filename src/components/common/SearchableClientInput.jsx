@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
-import { useSearchCustomers } from '../../hooks/useCustomers';
+import { useSearchCustomers } from '../../shared/hooks/useCustomers';
 
 /**
  * SearchableClientInput - A reusable searchable input component for selecting clients/customers

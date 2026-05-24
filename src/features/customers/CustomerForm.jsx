@@ -1,0 +1,472 @@
+import { useState, useEffect } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { Modal } from '../../components/common';
+import { Toast } from '../../shared/utils/alert';
+import { useCreateCustomer, useUpdateCustomer } from '../../shared/hooks/useCustomers';
+import { useMembershipPlans } from '../../shared/hooks/useMembershipPlans';
+import { useCoaches } from '../../shared/hooks/useUsers';
+import { normalizePhoneNumber, normalizeDate } from '../../shared/utils/formatters';
+import { isValidEmail, normalizeEmail } from '../../shared/utils/validators/email';
+
+const CustomerForm = ({
+  isOpen,
+  onClose,
+  formData,
+  setFormData,
+  selectedCustomer,
+  onSaveSuccess,
+}) => {
+  const [errors, setErrors] = useState({});
+
+  const createMutation = useCreateCustomer();
+  const updateMutation = useUpdateCustomer();
+  const { data: membershipPlans = [] } = useMembershipPlans();
+  const { data: trainers = [], isLoading: loadingCoaches, error: coachesError } = useCoaches();
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
+  useEffect(() => {
+    if (coachesError) Toast.error('Failed to load coaches');
+  }, [coachesError]);
+
+  const validateRequiredField = (value, fieldName) => {
+    if (!value || (typeof value === 'string' && !value.trim())) return `${fieldName} is required`;
+    return '';
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    const requiredFields = [
+      { key: 'firstName', label: 'First Name' },
+      { key: 'lastName', label: 'Last Name' },
+      { key: 'phoneNumber', label: 'Phone Number' },
+      { key: 'dateOfBirth', label: 'Date of Birth' },
+    ];
+
+    requiredFields.forEach(({ key, label }) => {
+      const error = validateRequiredField(formData[key], label);
+      if (error) newErrors[key] = error;
+    });
+
+    const email = normalizeEmail(formData.email);
+    if (email && !isValidEmail(email)) {
+      newErrors.email = 'Invalid email address';
+    }
+
+    setErrors(newErrors);
+    return newErrors;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formErrors = validateForm();
+    if (Object.keys(formErrors).length > 0) {
+      setTimeout(() => {
+        const firstError = document.querySelector('.border-danger-500');
+        if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
+      return;
+    }
+
+    // Normalize all fields
+    const normalizedCustomerData = Object.fromEntries(
+      Object.entries(formData).map(([key, value]) => {
+        if (key === 'phoneNumber') return [key, normalizePhoneNumber(value)];
+        if (key === 'dateOfBirth') return [key, normalizeDate(value)];
+        if (typeof value === 'string') return [key, value.trim() || null];
+        return [key, value ?? null];
+      })
+    );
+
+    if (normalizedCustomerData.email) {
+      normalizedCustomerData.email = normalizeEmail(normalizedCustomerData.email);
+    }
+
+    if (!selectedCustomer) {
+      normalizedCustomerData.membershipPlanId = formData.membershipPlanId
+        ? parseInt(formData.membershipPlanId)
+        : null;
+      normalizedCustomerData.currentTrainerId = formData.currentTrainerId || null;
+    }
+
+    try {
+      if (selectedCustomer) {
+        await updateMutation.mutateAsync({ id: selectedCustomer.id, data: normalizedCustomerData });
+      } else {
+        await createMutation.mutateAsync(normalizedCustomerData);
+      }
+      onClose();
+      if (onSaveSuccess) onSaveSuccess();
+    } catch (error) {
+      if (import.meta.env.DEV) console.error('Error saving customer:', error);
+    }
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={selectedCustomer ? 'Edit Client' : 'Add New Client'}
+      size="full"
+    >
+      <form onSubmit={handleSubmit} noValidate className="space-y-6">
+
+        {/* Personal Information */}
+        <div className="border-b border-dark-200 pb-6">
+          <h3 className="text-lg font-semibold text-dark-50 mb-4">Personal Information</h3>
+          <div className="grid grid-cols-6 gap-6">
+            <div className="col-span-5 grid grid-cols-2 gap-4">
+              <div>
+                <label className="label">First Name <span className="text-danger-600">*</span></label>
+                <input
+                  type="text"
+                  className={`input ${errors.firstName ? 'border-danger-500 focus:border-danger-500' : ''}`}
+                  placeholder="John"
+                  value={formData.firstName}
+                  onChange={(e) => {
+                    setFormData({ ...formData, firstName: e.target.value });
+                    if (errors.firstName) setErrors({ ...errors, firstName: '' });
+                  }}
+                  onBlur={() => {
+                    const error = validateRequiredField(formData.firstName, 'First name');
+                    if (error) setErrors({ ...errors, firstName: error });
+                  }}
+                />
+                {errors.firstName && <p className="text-danger-600 text-xs mt-1">{errors.firstName}</p>}
+              </div>
+
+              <div>
+                <label className="label">Last Name <span className="text-danger-600">*</span></label>
+                <input
+                  type="text"
+                  className={`input ${errors.lastName ? 'border-danger-500 focus:border-danger-500' : ''}`}
+                  placeholder="Smith"
+                  value={formData.lastName}
+                  onChange={(e) => {
+                    setFormData({ ...formData, lastName: e.target.value });
+                    if (errors.lastName) setErrors({ ...errors, lastName: '' });
+                  }}
+                  onBlur={() => {
+                    const error = validateRequiredField(formData.lastName, 'Last name');
+                    if (error) setErrors({ ...errors, lastName: error });
+                  }}
+                />
+                {errors.lastName && <p className="text-danger-600 text-xs mt-1">{errors.lastName}</p>}
+              </div>
+
+              <div>
+                <label className="label">Gender</label>
+                <select
+                  className="input"
+                  value={formData.gender || 'Male'}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="label">Date of Birth <span className="text-danger-600">*</span></label>
+                <DatePicker
+                  selected={formData.dateOfBirth ? new Date(formData.dateOfBirth) : null}
+                  onChange={(date) => setFormData({ ...formData, dateOfBirth: date ? date.toISOString().split('T')[0] : '' })}
+                  dateFormat="yyyy-MM-dd"
+                  placeholderText="Click to select date"
+                  className={`input w-full ${errors.dateOfBirth ? 'border-danger-500 focus:border-danger-500' : ''}`}
+                  showYearDropdown
+                  showMonthDropdown
+                  dropdownMode="select"
+                  maxDate={new Date()}
+                  isClearable
+                  onBlur={() => {
+                    const error = validateRequiredField(formData.dateOfBirth, 'Date of birth');
+                    if (error) setErrors({ ...errors, dateOfBirth: error });
+                  }}
+                />
+                {errors.dateOfBirth && <p className="text-danger-600 text-xs mt-1">{errors.dateOfBirth}</p>}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Contact Information */}
+        <div className="border-b border-dark-200 pb-6">
+          <h3 className="text-lg font-semibold text-dark-50 mb-4">Contact Information</h3>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="label">Phone Number <span className="text-danger-600">*</span></label>
+              <input
+                type="tel"
+                className={`input ${errors.phoneNumber ? 'border-danger-500 focus:border-danger-500' : ''}`}
+                placeholder="09123456789"
+                value={formData.phoneNumber}
+                onChange={(e) => {
+                  setFormData({ ...formData, phoneNumber: e.target.value });
+                  if (errors.phoneNumber) setErrors({ ...errors, phoneNumber: '' });
+                }}
+                onBlur={() => {
+                  const error = validateRequiredField(formData.phoneNumber, 'Phone Number');
+                  if (error) setErrors({ ...errors, phoneNumber: error });
+                }}
+              />
+              {errors.phoneNumber && <p className="text-danger-600 text-xs mt-1">{errors.phoneNumber}</p>}
+            </div>
+
+            <div>
+              <label className="label">Email</label>
+              <input
+                type="email"
+                className={`input ${errors.email ? 'border-danger-500 focus:border-danger-500' : ''}`}
+                placeholder="john@email.com"
+                value={formData.email}
+                onChange={(e) => {
+                  setFormData({ ...formData, email: e.target.value });
+                  if (errors.email) setErrors({ ...errors, email: '' });
+                }}
+                onBlur={() => {
+                  if (formData.email && !isValidEmail(normalizeEmail(formData.email))) {
+                    setErrors({ ...errors, email: 'Please enter a valid email address' });
+                  }
+                }}
+              />
+              {errors.email && <p className="text-danger-600 text-xs mt-1">{errors.email}</p>}
+            </div>
+
+            <div>
+              <label className="label">Address</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="City, Province"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Membership & Coach */}
+        {!selectedCustomer && (
+          <div className="border-b border-dark-200 pb-6">
+            <h3 className="text-lg font-semibold text-dark-50 mb-4">Membership Plan</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label">Membership Plan</label>
+                <select
+                  className="input"
+                  value={formData.membershipPlanId}
+                  onChange={(e) => setFormData({ ...formData, membershipPlanId: e.target.value })}
+                >
+                  <option value="">No membership plan</option>
+                  {membershipPlans.map((plan) => (
+                    <option key={plan.id} value={plan.id}>
+                      {plan.planName} - ₱{parseFloat(plan.price).toLocaleString()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Health & Emergency */}
+        <div className="border-b border-dark-200 pb-6">
+          <h3 className="text-lg font-semibold text-dark-50 mb-4">Health & Emergency</h3>
+
+          {/* Medical Information */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label">Medical Notes</label>
+                <textarea
+                  className="input"
+                  rows="3"
+                  placeholder="e.g., Asthma, previous injuries, etc."
+                  value={formData.medicalNotes}
+                  onChange={(e) => setFormData({ ...formData, medicalNotes: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="label">Allergies</label>
+                <textarea
+                  className="input"
+                  rows="3"
+                  placeholder="e.g., Peanuts, Latex, Penicillin"
+                  value={formData.allergies}
+                  onChange={(e) => setFormData({ ...formData, allergies: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-4 gap-4">
+              <div>
+                <label className="label">Blood Type</label>
+                <select
+                  className="input"
+                  value={formData.bloodType}
+                  onChange={(e) => setFormData({ ...formData, bloodType: e.target.value })}
+                >
+                  <option value="">Select blood type</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
+              </div>
+              <div>
+                <label className="label">Medical Conditions</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="e.g., Diabetes, Hypertension"
+                  value={formData.medicalConditions}
+                  onChange={(e) => setFormData({ ...formData, medicalConditions: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="label">Doctor Name</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="Primary care physician name"
+                  value={formData.doctorName}
+                  onChange={(e) => setFormData({ ...formData, doctorName: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="label">Doctor Phone</label>
+                <input
+                  type="tel"
+                  className="input"
+                  placeholder="+1 234 567 8901"
+                  value={formData.doctorPhone}
+                  onChange={(e) => setFormData({ ...formData, doctorPhone: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label">Current Medications</label>
+                <textarea
+                  className="input"
+                  rows="2"
+                  placeholder="List current medications and dosages"
+                  value={formData.currentMedications}
+                  onChange={(e) => setFormData({ ...formData, currentMedications: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Insurance Provider</label>
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="Insurance company name"
+                    value={formData.insuranceProvider}
+                    onChange={(e) => setFormData({ ...formData, insuranceProvider: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="label">Policy Number</label>
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="Insurance policy number"
+                    value={formData.insurancePolicyNumber}
+                    onChange={(e) => setFormData({ ...formData, insurancePolicyNumber: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Emergency Contact */}
+          <div className="border-t border-dark-200 pt-4 mt-4">
+            <h4 className="text-md font-semibold text-dark-50 mb-3">Emergency Contact</h4>
+            <div className="grid grid-cols-4 gap-4">
+              <div>
+                <label className="label">Emergency Contact Name</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="Emergency contact name"
+                  value={formData.emergencyContactName}
+                  onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="label">Relationship</label>
+                <select
+                  className="input"
+                  value={formData.emergencyContactRelationship}
+                  onChange={(e) => setFormData({ ...formData, emergencyContactRelationship: e.target.value })}
+                >
+                  <option value="">Select relationship</option>
+                  <option value="Spouse">Spouse</option>
+                  <option value="Parent">Parent</option>
+                  <option value="Sibling">Sibling</option>
+                  <option value="Child">Child</option>
+                  <option value="Friend">Friend</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="label">Emergency Contact Phone</label>
+                <input
+                  type="tel"
+                  className="input"
+                  placeholder="+1 234 567 8901"
+                  value={formData.emergencyContactPhone}
+                  onChange={(e) => setFormData({ ...formData, emergencyContactPhone: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="label">Emergency Contact Address</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="Emergency contact address"
+                  value={formData.emergencyContactAddress}
+                  onChange={(e) => setFormData({ ...formData, emergencyContactAddress: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Form Buttons */}
+        <div className="flex gap-3 pt-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 btn-secondary"
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="flex-1 btn-primary"
+            disabled={isSubmitting}
+          >
+            {isSubmitting
+              ? 'Saving...'
+              : selectedCustomer
+                ? 'Save Changes'
+                : 'Add Client'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
+export default CustomerForm;

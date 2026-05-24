@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Badge } from '../common/index';
 import { Calendar, Clock, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, isSameMonth, isSameDay, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays } from 'date-fns';
-import { SESSION_TYPES, getSessionTypeColors } from '../../constants/sessionSchedulingConstants';
-import { BOOKING_STATUS_VARIANTS, BOOKING_STATUS } from '../../constants/classSessionBookingConstants';
+import { SESSION_TYPES, getSessionTypeColors } from '../../shared/constants/sessionSchedulingConstants';
+import { BOOKING_STATUS_VARIANTS, BOOKING_STATUS } from '../../shared/constants/classSessionBookingConstants';
 
 const CalendarView = ({
   calendarDate: initialCalendarDate,

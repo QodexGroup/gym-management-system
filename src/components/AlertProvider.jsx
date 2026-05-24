@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { ToastContainer } from 'react-toastify';
-import { initAlertButtonFix } from '../utils/alert';
+import { initAlertButtonFix } from '../shared/utils/alert';
 
 /**
  * Alert Provider Component

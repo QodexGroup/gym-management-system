@@ -1,0 +1,99 @@
+import { useState } from 'react';
+import DataTable from '../../../components/DataTable';
+import { Pagination } from '../../../components/common';
+import { useSubscriptionRequests } from '../../../shared/hooks/useSubscriptionRequests';
+import { subscriptionInvoiceColumns } from '../subscriptionInvoiceTable.config.jsx';
+import { getFileUrl } from '../../../shared/services/firebaseUrlService';
+import { Toast } from '../../../shared/utils/alert';
+import { formatCurrency, formatDate } from '../../../shared/utils/formatters';
+import {
+  getSubscriptionPaymentStatusBadgeClass,
+  getSubscriptionPaymentStatusLabel,
+} from '../../../shared/constants/subscriptionConstants';
+import InvoicePaymentModal from '../InvoicePaymentModal';
+
+const PAGE_SIZE = 20;
+
+const SubscriptionInvoicesTab = () => {
+  const [invoicePage, setInvoicePage] = useState(1);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+  const openReceipt = async (receiptUrl) => {
+    if (!receiptUrl) return;
+    try {
+      const fileUrl = await getFileUrl(receiptUrl);
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      Toast.error(err.message || 'Failed to open receipt');
+    }
+  };
+
+  const handlePayInvoice = (invoice) => {
+    setSelectedInvoice(invoice);
+    setIsPaymentModalOpen(true);
+  };
+
+  const handleClosePaymentModal = () => {
+    setIsPaymentModalOpen(false);
+    setSelectedInvoice(null);
+  };
+
+  const invoiceColumns = subscriptionInvoiceColumns({
+    formatMoney: (value) => formatCurrency(value || 0),
+    formatDate: (value) => formatDate(value),
+    formatStatusLabel: getSubscriptionPaymentStatusLabel,
+    getStatusBadgeClass: getSubscriptionPaymentStatusBadgeClass,
+    onOpenReceipt: openReceipt,
+    onPayInvoice: handlePayInvoice,
+  });
+
+  const { data: requestData, isLoading } = useSubscriptionRequests({
+    page: invoicePage,
+    pagelimit: PAGE_SIZE,
+  });
+
+  // Invoice tab should only show invoice-linked payment requests.
+  const invoiceRows = (requestData?.data || []).filter(
+    (row) => row.paymentTransaction?.includes('AccountInvoice')
+  );
+  const pagination = requestData?.pagination;
+
+  return (
+    <div>
+      <h3 className="text-lg font-semibold text-dark-50 mb-4">Invoices</h3>
+
+        <DataTable
+          columns={invoiceColumns}
+          data={invoiceRows}
+          loading={isLoading}
+          emptyMessage="No invoices yet."
+        />
+        {pagination && pagination.lastPage > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <p className="text-sm text-dark-400">
+              Showing {pagination.from}-{pagination.to} of {pagination.total}
+            </p>
+            <Pagination
+              currentPage={invoicePage}
+              lastPage={pagination.lastPage}
+              from={pagination.from}
+              to={pagination.to}
+              total={pagination.total}
+              onPrev={() => setInvoicePage((prev) => Math.max(1, prev - 1))}
+              onNext={() => setInvoicePage((prev) => Math.min(prev + 1, pagination.lastPage))}
+            />
+          </div>
+        )}
+
+      {/* Invoice Payment Modal */}
+      <InvoicePaymentModal
+        invoice={selectedInvoice}
+        isOpen={isPaymentModalOpen}
+        onClose={handleClosePaymentModal}
+      />
+    </div>
+  );
+};
+
+export default SubscriptionInvoicesTab;
