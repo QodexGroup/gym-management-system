@@ -3,7 +3,21 @@
  * Defines the structure and initial state for user form data and data transformations
  */
 
-import { USER_ROLES } from '../constants/userRoles';
+import { USER_ROLES, isPermissionBasedRole } from '../constants/userRoles';
+import { toLocalPhFormat } from '../utils/validators/phone';
+
+/**
+ * Normalize permissions from API to string array
+ * @param {Array|null|undefined} permissions - Permissions from API
+ * @returns {string[]} Normalized permission keys
+ */
+export const normalizePermissions = (permissions) => {
+  if (!Array.isArray(permissions)) return [];
+
+  return permissions
+    .map((p) => (typeof p === 'string' ? p : p?.permission))
+    .filter(Boolean);
+};
 
 /**
  * Get initial user form data
@@ -34,8 +48,38 @@ export const mapUserToFormData = (user) => {
     phone: user.phone || '',
     role: user.role || USER_ROLES.ADMIN,
     password: '', // Never include password in form data
-    permissions: user.permissions || [],
+    permissions: normalizePermissions(user.permissions),
   };
+};
+
+/**
+ * Prepare user form data for API submission
+ * @param {Object} formData - Current form state
+ * @param {Object} options
+ * @param {boolean} options.isEdit - Whether this is an update
+ * @returns {Object} Normalized payload for create/update
+ */
+export const prepareUserSubmitData = (formData, { isEdit = false } = {}) => {
+  let normalizedUserData = Object.fromEntries(
+    Object.entries(formData).map(([key, value]) => {
+      if (key === 'password') return [key, value || null];
+      if (key === 'permissions') return [key, value];
+      if (typeof value === 'string') return [key, value.trim() || null];
+      return [key, value ?? null];
+    })
+  );
+
+  if (isEdit) {
+    const { email: _email, password: _password, ...updateData } = normalizedUserData;
+    normalizedUserData = updateData;
+  }
+
+  normalizedUserData.phone = formData.phone ? toLocalPhFormat(formData.phone) : null;
+  normalizedUserData.permissions = isPermissionBasedRole(formData.role)
+    ? (formData.permissions || [])
+    : [];
+
+  return normalizedUserData;
 };
 
 /**
@@ -54,7 +98,7 @@ export const mapUsersData = (usersData = []) => {
     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullname || user.firstname)}&background=random`,
     role: user.role,
     status: user.status,
-    permissions: user.permissions?.map((p) => p.permission) || [],
+    permissions: normalizePermissions(user.permissions),
     isAccountOwner: !!user.isAccountOwner,
   }));
 };
