@@ -14,32 +14,10 @@ export const USER_ROLES = {
  * Human-readable labels for each role
  */
 export const USER_ROLE_LABELS = {
-  [USER_ROLES.ADMIN]: 'Administrator',
+  [USER_ROLES.ADMIN]: 'Admin',
   [USER_ROLES.STAFF]: 'Staff',
   [USER_ROLES.COACH]: 'Coach',
   [USER_ROLES.TRAINER]: 'Trainer',
-};
-
-export const USER_ROLE_VARIANTS = {
-  [USER_ROLES.ADMIN]: 'danger',
-  [USER_ROLES.COACH]: 'primary',
-  [USER_ROLES.STAFF]: 'success',
-};
-
-export const USER_ROLE_OPTIONS = [
-  { value: USER_ROLES.ADMIN, label: USER_ROLE_LABELS[USER_ROLES.ADMIN], color: 'danger' },
-  { value: USER_ROLES.COACH, label: USER_ROLE_LABELS[USER_ROLES.COACH], color: 'primary' },
-  { value: USER_ROLES.STAFF, label: USER_ROLE_LABELS[USER_ROLES.STAFF], color: 'success' },
-];
-
-export const USER_STATUS = {
-  ACTIVE: 'active',
-  DEACTIVATED: 'deactivated',
-};
-
-export const USER_STATUS_VARIANTS = {
-  [USER_STATUS.ACTIVE]: 'success',
-  [USER_STATUS.DEACTIVATED]: 'default',
 };
 
 /**
@@ -68,13 +46,6 @@ export const isStaffRole = (role) => {
 export const isCoachRole = (role) => {
   return role === USER_ROLES.COACH || role === USER_ROLES.TRAINER;
 };
-
-/**
- * Check if a role uses permission-based access
- * @param {string} role - User role
- * @returns {boolean}
- */
-export const isPermissionBasedRole = (role) => isStaffRole(role) || isCoachRole(role);
 
 /**
  * Get role label

@@ -1,78 +1,8 @@
 import { Avatar, Badge } from '../../components/common';
 import { Mail, Phone, Edit, Key, Trash, CheckCircle, XCircle } from 'lucide-react';
-import {
-  isAdminRole,
-  isPermissionBasedRole,
-  USER_ROLE_LABELS,
-  USER_ROLE_VARIANTS,
-  USER_STATUS,
-  USER_STATUS_VARIANTS,
-} from '../../shared/constants/userRoles';
+import { isAdminRole } from '../../shared/constants/userRoles';
 
-export const userTableColumns = ({
-  onEdit,
-  onResetPassword,
-  onDeactivate,
-  onActivate,
-  onDelete,
-}) => [
-  {
-    key: 'actions',
-    label: 'Actions',
-    align: 'right',
-    render: (user) => {
-      if (user.isAccountOwner) {
-        return null;
-      }
-
-      return (
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          <button
-            onClick={() => onEdit?.(user)}
-            className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-            title="Edit user"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onResetPassword?.(user)}
-            className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-            title="Reset password"
-          >
-            <Key className="w-4 h-4" />
-          </button>
-          {!isAdminRole(user.role) && (
-            user.status === USER_STATUS.ACTIVE ? (
-              <button
-                onClick={() => onDeactivate?.(user)}
-                className="p-2 text-dark-400 hover:text-warning-600 hover:bg-warning-50 rounded-lg transition-colors"
-                title="Deactivate user"
-              >
-                <XCircle className="w-4 h-4" />
-              </button>
-            ) : (
-              <button
-                onClick={() => onActivate?.(user)}
-                className="p-2 text-dark-400 hover:text-success-600 hover:bg-success-50 rounded-lg transition-colors"
-                title="Activate user"
-              >
-                <CheckCircle className="w-4 h-4" />
-              </button>
-            )
-          )}
-          {!isAdminRole(user.role) && (
-            <button
-              onClick={() => onDelete?.(user)}
-              className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
-              title="Delete user"
-            >
-              <Trash className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      );
-    },
-  },
+export const userTableColumns = ({ getRoleBadge }) => [
   {
     key: 'user',
     label: 'User',
@@ -111,39 +41,77 @@ export const userTableColumns = ({
   {
     key: 'role',
     label: 'Role',
-    render: (user) => (
-      <Badge variant={USER_ROLE_VARIANTS[user.role] || 'default'}>
-        {USER_ROLE_LABELS[user.role] || user.role}
-      </Badge>
-    ),
-  },
-  {
-    key: 'permissions',
-    label: 'Permissions',
-    render: (user) => {
-      if (isAdminRole(user.role)) {
-        return <span className="text-sm text-dark-400">Full access</span>;
-      }
-
-      if (isPermissionBasedRole(user.role)) {
-        const count = user.permissions?.length ?? 0;
-        return (
-          <span className="text-sm text-dark-200">
-            {count > 0 ? `${count} permissions` : 'None'}
-          </span>
-        );
-      }
-
-      return <span className="text-sm text-dark-400">—</span>;
-    },
+    render: (user) => getRoleBadge(user.role),
   },
   {
     key: 'status',
     label: 'Status',
     render: (user) => (
-      <Badge variant={USER_STATUS_VARIANTS[user.status] || 'default'}>
+      <Badge variant={user.status === 'active' ? 'success' : 'default'}>
         {user.status}
       </Badge>
     ),
   },
 ];
+
+
+export const getUserActionMenuItems = ({
+  user,
+  onEdit,
+  onResetPassword,
+  onDeactivate,
+  onActivate,
+  onDelete,
+}) => {
+  // Account owners cannot be edited, have password reset, deactivated, activated, or deleted by other admins
+  if (user.isAccountOwner) {
+    return [];
+  }
+
+  const items = [
+    {
+      key: 'edit',
+      label: 'Edit User',
+      icon: Edit,
+      onClick: () => onEdit?.(user),
+    },
+    {
+      key: 'reset-password',
+      label: 'Reset Password',
+      icon: Key,
+      onClick: () => onResetPassword?.(user),
+    },
+  ];
+
+  if (!isAdminRole(user.role)) {
+    items.push({ divider: true });
+
+    if (user.status === 'active') {
+      items.push({
+        key: 'deactivate',
+        label: 'Deactivate',
+        icon: XCircle,
+        variant: 'warning',
+        onClick: () => onDeactivate?.(user),
+      });
+    } else {
+      items.push({
+        key: 'activate',
+        label: 'Activate',
+        icon: CheckCircle,
+        variant: 'success',
+        onClick: () => onActivate?.(user),
+      });
+    }
+
+    items.push({
+      key: 'delete',
+      label: 'Delete',
+      icon: Trash,
+      variant: 'danger',
+      onClick: () => onDelete?.(user),
+    });
+  }
+
+  return items;
+};

@@ -1,28 +1,28 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Layout from '../../layout/Layout';
-import { Modal, SearchAndFilter } from '../../components/common';
+import { Modal, SearchAndFilter, Badge } from '../../components/common';
 import StatsCards from '../../components/common/StatsCards';
-import DataTable from '../../components/DataTable';
+import DataTable, { DataTableActions } from '../../components/DataTable';
 import {
   Plus,
   Shield,
   UserCog,
   Users,
   CheckCircle,
-  Briefcase,
 } from 'lucide-react';
 import {
   useUsers,
   useDeleteUser,
   useDeactivateUser,
   useActivateUser,
+  useResetPassword,
 } from '../../shared/hooks/useUsers';
 import { useAccountLimit } from '../../shared/hooks/useAccountLimit';
 import { useAuth } from '../../shared/context/AuthContext';
 import UserForm from './UserForm';
 import ResetPasswordForm from './ResetPasswordForm';
-import { USER_ROLES, USER_ROLE_OPTIONS, USER_STATUS } from '../../shared/constants/userRoles';
-import { userTableColumns } from './userTable.config';
+import { USER_ROLES } from '../../shared/constants/userRoles';
+import { userTableColumns, getUserActionMenuItems } from './userTable.config';
 import { mapUsersData } from '../../shared/models/userModel';
 import { useConfirmAction } from '../../shared/hooks/useConfirmAction';
 
@@ -40,8 +40,16 @@ const UserManagement = () => {
   const deactivateUserMutation = useDeactivateUser();
   const activateUserMutation = useActivateUser();
 
+  // Transform API data to match component expectations
   const users = useMemo(() => mapUsersData(usersData), [usersData]);
 
+  const roles = [
+    { value: USER_ROLES.ADMIN, label: 'Administrator', color: 'danger' },
+    { value: USER_ROLES.COACH, label: 'Coach', color: 'primary' },
+    { value: USER_ROLES.STAFF, label: 'Staff', color: 'success' },
+  ];
+
+  // Filter users
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
       const matchesSearch =
@@ -52,33 +60,42 @@ const UserManagement = () => {
     });
   }, [users, searchQuery, filterRole]);
 
-  const handleEditUser = useCallback((user) => {
-    setSelectedUser(user);
-    setShowUserModal(true);
+  const getRoleBadge = useCallback((role) => {
+    const roleInfo = roles.find((r) => r.value === role);
+    return (
+      <Badge variant={roleInfo?.color || 'default'}>
+        {roleInfo?.label || role}
+      </Badge>
+    );
   }, []);
 
-  const handleAddUser = useCallback(() => {
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setShowUserModal(true);
+  };
+
+  const handleAddUser = () => {
     setSelectedUser(null);
     setShowUserModal(true);
-  }, []);
+  };
 
   const handleDeleteUser = useConfirmAction(
     (user) => deleteUserMutation.mutateAsync(user.id),
     { title: 'Delete User?', text: 'Are you sure you want to delete this user? This action cannot be undone.', icon: 'warning' }
   );
 
-  const handleDeactivateUser = useCallback(async (user) => {
+  const handleDeactivateUser = async (user) => {
     await deactivateUserMutation.mutateAsync(user.id);
-  }, [deactivateUserMutation]);
+  };
 
-  const handleActivateUser = useCallback(async (user) => {
+  const handleActivateUser = async (user) => {
     await activateUserMutation.mutateAsync(user.id);
-  }, [activateUserMutation]);
+  };
 
-  const handleResetPassword = useCallback((user) => {
+  const handleResetPassword = (user) => {
     setSelectedUser(user);
     setShowResetPasswordModal(true);
-  }, []);
+  };
 
   const handleResetPasswordSuccess = () => {
     setShowResetPasswordModal(false);
@@ -93,7 +110,7 @@ const UserManagement = () => {
   const handleUserFormSuccess = async () => {
     setShowUserModal(false);
     setSelectedUser(null);
-    await fetchUserData();
+    await fetchUserData(); // refresh usage so Subscription shows correct Users count (e.g. 2/2)
   };
 
   const handleUserFormClose = () => {
@@ -101,6 +118,7 @@ const UserManagement = () => {
     setSelectedUser(null);
   };
 
+  // Prepare stats
   const stats = useMemo(() => {
     return [
       {
@@ -111,7 +129,7 @@ const UserManagement = () => {
       },
       {
         title: 'Active',
-        value: users.filter((u) => u.status === USER_STATUS.ACTIVE).length,
+        value: users.filter((u) => u.status === 'active').length,
         color: 'success',
         icon: CheckCircle,
       },
@@ -122,12 +140,6 @@ const UserManagement = () => {
         icon: UserCog,
       },
       {
-        title: 'Staff',
-        value: users.filter((u) => u.role === USER_ROLES.STAFF).length,
-        color: 'success',
-        icon: Briefcase,
-      },
-      {
         title: 'Admins',
         value: users.filter((u) => u.role === USER_ROLES.ADMIN).length,
         color: 'danger',
@@ -136,21 +148,30 @@ const UserManagement = () => {
     ];
   }, [users]);
 
+  // Table columns
   const columns = useMemo(
-    () => userTableColumns({
+    () => userTableColumns({ getRoleBadge }),
+    [getRoleBadge]
+  );
+
+  // Get action menu items for a user
+  const getActionMenuItems = useCallback((user) => {
+    return getUserActionMenuItems({
+      user,
       onEdit: handleEditUser,
       onResetPassword: handleResetPassword,
       onDeactivate: handleDeactivateUser,
       onActivate: handleActivateUser,
       onDelete: handleDeleteUser,
-    }),
-    [handleEditUser, handleResetPassword, handleDeactivateUser, handleActivateUser, handleDeleteUser]
-  );
+    });
+  }, []);
 
   return (
-    <Layout title="User Management" subtitle="Manage users, roles, and access permissions for non-admin users">
-      <StatsCards stats={stats} columns={5} dark={true} />
+    <Layout title="User Management" subtitle="Manage users and their access permissions">
+      {/* Stats Cards */}
+      <StatsCards stats={stats} columns={4} dark={true} />
 
+      {/* Users Table */}
       <div className="card">
         <div className="mb-6">
           <SearchAndFilter
@@ -159,7 +180,7 @@ const UserManagement = () => {
             searchPlaceholder="Search users..."
             filterValue={filterRole}
             onFilterChange={setFilterRole}
-            filterOptions={USER_ROLE_OPTIONS}
+            filterOptions={roles}
             filterLabel="All Roles"
             onAddClick={handleAddUser}
             addButtonLabel="Add User"
@@ -173,16 +194,25 @@ const UserManagement = () => {
           data={filteredUsers}
           loading={isLoading}
           emptyMessage={error ? `Error loading users: ${error.message}` : 'No users found'}
+          renderActions={(user) => (
+            <DataTableActions
+              items={getActionMenuItems(user)}
+            />
+          )}
         />
       </div>
 
+      {/* Unified User Modal */}
       <UserForm
         selectedUser={selectedUser}
         isOpen={showUserModal}
         onClose={handleUserFormClose}
         onSuccess={handleUserFormSuccess}
+        roles={roles}
+        getRoleBadge={getRoleBadge}
       />
 
+      {/* Reset Password Modal */}
       <Modal
         isOpen={showResetPasswordModal}
         onClose={handleResetPasswordCancel}
