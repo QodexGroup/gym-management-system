@@ -8,7 +8,9 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { useConfirmAction } from '../../../shared/hooks/useConfirmAction';
+import { usePermissions } from '../../../shared/hooks/usePermissions';
 import { BOOKING_STATUS, BOOKING_STATUS_LABELS, BOOKING_STATUS_VARIANTS } from '../../../shared/constants/classSessionBookingConstants';
+import { PT_SESSION_PERMISSIONS } from '../../../shared/constants/ptConstants';
 import { formatDate, formatTime } from '../../../shared/utils/formatters';
 import PtSessionForm from '../../personal-training/PtSessionForm';
 import {
@@ -22,6 +24,11 @@ import { useCustomerPtPackages } from '../../../shared/hooks/useCustomerPtPackag
 import { transformPtBookingToApiFormat, mapPtBookingToFormData } from '../../../shared/models/ptBookingModel';
 
 const PtSessionsTab = ({ member }) => {
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission(PT_SESSION_PERMISSIONS.CREATE);
+  const canUpdate = hasPermission(PT_SESSION_PERMISSIONS.UPDATE);
+  const canCancel = hasPermission(PT_SESSION_PERMISSIONS.CANCEL);
+
   const [showModal, setShowModal] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
   const [historyPage, setHistoryPage] = useState(1);
@@ -146,7 +153,7 @@ const PtSessionsTab = ({ member }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-dark-50">PT Sessions</h3>
-        {activePackages.length > 0 && (
+        {canCreate && activePackages.length > 0 && (
           <button
             onClick={() => handleOpenModal()}
             className="btn-primary flex items-center gap-2"
@@ -208,8 +215,8 @@ const PtSessionsTab = ({ member }) => {
               },
             ]}
             actions={{
-              onEdit: handleOpenModal,
-              onCancel: handleCancelSession,
+              ...(canUpdate && { onEdit: handleOpenModal }),
+              ...(canCancel && { onCancel: handleCancelSession }),
             }}
             emptyStateMessage="No upcoming sessions"
           />

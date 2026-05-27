@@ -10,7 +10,6 @@ import {
   resolveCustomerPtPackageRowId,
 } from '../../shared/models/ptBookingModel';
 import { useCustomerPtPackages } from '../../shared/hooks/useCustomerPtPackages';
-import { isCustomerMembershipDeactivated } from '../../shared/constants/customerMembership';
 
 const PtSessionForm = ({
   session = null,
@@ -48,22 +47,6 @@ const PtSessionForm = ({
     if (!selectedPackage?.coach) return 'No coach assigned';
     return `${selectedPackage.coach.firstname || ''} ${selectedPackage.coach.lastname || ''}`.trim();
   }, [selectedPackage]);
-
-  const selectableCustomers = useMemo(() => {
-    return customers.filter((customer) => {
-      if (!isCustomerMembershipDeactivated(customer)) return true;
-      if (formData.customerId && customer.id.toString() === formData.customerId.toString()) {
-        return true;
-      }
-      return false;
-    });
-  }, [customers, formData.customerId]);
-
-  const isCustomerDeactivated = useMemo(() => {
-    if (!formData.customerId) return false;
-    const customer = customers.find((c) => c.id.toString() === formData.customerId.toString());
-    return customer ? isCustomerMembershipDeactivated(customer) : false;
-  }, [formData.customerId, customers]);
 
   useEffect(() => {
     if (session) {
@@ -108,9 +91,6 @@ const PtSessionForm = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.customerId || isCustomerDeactivated) {
-      return;
-    }
     onSubmit(formData);
   };
 
@@ -137,20 +117,13 @@ const PtSessionForm = ({
       {/* Client Search */}
       {showMemberSearch && (
         <SearchableClientInput
-          customers={selectableCustomers}
+          customers={customers}
           value={formData.customerId}
           onChange={handleCustomerChange}
           label="Member"
           required
           placeholder="Search member by name, email, or phone"
-          isCustomerDisabled={(c) => isCustomerMembershipDeactivated(c)}
         />
-      )}
-
-      {isCustomerDeactivated && (
-        <div className="p-3 bg-yellow-500/10 border-2 border-yellow-400 rounded-lg text-sm text-yellow-300 font-medium">
-          <strong className="text-yellow-200">This client has a deactivated membership and cannot be booked.</strong>
-        </div>
       )}
 
       {/* PT Package Selection */}
@@ -287,7 +260,7 @@ const PtSessionForm = ({
         <button
           type="submit"
           className="flex-1 btn-primary"
-          disabled={isSubmitting || !formData.customerId || isCustomerDeactivated}
+          disabled={isSubmitting}
         >
           {isSubmitting
             ? 'Saving...'
