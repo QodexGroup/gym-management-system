@@ -18,7 +18,7 @@ jobs:
       - name: Secure Config Injection and Build
         env:
           FIREBASE_ADMIN_CREDENTIALS: ${{ secrets.FIREBASE_ADMIN_CREDENTIALS }}
-          VITE_API_BASE_URL: https://gym-management-api-21018123230.asia-southeast1.run.app/api
+          VITE_API_BASE_URL: https://gym-management-api-staging.up.railway.app/api
         run: |
           echo "$FIREBASE_ADMIN_CREDENTIALS" > ./service-account-key.json
           export GOOGLE_APPLICATION_CREDENTIALS="./service-account-key.json"
