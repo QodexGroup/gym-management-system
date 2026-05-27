@@ -107,6 +107,23 @@
         "label": "View Expense"
       }
     ]
+  },
+  "pt_sessions": {
+    "label": "PT Sessions",
+    "permissions": [
+      {
+        "key": "pt_sessions_create",
+        "label": "Book PT Session"
+      },
+      {
+        "key": "pt_sessions_update",
+        "label": "Edit PT Session"
+      },
+      {
+        "key": "pt_sessions_cancel",
+        "label": "Cancel PT Session"
+      }
+    ]
   }
 }
 

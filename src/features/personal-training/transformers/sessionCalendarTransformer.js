@@ -25,6 +25,10 @@ export const transformSessionsForCalendar = (sessions, handlers) => {
     onCancelSession,
     onCancelBooking,
     allowMemberAttendance = false,
+    // PT session permission flags — default true so the transformer is safe to
+    // call from contexts that don't manage permissions (e.g. tests, legacy callers)
+    canUpdatePtSession = true,
+    canCancelPtSession = true,
   } = handlers;
 
   return sessions.map((session) => {
@@ -139,22 +143,22 @@ export const transformSessionsForCalendar = (sessions, handlers) => {
     } else if (isCoachPT) {
       // For Coach PT sessions from class schedules (has sessionId), treat like group class
       if (session.sessionId) {
-        actions.onEdit = () => onEditGroupClassSession?.(session);
+        if (canUpdatePtSession) actions.onEdit = () => onEditGroupClassSession?.(session);
         actions.onMarkAttendance = () => onSessionClick?.(session);
-        actions.onCancel = () => onCancelSession?.(session.sessionId);
+        if (canCancelPtSession) actions.onCancel = () => onCancelSession?.(session.sessionId);
       } else {
         // For PT bookings, use PT-specific handlers
-        actions.onEdit = () => onEditPtSession?.(session);
+        if (canUpdatePtSession) actions.onEdit = () => onEditPtSession?.(session);
         actions.onMarkAttendance = () => onSessionClick?.(session);
-        actions.onCancel = () => onCancelSession?.(session.id);
+        if (canCancelPtSession) actions.onCancel = () => onCancelSession?.(session.id);
       }
     } else if (isMemberPT) {
       // For Member PT sessions (bookings)
-      actions.onEdit = () => onEditPtSession?.(session);
+      if (canUpdatePtSession) actions.onEdit = () => onEditPtSession?.(session);
       if (allowMemberAttendance) {
         actions.onMarkAttendance = () => onSessionClick?.(session);
       }
-      actions.onCancel = () => onCancelSession?.(session.id);
+      if (canCancelPtSession) actions.onCancel = () => onCancelSession?.(session.id);
     }
 
     return {

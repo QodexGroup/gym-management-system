@@ -21,6 +21,8 @@ import { useClassScheduleSessions, useUpdateClassScheduleSession, useCancelClass
 import { useBookingSessions, useUpdateAttendanceStatus } from '../../shared/hooks/useClassSessionBookings';
 import { useCreatePtBooking, useUpdatePtBooking, usePtBookings, usePtBookingsByCoach, useCancelPtBooking, useCoachCancelPtBooking } from '../../shared/hooks/usePtBookings';
 import { useAuth } from '../../shared/context/AuthContext';
+import { usePermissions } from '../../shared/hooks/usePermissions';
+import { PT_SESSION_PERMISSIONS } from '../../shared/constants/ptConstants';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { mapClassScheduleSessionsToComponent } from '../../shared/models/classScheduleSessionModel';
 import { mapBookingsToMemberGroupClassSessions } from '../../shared/models/classSessionBookingModel';
@@ -44,6 +46,10 @@ const SessionScheduling = () => {
 
   /* ------------------------------- hooks ------------------------------- */
   const { user, isTrainer } = useAuth();
+  const { hasPermission } = usePermissions();
+  const canCreatePtSession = hasPermission(PT_SESSION_PERMISSIONS.CREATE);
+  const canUpdatePtSession = hasPermission(PT_SESSION_PERMISSIONS.UPDATE);
+  const canCancelPtSession = hasPermission(PT_SESSION_PERMISSIONS.CANCEL);
   const { data: coaches = [] } = useCoaches();
 
   /* ------------------------------- filters ------------------------------- */
@@ -344,6 +350,8 @@ const SessionScheduling = () => {
       onCancelSession: handleCancelSession,
       onCancelBooking: handleCancelBooking,
       allowMemberAttendance: isTrainer,
+      canUpdatePtSession,
+      canCancelPtSession,
     });
   },
   [classScheduleSessions,
@@ -357,7 +365,9 @@ const SessionScheduling = () => {
     handleCancelSession,
     handleCancelBooking,
     isTrainer,
-    user?.id
+    user?.id,
+    canUpdatePtSession,
+    canCancelPtSession,
   ]);
 
   // Prepare type filters for CalendarToolbar
@@ -379,28 +389,34 @@ const SessionScheduling = () => {
   }, [typeFilters, isTrainer]);
 
   // Prepare action buttons for CalendarToolbar
-  const actionButtons = useMemo(() => [
-    {
-      key: 'book-group-class',
-      label: 'Book Group Class',
-      icon: Plus,
-      onClick: () => {
-        setSelectedBooking(null);
-        setShowGroupClassModal(true);
+  // "Book PT Session" is hidden when the user lacks pt_sessions_create permission
+  const actionButtons = useMemo(() => {
+    const buttons = [
+      {
+        key: 'book-group-class',
+        label: 'Book Group Class',
+        icon: Plus,
+        onClick: () => {
+          setSelectedBooking(null);
+          setShowGroupClassModal(true);
+        },
+        variant: 'secondary',
       },
-      variant: 'secondary',
-    },
-    {
-      key: 'book-pt-session',
-      label: 'Book PT Session',
-      icon: Plus,
-      onClick: () => {
-        setSelectedSession(null);
-        setShowModal(true);
-      },
-      variant: 'primary',
-    },
-  ], []);
+    ];
+    if (canCreatePtSession) {
+      buttons.push({
+        key: 'book-pt-session',
+        label: 'Book PT Session',
+        icon: Plus,
+        onClick: () => {
+          setSelectedSession(null);
+          setShowModal(true);
+        },
+        variant: 'primary',
+      });
+    }
+    return buttons;
+  }, [canCreatePtSession]);
 
   // Prepare additional filters (coaches) for CalendarToolbar
   const additionalFilters = useMemo(() => {
