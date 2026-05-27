@@ -124,6 +124,23 @@
         "label": "Cancel PT Session"
       }
     ]
+  },
+  "group_class_sessions": {
+    "label": "Group Class Sessions",
+    "permissions": [
+      {
+        "key": "group_class_sessions_create",
+        "label": "Book Group Class Session"
+      },
+      {
+        "key": "group_class_sessions_update",
+        "label": "Edit Group Class Session"
+      },
+      {
+        "key": "group_class_sessions_cancel",
+        "label": "Cancel Group Class Session"
+      }
+    ]
   }
 }
 

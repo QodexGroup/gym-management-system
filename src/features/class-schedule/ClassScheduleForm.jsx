@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCoaches } from '../../shared/hooks/useUsers';
+import { useAuth } from '../../shared/context/AuthContext';
 import {
   useCreateClassSchedule,
   useUpdateClassSchedule,
@@ -19,6 +20,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
 const ClassScheduleForm = ({ schedule, onSubmit, onCancel }) => {
+  const { user, isTrainer } = useAuth();
   const { data: coaches = [], isLoading: loadingCoaches } = useCoaches();
   const createMutation = useCreateClassSchedule();
   const updateMutation = useUpdateClassSchedule();
@@ -26,8 +28,17 @@ const ClassScheduleForm = ({ schedule, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState(getInitialClassScheduleFormData());
 
   useEffect(() => {
-    setFormData(mapClassScheduleToFormData(schedule));
-  }, [schedule]);
+    if (schedule) {
+      setFormData(mapClassScheduleToFormData(schedule));
+    } else if (isTrainer && user?.id) {
+      setFormData({
+        ...getInitialClassScheduleFormData(),
+        coachId: user.id.toString(),
+      });
+    } else {
+      setFormData(getInitialClassScheduleFormData());
+    }
+  }, [schedule, isTrainer, user?.id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,7 +53,7 @@ const ClassScheduleForm = ({ schedule, onSubmit, onCancel }) => {
     const scheduleData = {
       className: formData.className,
       description: formData.description || null,
-      coachId: parseInt(formData.coachId),
+      coachId: isTrainer ? parseInt(user.id) : parseInt(formData.coachId),
       capacity: parseInt(formData.capacity),
       duration: parseInt(formData.duration),
       startDate: startDateTime,
@@ -64,6 +75,10 @@ const ClassScheduleForm = ({ schedule, onSubmit, onCancel }) => {
   };
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
+  const coachDisplayName = isTrainer
+    ? `${user?.firstname || ''} ${user?.lastname || ''}`.trim()
+    : null;
 
   if (loadingCoaches) {
     return <div className="text-center py-4">Loading coaches...</div>;
@@ -97,19 +112,29 @@ const ClassScheduleForm = ({ schedule, onSubmit, onCancel }) => {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="label">Coach *</label>
-          <select
-            className="input"
-            value={formData.coachId}
-            onChange={(e) => setFormData({ ...formData, coachId: e.target.value })}
-            required
-          >
-            <option value="">Select coach</option>
-            {coaches.map((coach) => (
-              <option key={coach.id} value={coach.id}>
-                {coach.firstname} {coach.lastname}
-              </option>
-            ))}
-          </select>
+          {isTrainer ? (
+            <input
+              type="text"
+              className="input"
+              value={coachDisplayName}
+              readOnly
+              disabled
+            />
+          ) : (
+            <select
+              className="input"
+              value={formData.coachId}
+              onChange={(e) => setFormData({ ...formData, coachId: e.target.value })}
+              required
+            >
+              <option value="">Select coach</option>
+              {coaches.map((coach) => (
+                <option key={coach.id} value={coach.id}>
+                  {coach.firstname} {coach.lastname}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
         <div>
           <label className="label">Capacity *</label>

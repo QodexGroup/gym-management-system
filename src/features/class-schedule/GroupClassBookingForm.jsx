@@ -11,6 +11,7 @@ import {
   mapGroupClassBookingToFormData,
 } from '../../shared/models/groupClassBookingFormModel';
 import { SESSION_TYPES } from '../../shared/constants/sessionSchedulingConstants';
+import { isCustomerMembershipDeactivated } from '../../shared/constants/customerMembership';
 
 const GroupClassBookingForm = ({
   booking = null,
@@ -154,9 +155,25 @@ const GroupClassBookingForm = ({
   const bookMutation = useBookClassSession();
   const updateMutation = useUpdateClassSessionBooking();
 
+  const selectableCustomers = useMemo(() => {
+    return customers.filter((customer) => {
+      if (!isCustomerMembershipDeactivated(customer)) return true;
+      if (formData.customerId && customer.id.toString() === formData.customerId.toString()) {
+        return true;
+      }
+      return false;
+    });
+  }, [customers, formData.customerId]);
+
+  const isCustomerDeactivated = useMemo(() => {
+    if (!formData.customerId) return false;
+    const customer = customers.find(c => c.id.toString() === formData.customerId.toString());
+    return customer ? isCustomerMembershipDeactivated(customer) : false;
+  }, [formData.customerId, customers]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.customerId || !formData.sessionId) {
+    if (!formData.customerId || !formData.sessionId || isCustomerDeactivated) {
       return;
     }
 
@@ -228,14 +245,21 @@ const GroupClassBookingForm = ({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div style={{ position: 'relative', zIndex: 50 }}>
         <SearchableClientInput
-          customers={customers}
+          customers={selectableCustomers}
           value={formData.customerId}
           onChange={handleCustomerChange}
           label="Client"
           required
           placeholder="Search client by name .."
+          isCustomerDisabled={(c) => isCustomerMembershipDeactivated(c)}
         />
       </div>
+
+      {isCustomerDeactivated && (
+        <div className="p-3 bg-yellow-500/10 border-2 border-yellow-400 rounded-lg text-sm text-yellow-300 font-medium">
+          <strong className="text-yellow-200">This client has a deactivated membership and cannot be booked.</strong>
+        </div>
+      )}
 
       <div className="relative mt-6" ref={sessionInputRef} style={{ zIndex: 1 }}>
         <label className="label">Class Session *</label>
@@ -373,7 +397,7 @@ const GroupClassBookingForm = ({
         <button
           type="submit"
           className="flex-1 btn-primary"
-          disabled={isSubmitting || bookMutation.isPending || updateMutation.isPending || !formData.customerId || !formData.sessionId}
+          disabled={isSubmitting || bookMutation.isPending || updateMutation.isPending || !formData.customerId || !formData.sessionId || isCustomerDeactivated}
         >
           {isSubmitting || bookMutation.isPending || updateMutation.isPending
             ? (booking ? 'Updating...' : 'Booking...')

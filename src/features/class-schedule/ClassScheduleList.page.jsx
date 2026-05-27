@@ -213,11 +213,15 @@ const ClassScheduleList = () => {
               },
             },
           ]}
-          actions={(schedule) =>
-            schedule.classType === CLASS_SCHEDULE_TYPE.PERSONAL_TRAINING
-              ? {}
-              : { onEdit: handleOpenModal, onDelete: handleDeleteSchedule }
-          }
+          actions={(schedule) => {
+            if (schedule.classType === CLASS_SCHEDULE_TYPE.PERSONAL_TRAINING) {
+              return {};
+            }
+            if (isTrainer && schedule.coachId !== user?.id) {
+              return {};
+            }
+            return { onEdit: handleOpenModal, onDelete: handleDeleteSchedule };
+          }}
           emptyStateMessage="No class schedules found"
           emptyStateIcon={Calendar}
         />

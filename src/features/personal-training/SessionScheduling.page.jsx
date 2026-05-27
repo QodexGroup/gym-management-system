@@ -13,6 +13,7 @@ import {
   VIEW_MODE,
   getFilterButtonColor,
   getSessionStyle,
+  GROUP_CLASS_SESSION_PERMISSIONS,
 } from '../../shared/constants/sessionSchedulingConstants';
 import { BOOKING_STATUS } from '../../shared/constants/classSessionBookingConstants';
 import { useCoaches } from '../../shared/hooks/useUsers';
@@ -50,6 +51,9 @@ const SessionScheduling = () => {
   const canCreatePtSession = hasPermission(PT_SESSION_PERMISSIONS.CREATE);
   const canUpdatePtSession = hasPermission(PT_SESSION_PERMISSIONS.UPDATE);
   const canCancelPtSession = hasPermission(PT_SESSION_PERMISSIONS.CANCEL);
+  const canCreateGroupClassSession = hasPermission(GROUP_CLASS_SESSION_PERMISSIONS.CREATE);
+  const canUpdateGroupClassSession = hasPermission(GROUP_CLASS_SESSION_PERMISSIONS.UPDATE);
+  const canCancelGroupClassSession = hasPermission(GROUP_CLASS_SESSION_PERMISSIONS.CANCEL);
   const { data: coaches = [] } = useCoaches();
 
   /* ------------------------------- filters ------------------------------- */
@@ -352,6 +356,8 @@ const SessionScheduling = () => {
       allowMemberAttendance: isTrainer,
       canUpdatePtSession,
       canCancelPtSession,
+      canUpdateGroupClassSession,
+      canCancelGroupClassSession,
     });
   },
   [classScheduleSessions,
@@ -368,6 +374,8 @@ const SessionScheduling = () => {
     user?.id,
     canUpdatePtSession,
     canCancelPtSession,
+    canUpdateGroupClassSession,
+    canCancelGroupClassSession,
   ]);
 
   // Prepare type filters for CalendarToolbar
@@ -389,10 +397,11 @@ const SessionScheduling = () => {
   }, [typeFilters, isTrainer]);
 
   // Prepare action buttons for CalendarToolbar
-  // "Book PT Session" is hidden when the user lacks pt_sessions_create permission
+  // Trainers cannot book group classes; both buttons gated by explicit permissions
   const actionButtons = useMemo(() => {
-    const buttons = [
-      {
+    const buttons = [];
+    if (!isTrainer && canCreateGroupClassSession) {
+      buttons.push({
         key: 'book-group-class',
         label: 'Book Group Class',
         icon: Plus,
@@ -401,8 +410,8 @@ const SessionScheduling = () => {
           setShowGroupClassModal(true);
         },
         variant: 'secondary',
-      },
-    ];
+      });
+    }
     if (canCreatePtSession) {
       buttons.push({
         key: 'book-pt-session',
@@ -416,7 +425,7 @@ const SessionScheduling = () => {
       });
     }
     return buttons;
-  }, [canCreatePtSession]);
+  }, [isTrainer, canCreateGroupClassSession, canCreatePtSession]);
 
   // Prepare additional filters (coaches) for CalendarToolbar
   const additionalFilters = useMemo(() => {

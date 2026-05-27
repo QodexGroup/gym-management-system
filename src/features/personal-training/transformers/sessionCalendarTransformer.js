@@ -25,10 +25,12 @@ export const transformSessionsForCalendar = (sessions, handlers) => {
     onCancelSession,
     onCancelBooking,
     allowMemberAttendance = false,
-    // PT session permission flags — default true so the transformer is safe to
-    // call from contexts that don't manage permissions (e.g. tests, legacy callers)
+    // PT session permission flags
     canUpdatePtSession = true,
     canCancelPtSession = true,
+    // Group class session permission flags
+    canUpdateGroupClassSession = true,
+    canCancelGroupClassSession = true,
   } = handlers;
 
   return sessions.map((session) => {
@@ -129,15 +131,15 @@ export const transformSessionsForCalendar = (sessions, handlers) => {
     }
 
     if (isCoachGroupClass) {
-      actions.onEdit = () => onEditGroupClassSession?.(session);
+      if (canUpdateGroupClassSession) actions.onEdit = () => onEditGroupClassSession?.(session);
       actions.onMarkAttendance = () => onSessionClick?.(session);
-      actions.onCancel = () => onCancelSession?.(session.sessionId);
+      if (canCancelGroupClassSession) actions.onCancel = () => onCancelSession?.(session.sessionId);
     } else if (isMemberGroupClass) {
-      actions.onEdit = () => onEditGroupClassSession?.(session);
+      if (canUpdateGroupClassSession) actions.onEdit = () => onEditGroupClassSession?.(session);
       if (allowMemberAttendance) {
         actions.onMarkAttendance = () => onSessionClick?.(session);
       }
-      if (session.bookingId) {
+      if (session.bookingId && canCancelGroupClassSession) {
         actions.onCancel = () => onCancelBooking?.(session.bookingId);
       }
     } else if (isCoachPT) {
