@@ -1,49 +1,40 @@
 import { useState, useEffect } from 'react';
 import { Avatar, Badge, Modal } from '../../components/common';
-import {
-  USER_ROLE_OPTIONS,
-  USER_ROLE_LABELS,
-  USER_ROLE_VARIANTS,
-  isPermissionBasedRole,
-} from '../../shared/constants/userRoles';
-import { USER_PERMISSION_CATEGORIES } from '../../shared/constants/userPermissionsConstants';
+import permissionsData from '../../data/permissions.json';
+import { USER_ROLES } from '../../shared/constants/userRoles';
 import { useCreateUser, useUpdateUser } from '../../shared/hooks/useUsers';
 import {
   getInitialUserFormData,
   mapUserToFormData,
-  prepareUserSubmitData,
 } from '../../shared/models/userModel';
 import { isValidEmail, normalizeEmail } from '../../shared/utils/validators/email';
 import { sanitizePhoneInput, validatePhPhone, PH_PHONE_INPUT_MAX } from '../../shared/utils/validators/phone';
-import { Toast } from '../../shared/utils/alert';
 
 const UserForm = ({
   selectedUser,
   isOpen,
   onClose,
   onSuccess,
+  roles,
+  getRoleBadge,
 }) => {
   const [formData, setFormData] = useState(getInitialUserFormData());
+  const [permissions, setPermissions] = useState([]);
 
   const createUserMutation = useCreateUser();
   const updateUserMutation = useUpdateUser();
 
+  // Load form data when selectedUser changes
   useEffect(() => {
     if (selectedUser && isOpen) {
-      setFormData(mapUserToFormData(selectedUser));
+      const mappedData = mapUserToFormData(selectedUser);
+      setFormData(mappedData);
+      setPermissions(selectedUser.permissions || []);
     } else if (!selectedUser && isOpen) {
       setFormData(getInitialUserFormData());
+      setPermissions([]);
     }
   }, [selectedUser, isOpen]);
-
-  const handlePermissionToggle = (permissionKey, checked) => {
-    setFormData((prev) => ({
-      ...prev,
-      permissions: checked
-        ? [...(prev.permissions || []), permissionKey]
-        : (prev.permissions || []).filter((key) => key !== permissionKey),
-    }));
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,11 +51,27 @@ const UserForm = ({
         }
       }
 
-      const normalizedUserData = prepareUserSubmitData(formData, { isEdit });
+      // Normalize all fields
+      let normalizedUserData = Object.fromEntries(
+        Object.entries(formData).map(([key, value]) => {
+          if (key === 'password') return [key, value || null];
+          if (key === 'permissions') return [key, value];
+          if (typeof value === 'string') return [key, value.trim() || null];
+          return [key, value ?? null];
+        })
+      );
 
+      // Exclude email and password for updates
+      if (isEdit) {
+        const { email, password, ...updateData } = normalizedUserData;
+        normalizedUserData = updateData;
+      }
       if (!isEdit && normalizedUserData.email) {
         normalizedUserData.email = normalizeEmail(normalizedUserData.email);
       }
+
+      // Set permissions based on role
+      normalizedUserData.permissions = formData.role === USER_ROLES.ADMIN ? [] : permissions;
 
       if (isEdit) {
         await updateUserMutation.mutateAsync({ id: selectedUser.id, data: normalizedUserData });
@@ -75,8 +82,10 @@ const UserForm = ({
       onSuccess?.();
       onClose?.();
     } catch (error) {
+      // Error handling is done by the mutation
       if (import.meta.env.DEV) console.error('Error submitting user:', error);
       if (error?.message) {
+        // keep UX consistent with other forms
         Toast.error(error.message);
       }
     }
@@ -92,15 +101,14 @@ const UserForm = ({
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+      {/* User Info Section - Only show when editing */}
       {selectedUser && (
         <div className="flex items-center gap-4 p-4 bg-dark-700 rounded-xl border border-dark-600">
           <Avatar src={selectedUser.avatar} name={selectedUser.name} size="xl" />
           <div>
             <h3 className="font-semibold text-dark-50">{selectedUser.name}</h3>
             <p className="text-sm text-dark-300">{selectedUser.email}</p>
-            <Badge variant={USER_ROLE_VARIANTS[selectedUser.role] || 'default'}>
-              {USER_ROLE_LABELS[selectedUser.role] || selectedUser.role}
-            </Badge>
+            {getRoleBadge(selectedUser.role)}
           </div>
         </div>
       )}
@@ -115,7 +123,7 @@ const UserForm = ({
             className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 rounded-lg focus:bg-dark-600 focus:border-primary-500 outline-none transition-colors"
             placeholder="John"
             value={formData.firstname}
-            onChange={(e) => setFormData((prev) => ({ ...prev, firstname: e.target.value }))}
+            onChange={(e) => setFormData(prev => ({ ...prev, firstname: e.target.value }))}
             required
           />
         </div>
@@ -128,7 +136,7 @@ const UserForm = ({
             className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 rounded-lg focus:bg-dark-600 focus:border-primary-500 outline-none transition-colors"
             placeholder="Doe"
             value={formData.lastname}
-            onChange={(e) => setFormData((prev) => ({ ...prev, lastname: e.target.value }))}
+            onChange={(e) => setFormData(prev => ({ ...prev, lastname: e.target.value }))}
             required
           />
         </div>
@@ -146,7 +154,7 @@ const UserForm = ({
           }`}
           placeholder="john@gym.com"
           value={formData.email}
-          onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
           disabled={!!selectedUser}
           required={!selectedUser}
         />
@@ -157,14 +165,14 @@ const UserForm = ({
           type="tel"
           maxLength={PH_PHONE_INPUT_MAX}
           className={`w-full px-4 py-2.5 bg-dark-700 border text-dark-50 rounded-lg focus:bg-dark-600 focus:border-primary-500 outline-none transition-colors ${
-            phoneError ? 'border-danger-500' : 'border-dark-600'
+            validatePhPhone(formData.phone) ? 'border-danger-500' : 'border-dark-600'
           }`}
           placeholder="09171234567"
           value={formData.phone}
-          onChange={(e) => setFormData((prev) => ({ ...prev, phone: sanitizePhoneInput(e.target.value) }))}
+          onChange={(e) => setFormData(prev => ({ ...prev, phone: sanitizePhoneInput(e.target.value) }))}
         />
-        {phoneError && (
-          <p className="text-danger-500 text-xs mt-1">{phoneError}</p>
+        {validatePhPhone(formData.phone) && (
+          <p className="text-danger-500 text-xs mt-1">{validatePhPhone(formData.phone)}</p>
         )}
       </div>
       <div>
@@ -175,28 +183,26 @@ const UserForm = ({
           className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 rounded-lg focus:bg-dark-600 focus:border-primary-500 outline-none transition-colors"
           value={formData.role}
           onChange={(e) => {
-            const nextRole = e.target.value;
-            setFormData((prev) => ({
-              ...prev,
-              role: nextRole,
-              permissions: isPermissionBasedRole(nextRole) ? (prev.permissions || []) : [],
-            }));
+            setFormData(prev => ({ ...prev, role: e.target.value }));
+            // Reset permissions when role changes to ADMIN
+            if (e.target.value === USER_ROLES.ADMIN) {
+              setPermissions([]);
+            }
           }}
           required
         >
-          {USER_ROLE_OPTIONS.map((role) => (
+          {roles.map((role) => (
             <option key={role.value} value={role.value} className="bg-dark-700 text-dark-50">
               {role.label}
             </option>
           ))}
         </select>
       </div>
-      {isPermissionBasedRole(formData.role) && (
+      {(formData.role === USER_ROLES.COACH || formData.role === USER_ROLES.STAFF) && (
         <div>
           <label className="block text-sm font-medium text-dark-200 mb-2">Permissions</label>
-          <p className="text-xs text-dark-400 mb-2">Assign access permissions for coach and staff users</p>
           <div className="space-y-4 p-4 bg-dark-700 rounded-lg border border-dark-600">
-            {Object.values(USER_PERMISSION_CATEGORIES).map((category) => (
+            {Object.values(permissionsData).map((category) => (
               <div key={category.label} className="space-y-2">
                 <h4 className="text-sm font-semibold text-dark-100 mb-2">{category.label}</h4>
                 <div className="grid grid-cols-3 gap-2 pl-4">
@@ -207,8 +213,14 @@ const UserForm = ({
                     >
                       <input
                         type="checkbox"
-                        checked={(formData.permissions || []).includes(perm.key)}
-                        onChange={(e) => handlePermissionToggle(perm.key, e.target.checked)}
+                        checked={permissions.includes(perm.key)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setPermissions(prev => [...prev, perm.key]);
+                          } else {
+                            setPermissions(prev => prev.filter(p => p !== perm.key));
+                          }
+                        }}
                         className="w-4 h-4 text-primary-600 bg-dark-600 border-dark-500 rounded focus:ring-primary-500"
                       />
                       <span className="text-sm text-dark-100">{perm.label}</span>
@@ -230,7 +242,7 @@ const UserForm = ({
             className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 rounded-lg focus:bg-dark-600 focus:border-primary-500 outline-none transition-colors"
             placeholder="••••••••"
             value={formData.password}
-            onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
+            onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
             required
           />
           <p className="text-xs text-dark-400 mt-1">

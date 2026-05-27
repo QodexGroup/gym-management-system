@@ -13,6 +13,7 @@ import {
   VIEW_MODE,
   getFilterButtonColor,
   getSessionStyle,
+  GROUP_CLASS_SESSION_PERMISSIONS,
 } from '../../shared/constants/sessionSchedulingConstants';
 import { BOOKING_STATUS } from '../../shared/constants/classSessionBookingConstants';
 import { useCoaches } from '../../shared/hooks/useUsers';
@@ -21,6 +22,8 @@ import { useClassScheduleSessions, useUpdateClassScheduleSession, useCancelClass
 import { useBookingSessions, useUpdateAttendanceStatus } from '../../shared/hooks/useClassSessionBookings';
 import { useCreatePtBooking, useUpdatePtBooking, usePtBookings, usePtBookingsByCoach, useCancelPtBooking, useCoachCancelPtBooking } from '../../shared/hooks/usePtBookings';
 import { useAuth } from '../../shared/context/AuthContext';
+import { usePermissions } from '../../shared/hooks/usePermissions';
+import { PT_SESSION_PERMISSIONS } from '../../shared/constants/ptConstants';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { mapClassScheduleSessionsToComponent } from '../../shared/models/classScheduleSessionModel';
 import { mapBookingsToMemberGroupClassSessions } from '../../shared/models/classSessionBookingModel';
@@ -44,6 +47,13 @@ const SessionScheduling = () => {
 
   /* ------------------------------- hooks ------------------------------- */
   const { user, isTrainer } = useAuth();
+  const { hasPermission } = usePermissions();
+  const canCreatePtSession = hasPermission(PT_SESSION_PERMISSIONS.CREATE);
+  const canUpdatePtSession = hasPermission(PT_SESSION_PERMISSIONS.UPDATE);
+  const canCancelPtSession = hasPermission(PT_SESSION_PERMISSIONS.CANCEL);
+  const canCreateGroupClassSession = hasPermission(GROUP_CLASS_SESSION_PERMISSIONS.CREATE);
+  const canUpdateGroupClassSession = hasPermission(GROUP_CLASS_SESSION_PERMISSIONS.UPDATE);
+  const canCancelGroupClassSession = hasPermission(GROUP_CLASS_SESSION_PERMISSIONS.CANCEL);
   const { data: coaches = [] } = useCoaches();
 
   /* ------------------------------- filters ------------------------------- */
@@ -195,9 +205,6 @@ const SessionScheduling = () => {
   }, [isTrainer]);
 
   const handleEditGroupClassSession = useCallback((session) => {
-    if (isTrainer && (session.type === SESSION_TYPES.MEMBER_GROUP_CLASS || session.coachId !== user?.id)) {
-      return;
-    }
     // If it's a member group class booking, open the booking form instead
     if (session.type === SESSION_TYPES.MEMBER_GROUP_CLASS && session.bookingId) {
       // Find the booking data - bookingsData might be an array or have a data property
@@ -212,7 +219,7 @@ const SessionScheduling = () => {
     // For coach group class sessions, open the session edit form
     setSelectedClassSession(session);
     setShowGroupClassEditModal(true);
-  }, [bookingsData, isTrainer, user?.id]);
+  }, [bookingsData]);
 
   const handleEditPtSession = useCallback((session) => {
     setSelectedSession(session);
@@ -236,16 +243,6 @@ const SessionScheduling = () => {
   }, [updateAttendanceStatusMutation]);
 
   const handleCancelSession = useCallback(async (sessionId) => {
-    const ptBookings = ptBookingsData || [];
-    const ptBooking = ptBookings.find(b => b.id === sessionId);
-
-    if (!ptBooking) {
-      const classSession = classScheduleSessions.find(s => s.sessionId === sessionId);
-      if (classSession && isTrainer && classSession.coachId !== user?.id) {
-        return;
-      }
-    }
-
     const result = await Alert.confirm({
       title: 'Cancel Session?',
       text: 'Are you sure you want to cancel this session?',
@@ -280,7 +277,7 @@ const SessionScheduling = () => {
     } catch (err) {
       if (import.meta.env.DEV) console.error(err);
     }
-  }, [ptBookingsData, classScheduleSessions, cancelPtBookingMutation, coachCancelPtBookingMutation, cancelClassScheduleSessionMutation, isTrainer, user?.id]);
+  }, [ptBookingsData, classScheduleSessions, cancelPtBookingMutation, coachCancelPtBookingMutation, cancelClassScheduleSessionMutation]);
 
   const handlePtSessionSubmit = useCallback(async (formData) => {
     try {
@@ -357,7 +354,10 @@ const SessionScheduling = () => {
       onCancelSession: handleCancelSession,
       onCancelBooking: handleCancelBooking,
       allowMemberAttendance: isTrainer,
-      sessionManagementContext: { isTrainer, userId: user?.id },
+      canUpdatePtSession,
+      canCancelPtSession,
+      canUpdateGroupClassSession,
+      canCancelGroupClassSession,
     });
   },
   [classScheduleSessions,
@@ -371,7 +371,11 @@ const SessionScheduling = () => {
     handleCancelSession,
     handleCancelBooking,
     isTrainer,
-    user?.id
+    user?.id,
+    canUpdatePtSession,
+    canCancelPtSession,
+    canUpdateGroupClassSession,
+    canCancelGroupClassSession,
   ]);
 
   // Prepare type filters for CalendarToolbar
@@ -393,9 +397,10 @@ const SessionScheduling = () => {
   }, [typeFilters, isTrainer]);
 
   // Prepare action buttons for CalendarToolbar
+  // Trainers cannot book group classes; both buttons gated by explicit permissions
   const actionButtons = useMemo(() => {
     const buttons = [];
-    if (!isTrainer) {
+    if (!isTrainer && canCreateGroupClassSession) {
       buttons.push({
         key: 'book-group-class',
         label: 'Book Group Class',
@@ -407,18 +412,20 @@ const SessionScheduling = () => {
         variant: 'secondary',
       });
     }
-    buttons.push({
-      key: 'book-pt-session',
-      label: 'Book PT Session',
-      icon: Plus,
-      onClick: () => {
-        setSelectedSession(null);
-        setShowModal(true);
-      },
-      variant: 'primary',
-    });
+    if (canCreatePtSession) {
+      buttons.push({
+        key: 'book-pt-session',
+        label: 'Book PT Session',
+        icon: Plus,
+        onClick: () => {
+          setSelectedSession(null);
+          setShowModal(true);
+        },
+        variant: 'primary',
+      });
+    }
     return buttons;
-  }, [isTrainer]);
+  }, [isTrainer, canCreateGroupClassSession, canCreatePtSession]);
 
   // Prepare additional filters (coaches) for CalendarToolbar
   const additionalFilters = useMemo(() => {

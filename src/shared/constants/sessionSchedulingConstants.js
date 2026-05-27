@@ -2,6 +2,17 @@
  * Session Scheduling Constants
  */
 
+/**
+ * Group Class Session Permission Keys
+ * Used with usePermissions().hasPermission() for frontend guards.
+ * Admins always pass all permission checks regardless of these keys.
+ */
+export const GROUP_CLASS_SESSION_PERMISSIONS = {
+  CREATE: 'group_class_sessions_create',
+  UPDATE: 'group_class_sessions_update',
+  CANCEL: 'group_class_sessions_cancel',
+};
+
 export const SESSION_TYPES = {
   COACH_GROUP_CLASS: 'coach_group_class',
   MEMBER_GROUP_CLASS: 'member_group_class',
