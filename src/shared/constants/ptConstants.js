@@ -79,6 +79,17 @@ export const ATTENDANCE_STATUS_VARIANTS = {
   [ATTENDANCE_STATUS.ABSENT]: 'danger',
 };
 
+/**
+ * PT Session Permission Keys
+ * Used with usePermissions().hasPermission() for frontend guards.
+ * Admins always pass all permission checks regardless of these keys.
+ */
+export const PT_SESSION_PERMISSIONS = {
+  CREATE: 'pt_sessions_create',
+  UPDATE: 'pt_sessions_update',
+  CANCEL: 'pt_sessions_cancel',
+};
+
 export const PT_DURATION_OPTIONS = [
   { label: '30 minutes', value: 30 },
   { label: '1 hour', value: 60 },
