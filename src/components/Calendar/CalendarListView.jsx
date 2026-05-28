@@ -75,9 +75,9 @@ const CalendarListView = ({ sessions = [] }) => {
                     <div className="flex items-center gap-3 mb-2">
                       <h4 className={`font-semibold ${colors.textSolid}`}>{title}</h4>
                       {badgeLabel && (
-                        <Badge className={colors.badge}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors.badge}`}>
                           {badgeLabel}
-                        </Badge>
+                        </span>
                       )}
                       {status && (
                         <Badge 

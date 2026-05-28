@@ -1,4 +1,4 @@
-const SectionCard = ({
+﻿const SectionCard = ({
   title,
   actions,
   children,
@@ -14,7 +14,7 @@ const SectionCard = ({
         <div className={`flex items-center justify-between mb-4 ${headerClassName}`}>
           {title && (
             typeof title === 'string'
-              ? <h3 className="text-lg font-semibold text-dark-800">{title}</h3>
+              ? <h3 className="text-lg font-semibold text-dark-50">{title}</h3>
               : title
           )}
           {actions && <div className="flex items-center gap-2">{actions}</div>}

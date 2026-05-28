@@ -16,7 +16,8 @@ import { useSearchCustomers } from '../../shared/hooks/useCustomers';
  * @param {string} placeholder - Placeholder text for the input
  * @param {string} className - Additional CSS classes
  * @param {boolean} disabled - Whether the input is disabled
- * @param {Function} isCustomerDisabled - Optional function; if returns true, customer is non-selectable with "(Deactivated)" suffix
+ * @param {Function} isCustomerDisabled - Optional function; if returns true, customer is non-selectable with a suffix label
+ * @param {Function} getCustomerDisabledLabel - Optional function; returns suffix label for disabled customers (default: "Deactivated")
  */
 const SearchableClientInput = ({
   customers = [],
@@ -29,6 +30,7 @@ const SearchableClientInput = ({
   className = '',
   disabled = false,
   isCustomerDisabled,
+  getCustomerDisabledLabel,
 }) => {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -203,6 +205,7 @@ const SearchableClientInput = ({
                   (customer.firstName && customer.lastName ? `${customer.firstName} ${customer.lastName}` : 
                   customer.firstName || 'Unknown');
                 const customerDisabled = isCustomerDisabled?.(customer) ?? false;
+                const disabledLabel = getCustomerDisabledLabel?.(customer) || 'Deactivated';
 
                 if (customerDisabled) {
                   return (
@@ -210,7 +213,7 @@ const SearchableClientInput = ({
                       key={customer.id}
                       className="w-full text-left px-4 py-2 text-dark-400 cursor-not-allowed"
                     >
-                      <div className="font-medium">{customerName} (Deactivated)</div>
+                      <div className="font-medium">{customerName} ({disabledLabel})</div>
                       {(customer.email || customer.phoneNumber) && (
                         <div className="text-xs text-dark-500">
                           {customer.email && customer.phoneNumber 

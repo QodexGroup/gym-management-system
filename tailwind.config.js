@@ -7,17 +7,43 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Themeable palettes — values come from CSS variables defined in
+        // src/shared/styles/_theme.scss and swapped at runtime by ThemeContext.
+        // Variables hold space-separated RGB triplets, e.g. "14 165 233".
         primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+          50: 'rgb(var(--c-primary-50) / <alpha-value>)',
+          100: 'rgb(var(--c-primary-100) / <alpha-value>)',
+          200: 'rgb(var(--c-primary-200) / <alpha-value>)',
+          300: 'rgb(var(--c-primary-300) / <alpha-value>)',
+          400: 'rgb(var(--c-primary-400) / <alpha-value>)',
+          500: 'rgb(var(--c-primary-500) / <alpha-value>)',
+          600: 'rgb(var(--c-primary-600) / <alpha-value>)',
+          700: 'rgb(var(--c-primary-700) / <alpha-value>)',
+          800: 'rgb(var(--c-primary-800) / <alpha-value>)',
+          900: 'rgb(var(--c-primary-900) / <alpha-value>)',
+        },
+        secondary: {
+          50: 'rgb(var(--c-secondary-50) / <alpha-value>)',
+          100: 'rgb(var(--c-secondary-100) / <alpha-value>)',
+          200: 'rgb(var(--c-secondary-200) / <alpha-value>)',
+          300: 'rgb(var(--c-secondary-300) / <alpha-value>)',
+          400: 'rgb(var(--c-secondary-400) / <alpha-value>)',
+          500: 'rgb(var(--c-secondary-500) / <alpha-value>)',
+          600: 'rgb(var(--c-secondary-600) / <alpha-value>)',
+          700: 'rgb(var(--c-secondary-700) / <alpha-value>)',
+          800: 'rgb(var(--c-secondary-800) / <alpha-value>)',
+          900: 'rgb(var(--c-secondary-900) / <alpha-value>)',
+        },
+        // App shell (sidebar + navbar + footer) — themed, mode-independent.
+        chrome: {
+          DEFAULT: 'rgb(var(--c-chrome-bg) / <alpha-value>)',
+          bg: 'rgb(var(--c-chrome-bg) / <alpha-value>)',
+          elevated: 'rgb(var(--c-chrome-elevated) / <alpha-value>)',
+          border: 'rgb(var(--c-chrome-border) / <alpha-value>)',
+          hover: 'rgb(var(--c-chrome-hover) / <alpha-value>)',
+          active: 'rgb(var(--c-chrome-active) / <alpha-value>)',
+          text: 'rgb(var(--c-chrome-text) / <alpha-value>)',
+          muted: 'rgb(var(--c-chrome-muted) / <alpha-value>)',
         },
         accent: {
           50: '#fdf4ff',
@@ -58,21 +84,25 @@ export default {
           800: '#991b1b',
           900: '#7f1d1d',
         },
+        // Neutral/surface scale — used semantically (900 = app background,
+        // 800 = cards/sidebar, 700 = borders, 400 = muted text, 50 = strongest
+        // text). In light mode _theme.scss inverts these so the same classes
+        // render correctly without touching any component.
         dark: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
+          50: 'rgb(var(--c-surface-50) / <alpha-value>)',
+          100: 'rgb(var(--c-surface-100) / <alpha-value>)',
+          200: 'rgb(var(--c-surface-200) / <alpha-value>)',
+          300: 'rgb(var(--c-surface-300) / <alpha-value>)',
+          400: 'rgb(var(--c-surface-400) / <alpha-value>)',
+          500: 'rgb(var(--c-surface-500) / <alpha-value>)',
+          600: 'rgb(var(--c-surface-600) / <alpha-value>)',
+          700: 'rgb(var(--c-surface-700) / <alpha-value>)',
+          800: 'rgb(var(--c-surface-800) / <alpha-value>)',
+          900: 'rgb(var(--c-surface-900) / <alpha-value>)',
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-app)', 'Inter', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',

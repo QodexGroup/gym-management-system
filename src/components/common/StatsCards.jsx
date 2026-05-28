@@ -1,6 +1,6 @@
 import StatCard from './StatCard';
 
-const StatsCards = ({ stats = [], dark = false, size = 'md', iconPosition = 'right', iconColor = 'light', columns = 4, variant = 'default' }) => {
+const StatsCards = ({ stats = [], dark = true, size = 'md', iconPosition = 'right', iconColor = 'light', columns = 4, variant = 'default' }) => {
   if (!Array.isArray(stats) || stats.length === 0) return null;
 
   const gridColsClass = {

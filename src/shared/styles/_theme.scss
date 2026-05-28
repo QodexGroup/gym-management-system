@@ -1,0 +1,115 @@
+@use 'sass:map';
+
+// =============================================================================
+// Theme system — CSS variables consumed by tailwind.config.js
+// -----------------------------------------------------------------------------
+// Variables hold space-separated RGB triplets (e.g. "14 165 233") so Tailwind
+// can apply opacity via `rgb(var(--x) / <alpha-value>)`.
+//
+//   --font-app          : active font stack (set inline by ThemeContext)
+//   --c-surface-50..900 : neutral scale (900 = bg, 800 = cards, 50 = text)
+//   --c-primary-50..900 : theme accent (sidebar active + .btn-primary)
+//   --c-secondary-50..900: complementary accent, always distinct from primary
+//
+// data-mode  (dark|light) swaps ONLY the surface scale.
+// data-theme (ocean|...)  swaps ONLY the primary + secondary scales.
+// The two groups never overlap, so they compose freely.
+// =============================================================================
+
+:root {
+  --font-app: 'Inter', system-ui, sans-serif;
+}
+
+// --- Surface: DARK ---
+// Applied as the :root default AND on any [data-mode='dark'] element. The
+// explicit attribute selector lets the Appearance preview scope a dark sample
+// even while the live app is in light mode (custom props cascade to the subtree).
+:root,
+[data-mode='dark'] {
+  --c-surface-50: 248 250 252;
+  --c-surface-100: 241 245 249;
+  --c-surface-200: 226 232 240;
+  --c-surface-300: 203 213 225;
+  --c-surface-400: 148 163 184;
+  --c-surface-500: 100 116 139;
+  --c-surface-600: 71 85 105;
+  --c-surface-700: 51 65 85;
+  --c-surface-800: 30 41 59;
+  --c-surface-900: 15 23 42;
+}
+
+// --- Surface: LIGHT (inverted scale) ---
+// 900 becomes the light app background, 800 pure-white cards, 50 the darkest
+// text. Because components use the scale semantically, this single override
+// flips the entire UI to light mode with no per-component edits.
+[data-mode='light'] {
+  --c-surface-50: 15 23 42;
+  --c-surface-100: 30 41 59;
+  --c-surface-200: 51 65 85;
+  --c-surface-300: 71 85 105;
+  --c-surface-400: 100 116 139;
+  --c-surface-500: 148 163 184;
+  --c-surface-600: 203 213 225;
+  --c-surface-700: 226 232 240;
+  --c-surface-800: 255 255 255;
+  --c-surface-900: 241 245 249;
+}
+
+// -----------------------------------------------------------------------------
+// Themes — primary (accent) + secondary (complementary). Ocean is the default
+// and also lives on :root so the app looks correct before data-theme is set.
+// -----------------------------------------------------------------------------
+
+@mixin theme($p, $s) {
+  --c-primary-50: #{map.get($p, 50)};
+  --c-primary-100: #{map.get($p, 100)};
+  --c-primary-200: #{map.get($p, 200)};
+  --c-primary-300: #{map.get($p, 300)};
+  --c-primary-400: #{map.get($p, 400)};
+  --c-primary-500: #{map.get($p, 500)};
+  --c-primary-600: #{map.get($p, 600)};
+  --c-primary-700: #{map.get($p, 700)};
+  --c-primary-800: #{map.get($p, 800)};
+  --c-primary-900: #{map.get($p, 900)};
+  --c-secondary-50: #{map.get($s, 50)};
+  --c-secondary-100: #{map.get($s, 100)};
+  --c-secondary-200: #{map.get($s, 200)};
+  --c-secondary-300: #{map.get($s, 300)};
+  --c-secondary-400: #{map.get($s, 400)};
+  --c-secondary-500: #{map.get($s, 500)};
+  --c-secondary-600: #{map.get($s, 600)};
+  --c-secondary-700: #{map.get($s, 700)};
+  --c-secondary-800: #{map.get($s, 800)};
+  --c-secondary-900: #{map.get($s, 900)};
+
+  // Chrome = app shell (sidebar + navbar + footer). Derived from the theme's
+  // primary scale and INTENTIONALLY independent of data-mode, so the shell
+  // keeps its theme color while only the content area flips light/dark.
+  --c-chrome-bg: #{map.get($p, 900)};       // shell background (deep theme tint)
+  --c-chrome-elevated: #{map.get($p, 800)}; // raised controls / hover
+  --c-chrome-border: #{map.get($p, 800)};   // dividers
+  --c-chrome-hover: #{map.get($p, 800)};    // nav item hover
+  --c-chrome-active: #{map.get($p, 500)};   // active nav item
+  --c-chrome-text: 255 255 255;             // primary shell text
+  --c-chrome-muted: #{map.get($p, 200)};    // secondary shell text
+}
+
+// Palettes (Tailwind reference colors, as RGB triplets)
+$sky:    (50: '240 249 255', 100: '224 242 254', 200: '186 230 253', 300: '125 211 252', 400: '56 189 248', 500: '14 165 233', 600: '2 132 199', 700: '3 105 161', 800: '7 89 133', 900: '12 74 110');
+$amber:  (50: '255 251 235', 100: '254 243 199', 200: '253 230 138', 300: '252 211 77', 400: '251 191 36', 500: '245 158 11', 600: '217 119 6', 700: '180 83 9', 800: '146 64 14', 900: '120 53 15');
+$green:  (50: '240 253 244', 100: '220 252 231', 200: '187 247 208', 300: '134 239 172', 400: '74 222 128', 500: '34 197 94', 600: '22 163 74', 700: '21 128 61', 800: '22 101 52', 900: '20 83 45');
+$orange: (50: '255 247 237', 100: '255 237 213', 200: '254 215 170', 300: '253 186 116', 400: '251 146 60', 500: '249 115 22', 600: '234 88 12', 700: '194 65 12', 800: '154 52 18', 900: '124 45 18');
+$indigo: (50: '238 242 255', 100: '224 231 255', 200: '199 210 254', 300: '165 180 252', 400: '129 140 248', 500: '99 102 241', 600: '79 70 229', 700: '67 56 202', 800: '55 48 163', 900: '49 46 129');
+$violet: (50: '245 243 255', 100: '237 233 254', 200: '221 214 254', 300: '196 181 253', 400: '167 139 250', 500: '139 92 246', 600: '124 58 237', 700: '109 40 217', 800: '91 33 182', 900: '76 29 149');
+$teal:   (50: '240 253 250', 100: '204 251 241', 200: '153 246 228', 300: '94 234 212', 400: '45 212 191', 500: '20 184 166', 600: '13 148 136', 700: '15 118 110', 800: '17 94 89', 900: '19 78 74');
+$rose:   (50: '255 241 242', 100: '255 228 230', 200: '254 205 211', 300: '253 164 175', 400: '251 113 133', 500: '244 63 94', 600: '225 29 72', 700: '190 18 60', 800: '159 18 57', 900: '136 19 55');
+$emerald:(50: '236 253 245', 100: '209 250 229', 200: '167 243 208', 300: '110 231 183', 400: '52 211 153', 500: '16 185 129', 600: '5 150 105', 700: '4 120 87', 800: '6 95 70', 900: '6 78 59');
+$slate:  (50: '248 250 252', 100: '241 245 249', 200: '226 232 240', 300: '203 213 225', 400: '148 163 184', 500: '100 116 139', 600: '71 85 105', 700: '51 65 85', 800: '30 41 59', 900: '15 23 42');
+
+:root,
+[data-theme='ocean']       { @include theme($sky, $amber); }    // blue   -> amber
+[data-theme='environment'] { @include theme($green, $orange); } // green  -> orange
+[data-theme='sunset']      { @include theme($orange, $indigo); }// orange -> indigo
+[data-theme='royal']       { @include theme($violet, $teal); }  // purple -> teal
+[data-theme='rose']        { @include theme($rose, $emerald); } // pink   -> emerald
+[data-theme='slate']       { @include theme($slate, $sky); }    // gray   -> sky

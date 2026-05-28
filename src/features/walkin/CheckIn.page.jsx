@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+﻿import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../layout/Layout';
 import { Avatar, Badge, StatsList } from '../../components/common';
@@ -225,7 +225,7 @@ const CheckIn = () => {
         <div className="mb-4 flex justify-end">
           <button
             onClick={handleRefresh}
-            className="flex items-center gap-2 px-4 py-2 text-sm text-dark-600 hover:bg-dark-100 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm text-dark-200 hover:bg-dark-100 rounded-lg transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             Refresh
@@ -332,11 +332,11 @@ const CheckIn = () => {
 
           <div className="card">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-dark-800">Today's Check-In History</h3>
+              <h3 className="text-lg font-semibold text-dark-50">Today's Check-In History</h3>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleRefresh}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-dark-600 hover:bg-dark-100 rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-dark-200 hover:bg-dark-100 rounded-lg transition-colors"
                 >
                   <RefreshCw className="w-4 h-4" />
                   Refresh

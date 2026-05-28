@@ -1,11 +1,13 @@
 const Badge = ({ children, variant = 'default', size = 'md', className = '' }) => {
   const variantClasses = {
-    default: 'bg-dark-700 text-dark-200',
-    primary: 'bg-primary-500 text-white',
-    success: 'bg-success-500 text-white',
-    warning: 'bg-warning-500 text-white',
-    danger: 'bg-danger-500 text-white',
-    accent: 'bg-accent-500 text-white',
+    default:  'bg-dark-700 text-dark-200',
+    // Using -100/-700 pairs: always high contrast regardless of mode or theme,
+    // because palette shades don't invert with color-mode (only the surface scale does).
+    primary: 'bg-primary-100 text-primary-700',
+    success:  'bg-success-100 text-success-700',
+    warning:  'bg-warning-100 text-warning-700',
+    danger:   'bg-danger-100 text-danger-700',
+    accent:   'bg-accent-100 text-accent-700',
   };
 
   const sizeClasses = {

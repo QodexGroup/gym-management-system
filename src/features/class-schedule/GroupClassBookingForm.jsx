@@ -11,7 +11,11 @@ import {
   mapGroupClassBookingToFormData,
 } from '../../shared/models/groupClassBookingFormModel';
 import { SESSION_TYPES } from '../../shared/constants/sessionSchedulingConstants';
-import { isCustomerMembershipDeactivated } from '../../shared/constants/customerMembership';
+import {
+  isCustomerEligibleForGroupClassBooking,
+  getCustomerGroupClassBookingBlockReason,
+  getCustomerMembershipDisabledLabel,
+} from '../../shared/constants/customerMembership';
 
 const GroupClassBookingForm = ({
   booking = null,
@@ -20,6 +24,8 @@ const GroupClassBookingForm = ({
   onSubmit,
   onCancel,
   isSubmitting = false,
+  showMemberSearch = true,
+  customerId = null,
 }) => {
   const [formData, setFormData] = useState(getInitialGroupClassBookingFormData());
   const [sessionSearch, setSessionSearch] = useState('');
@@ -119,10 +125,14 @@ const GroupClassBookingForm = ({
         }
       }
     } else {
-      setFormData(getInitialGroupClassBookingFormData());
+      const initialData = getInitialGroupClassBookingFormData();
+      if (!showMemberSearch && customerId) {
+        initialData.customerId = customerId.toString();
+      }
+      setFormData(initialData);
       setSessionSearch('');
     }
-  }, [booking, availableSessions, classSessions]);
+  }, [booking, availableSessions, classSessions, showMemberSearch, customerId]);
 
   // Initialize search with selected session
   useEffect(() => {
@@ -157,7 +167,7 @@ const GroupClassBookingForm = ({
 
   const selectableCustomers = useMemo(() => {
     return customers.filter((customer) => {
-      if (!isCustomerMembershipDeactivated(customer)) return true;
+      if (isCustomerEligibleForGroupClassBooking(customer)) return true;
       if (formData.customerId && customer.id.toString() === formData.customerId.toString()) {
         return true;
       }
@@ -165,15 +175,21 @@ const GroupClassBookingForm = ({
     });
   }, [customers, formData.customerId]);
 
-  const isCustomerDeactivated = useMemo(() => {
-    if (!formData.customerId) return false;
-    const customer = customers.find(c => c.id.toString() === formData.customerId.toString());
-    return customer ? isCustomerMembershipDeactivated(customer) : false;
+  const selectedCustomer = useMemo(() => {
+    if (!formData.customerId) return null;
+    return customers.find(c => c.id.toString() === formData.customerId.toString());
   }, [formData.customerId, customers]);
+
+  const customerBookingBlockReason = useMemo(() => {
+    if (!selectedCustomer) return null;
+    return getCustomerGroupClassBookingBlockReason(selectedCustomer);
+  }, [selectedCustomer]);
+
+  const isCustomerBookingBlocked = Boolean(customerBookingBlockReason);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.customerId || !formData.sessionId || isCustomerDeactivated) {
+    if (!formData.customerId || !formData.sessionId || isCustomerBookingBlocked) {
       return;
     }
 
@@ -243,21 +259,24 @@ const GroupClassBookingForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div style={{ position: 'relative', zIndex: 50 }}>
-        <SearchableClientInput
-          customers={selectableCustomers}
-          value={formData.customerId}
-          onChange={handleCustomerChange}
-          label="Client"
-          required
-          placeholder="Search client by name .."
-          isCustomerDisabled={(c) => isCustomerMembershipDeactivated(c)}
-        />
-      </div>
+      {showMemberSearch && (
+        <div style={{ position: 'relative', zIndex: 50 }}>
+          <SearchableClientInput
+            customers={selectableCustomers}
+            value={formData.customerId}
+            onChange={handleCustomerChange}
+            label="Client"
+            required
+            placeholder="Search client by name .."
+            isCustomerDisabled={(c) => !isCustomerEligibleForGroupClassBooking(c)}
+            getCustomerDisabledLabel={getCustomerMembershipDisabledLabel}
+          />
+        </div>
+      )}
 
-      {isCustomerDeactivated && (
+      {customerBookingBlockReason && (
         <div className="p-3 bg-yellow-500/10 border-2 border-yellow-400 rounded-lg text-sm text-yellow-300 font-medium">
-          <strong className="text-yellow-200">This client has a deactivated membership and cannot be booked.</strong>
+          <strong className="text-yellow-200">{customerBookingBlockReason}</strong>
         </div>
       )}
 
@@ -397,7 +416,7 @@ const GroupClassBookingForm = ({
         <button
           type="submit"
           className="flex-1 btn-primary"
-          disabled={isSubmitting || bookMutation.isPending || updateMutation.isPending || !formData.customerId || !formData.sessionId || isCustomerDeactivated}
+          disabled={isSubmitting || bookMutation.isPending || updateMutation.isPending || !formData.customerId || !formData.sessionId || isCustomerBookingBlocked}
         >
           {isSubmitting || bookMutation.isPending || updateMutation.isPending
             ? (booking ? 'Updating...' : 'Booking...')

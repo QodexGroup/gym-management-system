@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo, useCallback, useEffect } from 'react';
+﻿import { useRef, useState, useMemo, useCallback, useEffect } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import Layout from '../../layout/Layout';
 import { Badge, DateRangeExportBar, PrintArea, MessageCard, StatsCards } from '../../components/common';
@@ -279,7 +279,7 @@ const ExpenseReportPage = () => {
     { key: 'formattedDate', label: 'Date', render: (row) => row.formattedDate },
     { key: 'category', label: 'Category', render: (row) => <Badge variant="default">{row.category}</Badge> },
     { key: 'description', label: 'Description', render: (row) => <span className="font-medium">{row.description}</span> },
-    { key: 'amount', label: 'Amount', render: (row) => <span className="font-semibold text-dark-800">{formatCurrency(row.amount)}</span> },
+    { key: 'amount', label: 'Amount', render: (row) => <span className="font-semibold text-dark-50">{formatCurrency(row.amount)}</span> },
     { key: 'status', label: 'Status', render: (row) => <Badge variant={EXPENSE_STATUS_VARIANTS[row.status] || 'warning'}>{EXPENSE_STATUS_LABELS[row.status] || row.status}</Badge> },
   ];
 
@@ -387,7 +387,7 @@ const ExpenseReportPage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 no-print">
           <div className="card">
-            <h3 className="text-lg font-semibold text-dark-800 mb-4">Expenses by Category</h3>
+            <h3 className="text-lg font-semibold text-dark-50 mb-4">Expenses by Category</h3>
             <div className="h-64">
               {expenseByCategory.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -420,14 +420,14 @@ const ExpenseReportPage = () => {
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: categoryColors[index % categoryColors.length] }}
                   />
-                  <span className="text-dark-600">{item.name}</span>
+                  <span className="text-dark-200">{item.name}</span>
                   <span className="text-dark-400 ml-auto">{formatCurrency(item.value)}</span>
                 </div>
               ))}
             </div>
           </div>
           <div className="card">
-            <h3 className="text-lg font-semibold text-dark-800 mb-4">Monthly Expense Trend</h3>
+            <h3 className="text-lg font-semibold text-dark-50 mb-4">Monthly Expense Trend</h3>
             <div className="h-64">
               {monthlyTrend.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">

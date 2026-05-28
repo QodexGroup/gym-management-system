@@ -14,9 +14,7 @@ const GridDesignTwo = ({
 }) => {
   return (
     <div
-      className={`card relative p-6 flex flex-col border rounded-lg ${
-        dark ? 'bg-dark-800 border-dark-700' : 'bg-white border-gray-200'
-      }`}
+      className="card relative p-6 flex flex-col border border-dark-700 bg-dark-800 rounded-lg"
     >
       {/* Edit and Delete icons in top right */}
       {(actions.onEdit || actions.onDelete) && (
@@ -44,7 +42,7 @@ const GridDesignTwo = ({
 
       {/* Title */}
       {title && (
-        <h3 className={`text-lg font-bold mb-2 pr-20 ${dark ? 'text-dark-50' : 'text-gray-800'}`}>
+        <h3 className="text-lg font-bold mb-2 pr-20 text-dark-50">
           {title}
         </h3>
       )}
@@ -60,7 +58,7 @@ const GridDesignTwo = ({
 
       {/* Text/Body */}
       {text && (
-        <p className={`text-sm mb-4 line-clamp-2 ${dark ? 'text-dark-300' : 'text-gray-600'}`}>
+        <p className="text-sm mb-4 line-clamp-2 text-dark-300">
           {text}
         </p>
       )}
@@ -74,9 +72,9 @@ const GridDesignTwo = ({
               return (
                 <div key={idx} className="flex items-center gap-2 text-sm">
                   {item.icon && (
-                    <item.icon className={`w-4 h-4 ${dark ? 'text-primary-400' : 'text-primary-500'}`} />
+                    <item.icon className="w-4 h-4 text-primary-400" />
                   )}
-                  <span className={dark ? 'text-dark-200' : 'text-gray-700'}>{item.label}</span>
+                  <span className="text-dark-200">{item.label}</span>
                 </div>
               );
             }
@@ -84,7 +82,7 @@ const GridDesignTwo = ({
             if (typeof item === 'string') {
               return (
                 <div key={idx} className="flex items-center gap-2 text-sm">
-                  <span className={dark ? 'text-dark-200' : 'text-gray-700'}>{item}</span>
+                  <span className="text-dark-200">{item}</span>
                 </div>
               );
             }
@@ -96,7 +94,7 @@ const GridDesignTwo = ({
       {/* Footer text at bottom - large and bold */}
       {footer && (
         <div className="mt-auto pt-4 border-t border-dark-100">
-          <p className={`text-2xl font-bold ${dark ? 'text-dark-50' : 'text-gray-800'}`}>
+          <p className="text-2xl font-bold text-dark-50">
             {footer}
           </p>
         </div>

@@ -97,9 +97,11 @@ const StatCard = (
         subtitle: 'text-xs text-dark-400 mt-1',
       }
     : {
-        title: 'text-sm font-medium text-dark-500',
-        value: `${valueSizeClasses[size]} font-bold text-dark-800 mt-1`,
-        subtitle: 'text-xs text-dark-400 mt-1',
+        // For light-variant cards (bg-primary-50 etc.) use palette shades so text
+        // stays readable regardless of whether the surface scale is in light or dark mode.
+        title: 'text-sm font-medium text-primary-700',
+        value: `${valueSizeClasses[size]} font-bold text-primary-900 mt-1`,
+        subtitle: 'text-xs text-primary-600 mt-1',
       };
 
   const iconElement = Icon && variant === 'gradient' ? (

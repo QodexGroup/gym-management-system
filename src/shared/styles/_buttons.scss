@@ -7,6 +7,12 @@
     @apply bg-dark-700 hover:bg-dark-600 text-dark-50 font-medium py-2 px-4 rounded-lg transition-all duration-200;
   }
 
+  // Themed accent button — uses the theme's secondary (complementary) color,
+  // distinct from .btn-primary. Available app-wide via the `secondary` palette.
+  .btn-accent {
+    @apply bg-secondary-500 hover:bg-secondary-600 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md;
+  }
+
   .btn-success {
     @apply bg-success-500 hover:bg-success-600 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200;
   }

@@ -54,34 +54,34 @@ const AuthAction = () => {
   }, [status, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black px-4">
-      <div className="max-w-md w-full bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 p-8 text-center">
+    <div data-mode="dark" className="min-h-screen flex items-center justify-center bg-dark-900 px-4">
+      <div className="max-w-md w-full bg-dark-800 rounded-2xl shadow-2xl border border-dark-700 p-8 text-center">
         <div className="flex justify-center mb-6">
           <img src="/img/gymhubph.png" alt="GymHubPH" className="w-40 h-20 object-cover" />
         </div>
 
         {status === 'loading' && (
           <>
-            <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
-            <h1 className="text-xl font-bold text-white mb-2">Verifying your email...</h1>
-            <p className="text-gray-400 text-sm">Please wait a moment.</p>
+            <Loader2 className="w-12 h-12 text-primary-500 animate-spin mx-auto mb-4" />
+            <h1 className="text-xl font-bold text-dark-50 mb-2">Verifying your email...</h1>
+            <p className="text-dark-400 text-sm">Please wait a moment.</p>
           </>
         )}
 
         {status === 'success' && (
           <>
-            <CheckCircle className="w-14 h-14 text-green-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-white mb-2">Email Verified!</h1>
-            <p className="text-gray-300 text-sm mb-6">
+            <CheckCircle className="w-14 h-14 text-success-500 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-dark-50 mb-2">Email Verified!</h1>
+            <p className="text-dark-300 text-sm mb-6">
               Your email has been successfully verified. You can now log in to your account.
             </p>
             <button
               onClick={() => navigate('/login', { replace: true })}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+              className="w-full bg-primary-500 text-white py-3 rounded-lg font-semibold hover:bg-primary-600 transition"
             >
               Go to Login
             </button>
-            <p className="text-gray-500 text-xs mt-4">
+            <p className="text-dark-500 text-xs mt-4">
               Redirecting in {countdown} second{countdown !== 1 ? 's' : ''}...
             </p>
           </>
@@ -89,14 +89,14 @@ const AuthAction = () => {
 
         {status === 'error' && (
           <>
-            <XCircle className="w-14 h-14 text-red-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-white mb-2">Verification Failed</h1>
-            <p className="text-gray-300 text-sm mb-6">
+            <XCircle className="w-14 h-14 text-danger-500 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-dark-50 mb-2">Verification Failed</h1>
+            <p className="text-dark-300 text-sm mb-6">
               This link may have expired or already been used. Please request a new verification email.
             </p>
             <button
               onClick={() => navigate('/login', { replace: true })}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+              className="w-full bg-primary-500 text-white py-3 rounded-lg font-semibold hover:bg-primary-600 transition"
             >
               Go to Login
             </button>

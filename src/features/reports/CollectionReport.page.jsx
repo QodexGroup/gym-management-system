@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo, useCallback, useEffect } from 'react';
+﻿import { useRef, useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
 import Layout from '../../layout/Layout';
@@ -251,7 +251,7 @@ const CollectionReportPage = () => {
     { key: 'paymentDate', label: 'Date', render: (row) => formatDate(row.paymentDate) },
     { key: 'customerName', label: 'Member', render: (row) => <span className="font-medium">{row.customerName || 'N/A'}</span> },
     { key: 'billType', label: 'Type', render: (row) => row.billType || 'N/A' },
-    { key: 'amount', label: 'Amount', render: (row) => <span className="font-semibold text-dark-800">{formatCurrency(row.amount)}</span> },
+    { key: 'amount', label: 'Amount', render: (row) => <span className="font-semibold text-dark-50">{formatCurrency(row.amount)}</span> },
     { key: 'paymentMethod', label: 'Payment Method', render: (row) => row.paymentMethod ? String(row.paymentMethod) : 'N/A' },
   ];
 
@@ -304,7 +304,7 @@ const CollectionReportPage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 no-print">
           <div className="card">
-            <h3 className="text-lg font-semibold text-dark-800 mb-4">Payment Method Breakdown</h3>
+            <h3 className="text-lg font-semibold text-dark-50 mb-4">Payment Method Breakdown</h3>
             <div className="h-72">
               {paymentMethodData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -334,7 +334,7 @@ const CollectionReportPage = () => {
             </div>
           </div>
           <div className="card">
-            <h3 className="text-lg font-semibold text-dark-800 mb-4">Revenue by Membership Type</h3>
+            <h3 className="text-lg font-semibold text-dark-50 mb-4">Revenue by Membership Type</h3>
             <div className="h-72">
               {membershipTypeData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">

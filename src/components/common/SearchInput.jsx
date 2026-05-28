@@ -19,7 +19,7 @@ const SearchInput = ({
 }) => {
   const base = dark
     ? 'bg-dark-700 border-dark-600 text-dark-50 placeholder-dark-400 focus:bg-dark-600 focus:border-primary-500 focus:ring-2 focus:ring-primary-100'
-    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-100';
+    : 'bg-dark-800 border-dark-600 text-dark-50 placeholder-dark-400 focus:bg-dark-700 focus:border-primary-500 focus:ring-2 focus:ring-primary-100';
 
   return (
     <div className={`relative ${className}`}>

@@ -1,4 +1,4 @@
-
+﻿
 import { Check, Users, PhilippinePeso, Edit, Badge } from 'lucide-react';
 import { Modal } from '../../components/common';
 import { formatCurrency } from '../../shared/utils/formatters';
@@ -63,7 +63,7 @@ const MembershipPlanDetail = ({ isOpen, plan, onClose, onEdit }) => {
 
 const InfoCard = ({ icon: Icon, label, value }) => (
   <div className="bg-dark-50 p-4 rounded-lg">
-    <div className="flex items-center gap-2 text-dark-600 mb-1">
+    <div className="flex items-center gap-2 text-dark-200 mb-1">
       <Icon className="w-4 h-4" />
       <span className="text-sm">{label}</span>
     </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useCreateWalkin } from '../../shared/hooks/useWalkins';
 import { Calendar } from 'lucide-react';
 
@@ -31,7 +31,7 @@ const WalkinForm = ({ onSuccess, onCancel }) => {
             <Calendar className="w-10 h-10 text-primary-600" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-dark-800 mb-2">Create Today's Walkin</h3>
+            <h3 className="text-xl font-semibold text-dark-50 mb-2">Create Today's Walkin</h3>
             <p className="text-dark-500 mb-6">
               Start tracking attendance by creating a walkin session for today.
             </p>

@@ -1,4 +1,4 @@
-import Layout from '../../layout/Layout';
+﻿import Layout from '../../layout/Layout';
 import { StatsCards } from '../../components/common';
 import DataTable from '../../components/DataTable/DataTable';
 import {
@@ -114,7 +114,7 @@ const MyCollectionPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Weekly Earnings */}
         <div className="card">
-          <h3 className="text-lg font-semibold text-dark-800 mb-4">Weekly Performance</h3>
+          <h3 className="text-lg font-semibold text-dark-50 mb-4">Weekly Performance</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weeklyEarnings}>
@@ -146,7 +146,7 @@ const MyCollectionPage = () => {
 
         {/* Earnings Breakdown */}
         <div className="card">
-          <h3 className="text-lg font-semibold text-dark-800 mb-4">Earnings Breakdown</h3>
+          <h3 className="text-lg font-semibold text-dark-50 mb-4">Earnings Breakdown</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -175,8 +175,8 @@ const MyCollectionPage = () => {
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: item.color }}
                 />
-                <span className="text-sm text-dark-600">{item.name}</span>
-                <span className="text-sm font-medium text-dark-800">{formatCurrency(item.value)}</span>
+                <span className="text-sm text-dark-200">{item.name}</span>
+                <span className="text-sm font-medium text-dark-50">{formatCurrency(item.value)}</span>
               </div>
             ))}
           </div>
@@ -185,7 +185,7 @@ const MyCollectionPage = () => {
 
       {/* Monthly Earnings Trend */}
       <div className="card mb-6">
-        <h3 className="text-lg font-semibold text-dark-800 mb-4">
+        <h3 className="text-lg font-semibold text-dark-50 mb-4">
           Monthly Earnings Trend
         </h3>
         <div className="h-72">

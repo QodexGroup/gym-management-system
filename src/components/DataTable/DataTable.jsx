@@ -1,4 +1,4 @@
-const DataTable = ({
+﻿const DataTable = ({
   columns,
   data,
   keyField = 'id',
@@ -19,7 +19,7 @@ const DataTable = ({
       <>
         {(title || actionButton) && (
           <div className="flex items-center justify-between mb-4">
-            {title && <h3 className="text-lg font-semibold text-dark-800">{title}</h3>}
+            {title && <h3 className="text-lg font-semibold text-dark-50">{title}</h3>}
             {actionButton}
           </div>
         )}
@@ -82,7 +82,7 @@ const DataTable = ({
     <>
       {(title || actionButton) && (
         <div className="flex items-center justify-between mb-4">
-          {title && <h3 className="text-lg font-semibold text-dark-800">{title}</h3>}
+          {title && <h3 className="text-lg font-semibold text-dark-50">{title}</h3>}
           {actionButton}
         </div>
       )}
