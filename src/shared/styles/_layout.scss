@@ -1,17 +1,17 @@
 @layer components {
   .sidebar-item {
-    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-dark-400 hover:bg-dark-700 hover:text-primary-400 transition-all duration-200 cursor-pointer;
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-chrome-muted hover:bg-chrome-hover hover:text-chrome-text transition-all duration-200 cursor-pointer;
   }
 
   .sidebar-item.active {
-    @apply bg-primary-500 text-white hover:bg-primary-600 hover:text-white shadow-md;
+    @apply bg-chrome-active text-white hover:bg-chrome-active hover:text-white shadow-md;
   }
 }
 
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: rgb(71, 85, 105) rgb(15, 23, 42);
+    scrollbar-color: rgb(var(--c-surface-600)) rgb(var(--c-surface-900));
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -28,10 +28,10 @@
   }
 }
 
-/* Global scrollbar styling */
+/* Global scrollbar styling — follows the active surface scale */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgb(71, 85, 105) rgb(15, 23, 42);
+  scrollbar-color: rgb(var(--c-surface-600)) rgb(var(--c-surface-900));
 }
 
 *::-webkit-scrollbar {
@@ -40,15 +40,15 @@
 }
 
 *::-webkit-scrollbar-track {
-  background: rgb(15, 23, 42);
+  background: rgb(var(--c-surface-900));
   border-radius: 4px;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgb(71, 85, 105);
+  background: rgb(var(--c-surface-600));
   border-radius: 4px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: rgb(100, 116, 139);
+  background: rgb(var(--c-surface-500));
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../layout/Layout';
 import DataTable from '../../components/DataTable';
@@ -120,7 +120,7 @@ const TrainerDashboard = () => {
           <div className="flex items-center gap-3">
             <Avatar src={row.avatar} name={row.name} size="sm" />
             <div>
-              <p className="font-medium text-dark-800">{row.name}</p>
+              <p className="font-medium text-dark-50">{row.name}</p>
               <p className="text-xs text-dark-500">{row.email}</p>
             </div>
           </div>
@@ -163,7 +163,7 @@ const TrainerDashboard = () => {
     return (
       <Layout title="My Dashboard" subtitle={subtitle}>
         <div className="card text-center py-12">
-          <p className="text-dark-600 mb-4">{statsError}</p>
+          <p className="text-dark-200 mb-4">{statsError}</p>
           <button type="button" onClick={() => window.location.reload()} className="btn-primary">
             Retry
           </button>

@@ -3,19 +3,21 @@
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
 
+  /* -100 bg / -700 text pairs give strong contrast regardless of color mode or theme,
+     because palette shades don't invert when the surface scale flips light ↔ dark. */
   .badge-success {
-    @apply bg-success-100 text-success-600;
+    @apply bg-success-100 text-success-700;
   }
 
   .badge-warning {
-    @apply bg-warning-100 text-warning-600;
+    @apply bg-warning-100 text-warning-700;
   }
 
   .badge-danger {
-    @apply bg-danger-100 text-danger-600;
+    @apply bg-danger-100 text-danger-700;
   }
 
   .badge-primary {
-    @apply bg-primary-100 text-primary-600;
+    @apply bg-primary-100 text-primary-700;
   }
 }

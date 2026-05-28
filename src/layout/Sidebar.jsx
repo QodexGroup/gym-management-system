@@ -153,13 +153,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile = false }) => {
   return (
     <>
       <aside
-        className={`fixed left-0 top-0 z-40 h-full bg-dark-800 border-r border-dark-700 flex flex-col transition-all duration-300 ${
+        className={`fixed left-0 top-0 z-40 h-full bg-chrome border-r border-chrome-border flex flex-col transition-all duration-300 ${
           isMobile ? 'w-16' : isCollapsed ? 'w-20' : 'w-64'
         }`}
       >
         {/* Logo */}
         <div
-          className={`flex items-center border-b border-dark-700 ${
+          className={`flex items-center border-b border-chrome-border ${
             collapsed ? 'px-2 py-4 justify-center' : 'px-4 py-5 justify-center'
           }`}
         >
@@ -178,7 +178,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile = false }) => {
         {!isMobile && (
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="absolute -right-3 top-20 w-6 h-6 bg-dark-800 border border-dark-700 rounded-full flex items-center justify-center text-dark-400 hover:text-dark-200 hover:bg-dark-700 transition-colors shadow-sm"
+            className="absolute -right-3 top-20 w-6 h-6 bg-chrome-elevated border border-chrome-border rounded-full flex items-center justify-center text-chrome-muted hover:text-chrome-text hover:bg-chrome-hover transition-colors shadow-sm"
           >
             {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
@@ -189,11 +189,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile = false }) => {
           {menuSections.map((section, sectionIndex) => (
             <div key={section.section} className={sectionIndex > 0 ? 'mt-6' : ''}>
               {!collapsed && (
-                <p className="px-4 mb-2 text-xs font-semibold text-dark-500 uppercase tracking-wider">
+                <p className="px-4 mb-2 text-xs font-semibold text-chrome-muted uppercase tracking-wider">
                   {section.section}
                 </p>
               )}
-              {collapsed && sectionIndex > 0 && <div className="border-t border-dark-700 mb-4 mx-2" />}
+              {collapsed && sectionIndex > 0 && <div className="border-t border-chrome-border mb-4 mx-2" />}
 
               <ul className="space-y-1">
                 {section.items.map((item, index) => (
@@ -214,7 +214,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile = false }) => {
                         <button
                           onClick={(e) => handleSubMenuClick(e, item)}
                           className={`sidebar-item w-full ${
-                            isMenuActive(item) ? 'text-primary-600 bg-primary-50' : ''
+                            isMenuActive(item) ? 'text-chrome-text bg-chrome-hover' : ''
                           } ${collapsed ? 'justify-center px-2' : 'justify-between'}`}
                           title={item.label}
                         >
@@ -231,7 +231,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile = false }) => {
 
                         {/* Expanded desktop submenu (inline) */}
                         {!collapsed && expandedMenus.includes(item.key) && (
-                          <ul className="mt-1 ml-4 pl-4 border-l border-dark-700 space-y-1">
+                          <ul className="mt-1 ml-4 pl-4 border-l border-chrome-border space-y-1">
                             {item.children.map((child, childIndex) => (
                               <li key={childIndex}>
                                 <NavLink
@@ -260,10 +260,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile = false }) => {
       {flyout && (
         <div
           ref={flyoutRef}
-          className="fixed z-50 bg-dark-800 rounded-lg shadow-xl border border-dark-700 py-2 min-w-[190px]"
+          className="fixed z-50 bg-chrome-elevated rounded-lg shadow-xl border border-chrome-border py-2 min-w-[190px]"
           style={{ left: sidebarWidth + 8, top: flyout.top }}
         >
-          <p className="px-4 py-1 text-xs font-semibold text-dark-400 uppercase tracking-wider">
+          <p className="px-4 py-1 text-xs font-semibold text-chrome-muted uppercase tracking-wider">
             {flyout.item.label}
           </p>
           {flyout.item.children.map((child, i) => (
@@ -272,7 +272,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile = false }) => {
               to={child.path}
               className={({ isActive }) =>
                 `block px-4 py-2 text-sm transition-colors ${
-                  isActive ? 'text-primary-400 bg-primary-500/20' : 'text-dark-300 hover:bg-dark-700'
+                  isActive ? 'text-white bg-chrome-active' : 'text-chrome-muted hover:bg-chrome-hover hover:text-chrome-text'
                 }`
               }
             >

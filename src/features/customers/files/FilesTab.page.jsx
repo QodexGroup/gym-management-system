@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import {
   FileText, Eye, Download, Calendar, Image,
   Activity, Trash2, Edit, ChevronLeft, ChevronRight, Filter
@@ -59,7 +59,7 @@ const FilesTab = ({ member }) => {
     if (type === 'photo') return 'bg-success-100 text-success-700';
     if (type === 'inbody_scan') return 'bg-primary-100 text-primary-700';
     if (type === 'styku_scan') return 'bg-accent-100 text-accent-700';
-    return 'bg-dark-100 text-dark-700';
+    return 'bg-dark-100 text-dark-100';
   };
 
   const getFileTypeLabel = (type) => {
@@ -131,7 +131,7 @@ const FilesTab = ({ member }) => {
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-dark-800">All Files</h3>
+            <h3 className="text-lg font-semibold text-dark-50">All Files</h3>
             <p className="text-sm text-dark-500">{sortedFiles.length} files</p>
           </div>
 
@@ -154,7 +154,7 @@ const FilesTab = ({ member }) => {
         </div>
 
         {/* Table Header */}
-        <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-dark-50 rounded-lg text-sm font-medium text-dark-600 mb-2">
+        <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-dark-50 rounded-lg text-sm font-medium text-dark-200 mb-2">
           <div className="col-span-2">Date</div>
           <div className="col-span-2">Type</div>
           <div className="col-span-3">File Name</div>
@@ -175,7 +175,7 @@ const FilesTab = ({ member }) => {
                 <div className="col-span-2">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-dark-400" />
-                    <p className="font-medium text-dark-800">{file.date}</p>
+                    <p className="font-medium text-dark-50">{file.date}</p>
                   </div>
                 </div>
 
@@ -191,17 +191,17 @@ const FilesTab = ({ member }) => {
 
                 {/* File Name */}
                 <div className="col-span-3">
-                  <p className="text-sm text-dark-800 font-medium truncate">{file.fileName}</p>
+                  <p className="text-sm text-dark-50 font-medium truncate">{file.fileName}</p>
                 </div>
 
                 {/* Size */}
                 <div className="col-span-1">
-                  <p className="text-sm text-dark-600">{file.fileSize}</p>
+                  <p className="text-sm text-dark-200">{file.fileSize}</p>
                 </div>
 
                 {/* Source */}
                 <div className="col-span-2">
-                  <p className="text-sm text-dark-600">{file.source}</p>
+                  <p className="text-sm text-dark-200">{file.source}</p>
                   <p className="text-xs text-dark-400">{file.uploadedBy}</p>
                 </div>
 
@@ -308,15 +308,15 @@ const FilesTab = ({ member }) => {
               </div>
               <div>
                 <p className="text-xs text-dark-500 mb-1">File Size</p>
-                <p className="font-medium text-dark-800">{selectedFile.fileSize}</p>
+                <p className="font-medium text-dark-50">{selectedFile.fileSize}</p>
               </div>
               <div>
                 <p className="text-xs text-dark-500 mb-1">Date</p>
-                <p className="font-medium text-dark-800">{selectedFile.date}</p>
+                <p className="font-medium text-dark-50">{selectedFile.date}</p>
               </div>
               <div>
                 <p className="text-xs text-dark-500 mb-1">Source</p>
-                <p className="font-medium text-dark-800">{selectedFile.source}</p>
+                <p className="font-medium text-dark-50">{selectedFile.source}</p>
               </div>
             </div>
 

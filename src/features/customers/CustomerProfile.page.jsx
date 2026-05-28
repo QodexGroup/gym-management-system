@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../layout/Layout';
 import { Avatar, Badge } from '../../components/common';
@@ -94,22 +94,22 @@ const ProfileStats = ({ member }) => (
       </div>
       <div>
         <p className="text-xs text-dark-400 mb-0.5">Phone</p>
-        <p className="text-sm text-dark-700">{member.phone}</p>
+        <p className="text-sm text-dark-100">{member.phone}</p>
       </div>
       {member.birthDate && (
         <div>
           <p className="text-xs text-dark-400 mb-0.5">Birthday</p>
-          <p className="text-sm text-dark-700">{member.birthDate}</p>
+          <p className="text-sm text-dark-100">{member.birthDate}</p>
         </div>
       )}
       <div>
         <p className="text-xs text-dark-400 mb-0.5">Membership Expires</p>
-        <p className="text-sm text-dark-700">{member.membershipExpiry}</p>
+        <p className="text-sm text-dark-100">{member.membershipExpiry}</p>
       </div>
       {member.address && (
         <div>
           <p className="text-xs text-dark-400 mb-0.5">Address</p>
-          <p className="text-sm text-dark-700 truncate">{member.address}</p>
+          <p className="text-sm text-dark-100 truncate">{member.address}</p>
         </div>
       )}
     </div>

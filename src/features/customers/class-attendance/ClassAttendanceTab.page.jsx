@@ -1,21 +1,49 @@
 import { useState, useMemo } from 'react';
-import { Pagination, CardList } from '../../../components/common';
+import { format } from 'date-fns';
+import { Modal, Pagination, CardList } from '../../../components/common';
 import {
   Calendar,
   Clock,
   UserCog,
+  Plus,
 } from 'lucide-react';
 import {
   BOOKING_STATUS,
   BOOKING_STATUS_LABELS,
   BOOKING_STATUS_VARIANTS,
 } from '../../../shared/constants/classSessionBookingConstants';
-import { formatDate, formatTime } from '../../../shared/utils/formatters';
+import { GROUP_CLASS_SESSION_PERMISSIONS } from '../../../shared/constants/sessionSchedulingConstants';
+import {
+  isCustomerEligibleForGroupClassBooking,
+  getCustomerGroupClassBookingBlockReason,
+} from '../../../shared/constants/customerMembership';
+import { formatDate } from '../../../shared/utils/formatters';
+import { Alert } from '../../../shared/utils/alert';
+import { usePermissions } from '../../../shared/hooks/usePermissions';
 import { useCustomerClassSessionBookingHistory } from '../../../shared/hooks/useClassSessionBookings';
+import { useClassScheduleSessions } from '../../../shared/hooks/useClassScheduleSessions';
+import { mapClassScheduleSessionsToComponent } from '../../../shared/models/classScheduleSessionModel';
+import GroupClassBookingForm from '../../class-schedule/GroupClassBookingForm';
 
 const ClassAttendanceTab = ({ member }) => {
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission(GROUP_CLASS_SESSION_PERMISSIONS.CREATE);
+
+  const [showModal, setShowModal] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
   const historyPageSize = 50;
+
+  const today = format(new Date(), 'yyyy-MM-dd');
+
+  const { data: classSessionsData } = useClassScheduleSessions({
+    pagelimit: 0,
+    relations: 'classSchedule,classSchedule.coach',
+    filters: { startDate: today },
+  });
+
+  const classScheduleSessions = useMemo(() => {
+    return mapClassScheduleSessionsToComponent(classSessionsData?.data || []);
+  }, [classSessionsData]);
 
   // Fetch paginated class session booking history
   const {
@@ -51,6 +79,19 @@ const ClassAttendanceTab = ({ member }) => {
       return dateB - dateA;
     });
   }, [historyBookings]);
+
+  const handleOpenModal = async () => {
+    if (!isCustomerEligibleForGroupClassBooking(member)) {
+      const reason = getCustomerGroupClassBookingBlockReason(member);
+      await Alert.warning('Cannot Book Class', reason);
+      return;
+    }
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
 
   const handleHistoryPageChange = (newPage) => {
     setHistoryPage(newPage);
@@ -88,6 +129,15 @@ const ClassAttendanceTab = ({ member }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-dark-50">Class Attendance</h3>
+        {canCreate && (
+          <button
+            onClick={handleOpenModal}
+            className="btn-primary flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Book Class
+          </button>
+        )}
       </div>
 
       {/* Session History */}
@@ -166,6 +216,23 @@ const ClassAttendanceTab = ({ member }) => {
           )}
         </div>
       )}
+
+      {/* Book Group Class Modal */}
+      <Modal
+        isOpen={showModal}
+        onClose={handleCloseModal}
+        title="Book Group Class Session"
+        size="lg"
+      >
+        <GroupClassBookingForm
+          customers={member ? [member] : []}
+          classSessions={classScheduleSessions}
+          onSubmit={handleCloseModal}
+          onCancel={handleCloseModal}
+          showMemberSearch={false}
+          customerId={member?.id}
+        />
+      </Modal>
     </div>
   );
 };

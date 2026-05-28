@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../layout/Layout';
 import { Badge } from '../../components/common';
@@ -171,7 +171,7 @@ const Notifications = () => {
         <div className="lg:col-span-2 card">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
-              <h3 className="text-lg font-semibold text-dark-800">All Notifications</h3>
+              <h3 className="text-lg font-semibold text-dark-50">All Notifications</h3>
               {unreadCount > 0 && <Badge variant="danger">{unreadCount} new</Badge>}
             </div>
             <div className="flex items-center gap-2">
@@ -224,7 +224,7 @@ const Notifications = () => {
                           <span className="w-2 h-2 bg-primary-500 rounded-full" />
                         )}
                       </div>
-                      <h4 className={`font-medium text-dark-800 ${!notification.isRead ? 'font-semibold' : ''}`}>
+                      <h4 className={`font-medium text-dark-50 ${!notification.isRead ? 'font-semibold' : ''}`}>
                         {notification.title}
                       </h4>
                       <p className="text-sm text-dark-500 mt-1">{notification.message}</p>
@@ -267,7 +267,7 @@ const Notifications = () => {
           ) : (
             <div className="text-center py-12">
               <Bell className="w-16 h-16 text-dark-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-dark-600">No notifications</h3>
+              <h3 className="text-lg font-semibold text-dark-200">No notifications</h3>
               <p className="text-dark-400 mt-1">You're all caught up!</p>
             </div>
           )}
@@ -275,7 +275,7 @@ const Notifications = () => {
 
         <div className="space-y-6">
           <div className="card">
-            <h3 className="text-lg font-semibold text-dark-800 mb-4">Notification Settings</h3>
+            <h3 className="text-lg font-semibold text-dark-50 mb-4">Notification Settings</h3>
             <div className="space-y-4">
               {[
                 { key: 'membership_expiry_enabled', icon: AlertTriangle, label: 'Membership Expiry', desc: 'Alert when memberships are expiring', color: 'text-warning-500' },
@@ -286,7 +286,7 @@ const Notifications = () => {
                   <div className="flex items-center gap-3">
                     <Icon className={`w-5 h-5 ${color}`} />
                     <div>
-                      <p className="font-medium text-dark-800">{label}</p>
+                      <p className="font-medium text-dark-50">{label}</p>
                       <p className="text-xs text-dark-500">{desc}</p>
                     </div>
                   </div>

@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo, useCallback, useEffect } from 'react';
+﻿import { useRef, useState, useMemo, useCallback, useEffect } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import Layout from '../../layout/Layout';
 import { DateRangeExportBar, PrintArea, MessageCard, StatsCards } from '../../components/common';
@@ -337,7 +337,7 @@ const SummaryReportPage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 no-print">
           <div className="card">
-            <h3 className="text-lg font-semibold text-dark-800 mb-4">Profit/Loss Overview</h3>
+            <h3 className="text-lg font-semibold text-dark-50 mb-4">Profit/Loss Overview</h3>
             <div className="h-72">
               {profitLossData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -358,7 +358,7 @@ const SummaryReportPage = () => {
             </div>
           </div>
           <div className="card">
-            <h3 className="text-lg font-semibold text-dark-800 mb-4">Expense Distribution</h3>
+            <h3 className="text-lg font-semibold text-dark-50 mb-4">Expense Distribution</h3>
             <div className="h-72">
               {expenseByCategory.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -391,7 +391,7 @@ const SummaryReportPage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 no-print">
           <div className="card">
-            <h3 className="text-lg font-semibold text-dark-800 mb-4">Expense vs Budget Trend</h3>
+            <h3 className="text-lg font-semibold text-dark-50 mb-4">Expense vs Budget Trend</h3>
             <div className="h-64">
               {monthlyExpenseTrend.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -411,7 +411,7 @@ const SummaryReportPage = () => {
             </div>
           </div>
           <div className="card no-print">
-            <h3 className="text-lg font-semibold text-dark-800 mb-4">Expense Breakdown by Category</h3>
+            <h3 className="text-lg font-semibold text-dark-50 mb-4">Expense Breakdown by Category</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {expenseByCategory.map((cat, index) => {
                 const percentage = totalExpenses > 0 ? ((cat.value / totalExpenses) * 100).toFixed(1) : '0';

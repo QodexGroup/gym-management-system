@@ -47,8 +47,8 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black px-4">
-      <div className="max-w-md w-full bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 p-8">
+    <div data-mode="dark" className="min-h-screen flex items-center justify-center bg-dark-900 px-4">
+      <div className="max-w-md w-full bg-dark-800 rounded-2xl shadow-2xl border border-dark-700 p-8">
         <div className="flex justify-center mb-8">
           <div className="w-48 h-24 flex items-center justify-center">
             <img
@@ -60,16 +60,16 @@ const ForgotPassword = () => {
         </div>
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Forgot Password</h1>
-          <p className="text-gray-300">Enter your email and we&apos;ll send reset instructions.</p>
+          <h1 className="text-3xl font-bold text-dark-50 mb-2">Forgot Password</h1>
+          <p className="text-dark-300">Enter your email and we&apos;ll send reset instructions.</p>
         </div>
 
         {submitted ? (
           <div className="space-y-6">
-            <p className="text-gray-300 text-sm text-center">{successMessage} Check your inbox and spam folder.</p>
+            <p className="text-dark-300 text-sm text-center">{successMessage} Check your inbox and spam folder.</p>
             <Link
               to="/login"
-              className="block w-full text-center bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+              className="block w-full text-center bg-primary-500 text-white py-3 rounded-lg font-semibold hover:bg-primary-600 transition"
             >
               Back to Login
             </Link>
@@ -77,7 +77,7 @@ const ForgotPassword = () => {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-200 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-dark-200 mb-2">
                 Email Address
               </label>
               <input
@@ -85,7 +85,7 @@ const ForgotPassword = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-white placeholder-gray-400"
+                className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition text-dark-50 placeholder-dark-400"
                 placeholder="Enter your email"
                 required
                 disabled={loading}
@@ -96,7 +96,7 @@ const ForgotPassword = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="w-full bg-primary-500 text-white py-3 rounded-lg font-semibold hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-dark-900 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               {loading ? (
                 <span className="flex items-center justify-center">
@@ -127,8 +127,8 @@ const ForgotPassword = () => {
               )}
             </button>
 
-            <p className="text-center text-sm text-gray-400">
-              <Link to="/login" className="text-blue-500 hover:text-blue-400 font-medium">
+            <p className="text-center text-sm text-dark-400">
+              <Link to="/login" className="text-primary-500 hover:text-primary-400 font-medium">
                 Back to Login
               </Link>
             </p>

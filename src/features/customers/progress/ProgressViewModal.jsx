@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Edit, Camera } from 'lucide-react';
 import { Modal } from '../../../components/common';
 import { formatDate } from '../../../shared/utils/formatters';
@@ -60,7 +60,7 @@ const ProgressViewModal = ({
         <div className="flex items-center justify-between p-4 bg-dark-50 rounded-xl">
           <div>
             <p className="text-sm text-dark-500">Recorded By</p>
-            <p className="font-medium text-dark-800">{viewLog.recordedByUser?.firstname} {viewLog.recordedByUser?.lastname || 'N/A'}</p>
+            <p className="font-medium text-dark-50">{viewLog.recordedByUser?.firstname} {viewLog.recordedByUser?.lastname || 'N/A'}</p>
           </div>
           <span className={`px-3 py-1 text-sm font-medium rounded-full uppercase ${getDataSourceBadge(viewLog.dataSource)}`}>
             {viewLog.dataSource || 'manual'}
@@ -69,69 +69,69 @@ const ProgressViewModal = ({
 
         {/* Basic Measurements */}
         <div>
-          <h4 className="font-semibold text-dark-800 mb-3">Basic Measurements</h4>
+          <h4 className="font-semibold text-dark-50 mb-3">Basic Measurements</h4>
           <div className="grid grid-cols-4 gap-4">
             <div className="p-3 bg-primary-50 rounded-xl text-center">
               <p className="text-2xl font-bold text-primary-800">{viewLog.weight || '--'}</p>
-              <p className="text-xs text-dark-600">Weight (kg)</p>
+              <p className="text-xs text-dark-200">Weight (kg)</p>
             </div>
             <div className="p-3 bg-accent-50 rounded-xl text-center">
               <p className="text-2xl font-bold text-accent-800">{viewLog.bodyFatPercentage || '--'}%</p>
-              <p className="text-xs text-dark-600">Body Fat</p>
+              <p className="text-xs text-dark-200">Body Fat</p>
             </div>
             <div className="p-3 bg-success-50 rounded-xl text-center">
               <p className="text-2xl font-bold text-success-800">{viewLog.skeletalMuscleMass || '--'}</p>
-              <p className="text-xs text-dark-600">Muscle (kg)</p>
+              <p className="text-xs text-dark-200">Muscle (kg)</p>
             </div>
             <div className="p-3 bg-warning-50 rounded-xl text-center">
               <p className="text-2xl font-bold text-warning-800">{viewLog.bmi || '--'}</p>
-              <p className="text-xs text-dark-600">BMI</p>
+              <p className="text-xs text-dark-200">BMI</p>
             </div>
           </div>
         </div>
 
         {/* Body Composition */}
         <div>
-          <h4 className="font-semibold text-dark-800 mb-3">Body Composition</h4>
+          <h4 className="font-semibold text-dark-50 mb-3">Body Composition</h4>
           <div className="grid grid-cols-3 gap-4">
             <div className="p-3 bg-danger-50 rounded-xl">
               <p className="text-lg font-bold text-danger-800">{viewLog.visceralFatLevel || '--'}</p>
-              <p className="text-xs text-dark-600">Visceral Fat Level</p>
+              <p className="text-xs text-dark-200">Visceral Fat Level</p>
             </div>
             <div className="p-3 bg-primary-50 rounded-xl">
               <p className="text-lg font-bold text-primary-800">{viewLog.totalBodyWater ? `${viewLog.totalBodyWater} L` : '--'}</p>
-              <p className="text-xs text-dark-600">Body Water</p>
+              <p className="text-xs text-dark-200">Body Water</p>
             </div>
             <div className="p-3 bg-warning-50 rounded-xl">
               <p className="text-lg font-bold text-warning-800">{viewLog.basalMetabolicRate ? `${viewLog.basalMetabolicRate} kcal` : '--'}</p>
-              <p className="text-xs text-dark-600">BMR</p>
+              <p className="text-xs text-dark-200">BMR</p>
             </div>
           </div>
         </div>
 
         {/* Body Measurements */}
         <div>
-          <h4 className="font-semibold text-dark-800 mb-3">Body Measurements (cm)</h4>
+          <h4 className="font-semibold text-dark-50 mb-3">Body Measurements (cm)</h4>
           <div className="grid grid-cols-4 gap-3">
-            <div className="p-2 bg-white rounded-lg text-center">
-              <p className="font-bold text-dark-900">{viewLog.chest || '--'}</p>
-              <p className="text-xs text-dark-600">Chest</p>
+            <div className="p-2 bg-dark-700 rounded-lg text-center">
+              <p className="font-bold text-dark-50">{viewLog.chest || '--'}</p>
+              <p className="text-xs text-dark-200">Chest</p>
             </div>
-            <div className="p-2 bg-white rounded-lg text-center">
-              <p className="font-bold text-dark-900">{viewLog.waist || '--'}</p>
-              <p className="text-xs text-dark-600">Waist</p>
+            <div className="p-2 bg-dark-700 rounded-lg text-center">
+              <p className="font-bold text-dark-50">{viewLog.waist || '--'}</p>
+              <p className="text-xs text-dark-200">Waist</p>
             </div>
-            <div className="p-2 bg-white rounded-lg text-center">
-              <p className="font-bold text-dark-900">{viewLog.hips || '--'}</p>
-              <p className="text-xs text-dark-600">Hips</p>
+            <div className="p-2 bg-dark-700 rounded-lg text-center">
+              <p className="font-bold text-dark-50">{viewLog.hips || '--'}</p>
+              <p className="text-xs text-dark-200">Hips</p>
             </div>
-            <div className="p-2 bg-white rounded-lg text-center">
-              <p className="font-bold text-dark-900">{viewLog.leftArm || '--'} / {viewLog.rightArm || '--'}</p>
-              <p className="text-xs text-dark-600">Arms (L/R)</p>
+            <div className="p-2 bg-dark-700 rounded-lg text-center">
+              <p className="font-bold text-dark-50">{viewLog.leftArm || '--'} / {viewLog.rightArm || '--'}</p>
+              <p className="text-xs text-dark-200">Arms (L/R)</p>
             </div>
-            <div className="p-2 bg-white rounded-lg text-center">
-              <p className="font-bold text-dark-900">{viewLog.leftThigh || '--'} / {viewLog.rightThigh || '--'}</p>
-              <p className="text-xs text-dark-600">Thighs (L/R)</p>
+            <div className="p-2 bg-dark-700 rounded-lg text-center">
+              <p className="font-bold text-dark-50">{viewLog.leftThigh || '--'} / {viewLog.rightThigh || '--'}</p>
+              <p className="text-xs text-dark-200">Thighs (L/R)</p>
             </div>
           </div>
         </div>
@@ -139,9 +139,9 @@ const ProgressViewModal = ({
         {/* Notes */}
         {viewLog.notes && (
           <div>
-            <h4 className="font-semibold text-dark-800 mb-2">Notes</h4>
+            <h4 className="font-semibold text-dark-50 mb-2">Notes</h4>
             <div className="p-4 bg-dark-50 rounded-xl">
-              <p className="text-dark-600">{viewLog.notes}</p>
+              <p className="text-dark-200">{viewLog.notes}</p>
             </div>
           </div>
         )}
@@ -149,7 +149,7 @@ const ProgressViewModal = ({
         {/* Photos */}
         {hasPhotos && (
           <div>
-            <h4 className="font-semibold text-dark-800 mb-2">Photos</h4>
+            <h4 className="font-semibold text-dark-50 mb-2">Photos</h4>
             <div className="grid grid-cols-4 gap-1">
               {allFiles.map((file, index) => (
                 <PhotoThumbnail

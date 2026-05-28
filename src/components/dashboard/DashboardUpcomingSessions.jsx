@@ -1,4 +1,4 @@
-import { format, parseISO, isToday } from 'date-fns';
+﻿import { format, parseISO, isToday } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '../common';
 import { CalendarDays } from 'lucide-react';
@@ -115,7 +115,7 @@ const DashboardUpcomingSessions = ({ sessions = [], loading, error }) => {
                     <div className="mt-0.5 truncate text-[11px] leading-snug text-dark-400">
                       <span className="text-dark-500">Coach</span>{' '}
                       <span className="font-medium text-dark-200">{coachName}</span>
-                      <span className="text-dark-600" aria-hidden>
+                      <span className="text-dark-200" aria-hidden>
                         {' · '}
                       </span>
                       <span className="text-dark-500">Clients</span>{' '}

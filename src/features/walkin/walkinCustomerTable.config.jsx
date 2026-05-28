@@ -1,4 +1,4 @@
-import { Avatar, Badge } from '../../components/common';
+﻿import { Avatar, Badge } from '../../components/common';
 import { Clock, UserX, Ban } from 'lucide-react';
 import { formatTimeFromDate } from '../../shared/utils/formatters';
 import { WALKIN_CUSTOMER_STATUS, WALKIN_CUSTOMER_STATUS_LABELS } from '../../shared/constants/walkinConstant';
@@ -25,7 +25,7 @@ export const walkinCustomerTableColumns = ({ onCheckOut, onCancel, isCheckingOut
           <button
             onClick={() => onCancel(wc.id)}
             disabled={isCancelling}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm text-dark-600 hover:bg-dark-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1 px-3 py-1.5 text-sm text-dark-200 hover:bg-dark-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Cancel"
           >
             <Ban className="w-4 h-4" />

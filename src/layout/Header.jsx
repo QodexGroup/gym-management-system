@@ -8,6 +8,7 @@ import {
   User,
   LogOut,
   QrCode,
+  Palette,
 } from 'lucide-react';
 
 const Header = ({ title, subtitle }) => {
@@ -18,6 +19,11 @@ const Header = ({ title, subtitle }) => {
   const handleMyProfile = () => {
     setShowUserMenu(false);
     navigate('/my-account');
+  };
+
+  const handleAppearance = () => {
+    setShowUserMenu(false);
+    navigate('/appearance');
   };
 
   const handleLogout = async () => {
@@ -68,11 +74,15 @@ const Header = ({ title, subtitle }) => {
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-2 p-1.5 pr-3 hover:bg-dark-700 rounded-xl transition-colors"
             >
-              <img
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullname || 'User')}&background=random`}
-                alt={user?.fullname || 'User'}
-                className="w-9 h-9 rounded-lg object-cover"
-              />
+              {/* Theme-aware initials avatar — always follows the active primary color */}
+              <span className="w-9 h-9 rounded-lg bg-primary-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 select-none">
+                {(user?.fullname || user?.firstname || 'U')
+                  .split(' ')
+                  .slice(0, 2)
+                  .map((n) => n[0])
+                  .join('')
+                  .toUpperCase()}
+              </span>
               <ChevronDown className="w-4 h-4 text-dark-400" />
             </button>
 
@@ -89,6 +99,13 @@ const Header = ({ title, subtitle }) => {
                   >
                     <User className="w-4 h-4" />
                     My Profile
+                  </button>
+                  <button
+                    onClick={handleAppearance}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-dark-200 hover:bg-dark-700 transition-colors"
+                  >
+                    <Palette className="w-4 h-4" />
+                    Themes & Appearance
                   </button>
                 </div>
                 <div className="border-t border-dark-700 py-2">

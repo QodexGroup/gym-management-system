@@ -111,7 +111,8 @@ export const getSessionTypeColors = (sessionType) => {
         textSolid: 'text-blue-500',
         border: 'border-blue-500/30',
         borderSolid: 'border-blue-500',
-        badge: 'bg-blue-500 text-white',
+        // -100/-700 pairs: readable on both light and dark cards across all themes
+        badge: 'bg-blue-100 text-blue-700',
       };
     case SESSION_TYPES.MEMBER_GROUP_CLASS:
       return {
@@ -121,7 +122,7 @@ export const getSessionTypeColors = (sessionType) => {
         textSolid: 'text-purple-500',
         border: 'border-purple-500/30',
         borderSolid: 'border-purple-500',
-        badge: 'bg-purple-500 text-white',
+        badge: 'bg-purple-100 text-purple-700',
       };
     case SESSION_TYPES.COACH_PT:
       return {
@@ -131,7 +132,7 @@ export const getSessionTypeColors = (sessionType) => {
         textSolid: 'text-primary-500',
         border: 'border-primary-500/30',
         borderSolid: 'border-primary-500',
-        badge: 'bg-primary-500 text-white',
+        badge: 'bg-primary-100 text-primary-700',
       };
     case SESSION_TYPES.MEMBER_PT:
       return {
@@ -141,7 +142,7 @@ export const getSessionTypeColors = (sessionType) => {
         textSolid: 'text-orange-500',
         border: 'border-orange-500/30',
         borderSolid: 'border-orange-500',
-        badge: 'bg-orange-500 text-white',
+        badge: 'bg-orange-100 text-orange-700',
       };
     default:
       return {

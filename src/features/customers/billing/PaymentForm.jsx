@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Avatar } from '../../../components/common';
@@ -43,7 +43,7 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false })
       <div className="p-4 bg-dark-50 rounded-xl flex items-center gap-4">
         <Avatar src={member.avatar} name={member.name} size="md" />
         <div className="space-y-1">
-          <p className="font-semibold text-dark-800">{member.name}</p>
+          <p className="font-semibold text-dark-50">{member.name}</p>
           <p className="text-sm text-dark-500">
             Bill Date: {formatDate(bill.billDate)} • Net: {formatCurrency(bill.netAmount)} • Paid:{' '}
             {formatCurrency(bill.paidAmount)}
@@ -143,10 +143,10 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false })
               className={`flex items-center justify-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all ${
                 method === value
                   ? 'border-primary-500 bg-primary-500 text-white shadow-lg shadow-primary-500/30'
-                  : 'border-dark-200 bg-dark-50 text-dark-700 hover:border-primary-400 hover:bg-primary-50'
+                  : 'border-dark-200 bg-dark-50 text-dark-100 hover:border-primary-400 hover:bg-primary-50'
               }`}
             >
-              <Icon className={`w-5 h-5 ${method === value ? 'text-white' : 'text-dark-600'}`} />
+              <Icon className={`w-5 h-5 ${method === value ? 'text-white' : 'text-dark-200'}`} />
               <span className="font-medium">{PAYMENT_METHOD_LABELS[value]}</span>
             </button>
           ))}

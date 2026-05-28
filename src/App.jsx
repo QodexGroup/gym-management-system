@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavig
 import { useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './shared/context/AuthContext';
+import { ThemeProvider } from './shared/context/ThemeContext';
 import AlertProvider from './components/AlertProvider';
 import ErrorBoundary from './components/ErrorBoundary';
 import { queryClient } from './shared/lib/queryClient';
@@ -47,6 +48,9 @@ import {
   AdminSubscriptionPage as Subscription,
   ReactivationModal,
 } from './features/account';
+
+// Appearance
+import { Appearance } from './features/appearance';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -143,6 +147,7 @@ const AccountStateGuard = ({ children }) => {
 
 function App() {
   return (
+    <ThemeProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <AlertProvider>
@@ -202,6 +207,9 @@ function App() {
                 {/* My Account */}
                 <Route path="/my-account" element={<ProtectedRoute><MyAccount /></ProtectedRoute>} />
 
+                {/* Themes & Appearance */}
+                <Route path="/appearance" element={<ProtectedRoute><Appearance /></ProtectedRoute>} />
+
                 {/* Settings */}
                 {/* <Route path="/settings" element={<Settings />} /> */}
 
@@ -215,6 +223,7 @@ function App() {
           </AlertProvider>
       </AuthProvider>
     </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

@@ -147,8 +147,8 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black px-4">
-      <div className="max-w-md w-full bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 p-8">
+    <div data-mode="dark" className="min-h-screen flex items-center justify-center bg-dark-900 px-4">
+      <div className="max-w-md w-full bg-dark-800 rounded-2xl shadow-2xl border border-dark-700 p-8">
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <div className="w-48 h-24 flex items-center justify-center">
@@ -161,25 +161,25 @@ const Login = () => {
         </div>
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
-          <p className="text-gray-300">Sign in to your account to continue</p>
+          <h1 className="text-3xl font-bold text-dark-50 mb-2">Welcome Back</h1>
+          <p className="text-dark-300">Sign in to your account to continue</p>
         </div>
 
         {deactivatedMessage && (
-          <div className="mb-4 rounded-lg bg-red-900/40 border border-red-600 text-red-100 px-4 py-3 text-sm text-left">
+          <div className="mb-4 rounded-lg bg-danger-500/10 border border-danger-500/40 text-danger-500 px-4 py-3 text-sm text-left">
             {deactivatedMessage}
           </div>
         )}
 
         {trialExpiredMessage && (
-          <div className="mb-4 rounded-lg bg-yellow-900/40 border border-yellow-600 text-yellow-100 px-4 py-3 text-sm text-left">
+          <div className="mb-4 rounded-lg bg-warning-500/10 border border-warning-500/40 text-warning-600 px-4 py-3 text-sm text-left">
             {trialExpiredMessage}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-200 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-dark-200 mb-2">
               Email Address
             </label>
             <input
@@ -187,7 +187,7 @@ const Login = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-white placeholder-gray-400"
+              className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition text-dark-50 placeholder-dark-400"
               placeholder="Enter your email"
               required
               disabled={loading}
@@ -196,12 +196,12 @@ const Login = () => {
 
           <div>
             <div className="flex justify-between items-center mb-2">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-200">
+              <label htmlFor="password" className="block text-sm font-medium text-dark-200">
                 Password
               </label>
               <Link
                 to="/forgot-password"
-                className="text-sm font-medium text-blue-500 hover:text-blue-400"
+                className="text-sm font-medium text-primary-500 hover:text-primary-400"
               >
                 Forgot password?
               </Link>
@@ -211,7 +211,7 @@ const Login = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-white placeholder-gray-400"
+              className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition text-dark-50 placeholder-dark-400"
               placeholder="Enter your password"
               required
               disabled={loading}
@@ -221,7 +221,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading || !firebaseAuth}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="w-full bg-primary-500 text-white py-3 rounded-lg font-semibold hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-dark-900 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {loading ? (
               <span className="flex items-center justify-center">

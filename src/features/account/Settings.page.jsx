@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import Layout from '../../layout/Layout';
 import { Modal } from '../../components/common';
 import {
@@ -70,12 +70,12 @@ const Settings = () => {
     <div className="flex items-center justify-between p-4 bg-dark-50 rounded-xl">
       <div className="flex items-center gap-4">
         {Icon && (
-          <div className="p-2 bg-white rounded-lg shadow-sm">
+          <div className="p-2 bg-primary-500/10 rounded-lg">
             <Icon className="w-5 h-5 text-primary-500" />
           </div>
         )}
         <div>
-          <h4 className="font-medium text-dark-800">{label}</h4>
+          <h4 className="font-medium text-dark-50">{label}</h4>
           {description && <p className="text-sm text-dark-500">{description}</p>}
         </div>
       </div>
@@ -105,7 +105,7 @@ const Settings = () => {
               <div className="p-2 bg-primary-100 rounded-lg">
                 <Bell className="w-5 h-5 text-primary-600" />
               </div>
-              <h3 className="text-lg font-semibold text-dark-800">Notifications</h3>
+              <h3 className="text-lg font-semibold text-dark-50">Notifications</h3>
             </div>
             <div className="space-y-4">
               <SettingToggle
@@ -157,7 +157,7 @@ const Settings = () => {
               <div className="p-2 bg-success-100 rounded-lg">
                 <Globe className="w-5 h-5 text-success-600" />
               </div>
-              <h3 className="text-lg font-semibold text-dark-800">General</h3>
+              <h3 className="text-lg font-semibold text-dark-50">General</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -238,7 +238,7 @@ const Settings = () => {
               <div className="p-2 bg-accent-100 rounded-lg">
                 <Palette className="w-5 h-5 text-accent-600" />
               </div>
-              <h3 className="text-lg font-semibold text-dark-800">Appearance</h3>
+              <h3 className="text-lg font-semibold text-dark-50">Appearance</h3>
             </div>
             <div className="space-y-4">
               <div>
@@ -254,7 +254,7 @@ const Settings = () => {
                           : 'border-dark-200 hover:border-primary-300'
                       }`}
                     >
-                      <span className="capitalize font-medium text-dark-800">{theme}</span>
+                      <span className="capitalize font-medium text-dark-50">{theme}</span>
                     </button>
                   ))}
                 </div>
@@ -273,7 +273,7 @@ const Settings = () => {
               <div className="p-2 bg-warning-100 rounded-lg">
                 <Shield className="w-5 h-5 text-warning-600" />
               </div>
-              <h3 className="text-lg font-semibold text-dark-800">Privacy</h3>
+              <h3 className="text-lg font-semibold text-dark-50">Privacy</h3>
             </div>
             <div className="space-y-4">
               <SettingToggle
@@ -294,7 +294,7 @@ const Settings = () => {
         <div className="space-y-6">
           {/* Quick Actions */}
           <div className="card">
-            <h3 className="text-lg font-semibold text-dark-800 mb-4">Quick Actions</h3>
+            <h3 className="text-lg font-semibold text-dark-50 mb-4">Quick Actions</h3>
             <div className="space-y-3">
               <button className="w-full btn-primary flex items-center justify-center gap-2">
                 <Save className="w-4 h-4" />
@@ -315,7 +315,7 @@ const Settings = () => {
             <div className="card">
               <div className="flex items-center gap-3 mb-4">
                 <Database className="w-5 h-5 text-dark-500" />
-                <h3 className="text-lg font-semibold text-dark-800">Data Management</h3>
+                <h3 className="text-lg font-semibold text-dark-50">Data Management</h3>
               </div>
               <div className="space-y-3">
                 <button
@@ -335,7 +335,7 @@ const Settings = () => {
 
           {/* Help & Support */}
           <div className="card">
-            <h3 className="text-lg font-semibold text-dark-800 mb-4">Help & Support</h3>
+            <h3 className="text-lg font-semibold text-dark-50 mb-4">Help & Support</h3>
             <div className="space-y-3">
               <a
                 href="#"
@@ -343,7 +343,7 @@ const Settings = () => {
               >
                 <HelpCircle className="w-5 h-5 text-primary-500" />
                 <div>
-                  <p className="font-medium text-dark-800">Help Center</p>
+                  <p className="font-medium text-dark-50">Help Center</p>
                   <p className="text-sm text-dark-500">Get help and support</p>
                 </div>
               </a>
@@ -353,7 +353,7 @@ const Settings = () => {
               >
                 <FileText className="w-5 h-5 text-primary-500" />
                 <div>
-                  <p className="font-medium text-dark-800">Documentation</p>
+                  <p className="font-medium text-dark-50">Documentation</p>
                   <p className="text-sm text-dark-500">Read the docs</p>
                 </div>
               </a>
@@ -384,7 +384,7 @@ const Settings = () => {
           <div className="w-16 h-16 bg-warning-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <RotateCcw className="w-8 h-8 text-warning-600" />
           </div>
-          <p className="text-dark-600 mb-6">
+          <p className="text-dark-200 mb-6">
             Are you sure you want to reset all settings to their default values? This action cannot
             be undone.
           </p>
@@ -416,25 +416,25 @@ const Settings = () => {
         size="md"
       >
         <div className="space-y-4">
-          <p className="text-dark-600">
+          <p className="text-dark-200">
             Select the data you want to export. The export will be downloaded as a CSV file.
           </p>
           <div className="space-y-3">
             <label className="flex items-center gap-3 p-3 bg-dark-50 rounded-xl cursor-pointer hover:bg-dark-100">
               <input type="checkbox" className="w-4 h-4 rounded text-primary-500" defaultChecked />
-              <span className="font-medium text-dark-800">Members</span>
+              <span className="font-medium text-dark-50">Members</span>
             </label>
             <label className="flex items-center gap-3 p-3 bg-dark-50 rounded-xl cursor-pointer hover:bg-dark-100">
               <input type="checkbox" className="w-4 h-4 rounded text-primary-500" defaultChecked />
-              <span className="font-medium text-dark-800">Payments</span>
+              <span className="font-medium text-dark-50">Payments</span>
             </label>
             <label className="flex items-center gap-3 p-3 bg-dark-50 rounded-xl cursor-pointer hover:bg-dark-100">
               <input type="checkbox" className="w-4 h-4 rounded text-primary-500" defaultChecked />
-              <span className="font-medium text-dark-800">Appointments</span>
+              <span className="font-medium text-dark-50">Appointments</span>
             </label>
             <label className="flex items-center gap-3 p-3 bg-dark-50 rounded-xl cursor-pointer hover:bg-dark-100">
               <input type="checkbox" className="w-4 h-4 rounded text-primary-500" />
-              <span className="font-medium text-dark-800">Expenses</span>
+              <span className="font-medium text-dark-50">Expenses</span>
             </label>
           </div>
           <div className="flex gap-3 pt-4">

@@ -6,7 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="GymHubPH" />
     <title>GymHubPH</title>
-    
+    <script>
+      // Apply saved appearance before first paint to avoid a flash of the
+      // wrong theme/mode/font. Mirrors src/shared/context/ThemeContext.jsx.
+      (function () {
+        try {
+          var s = JSON.parse(localStorage.getItem('gym-appearance') || '{}');
+          var mode = s.mode || 'dark';
+          if (mode === 'system') {
+            mode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          var fonts = {
+            inter: "'Inter', system-ui, sans-serif",
+            roboto: "'Roboto', system-ui, sans-serif",
+            nunito: "'Nunito Sans', system-ui, sans-serif",
+            atkinson: "'Atkinson Hyperlegible', system-ui, sans-serif",
+            comic: "'Comic Sans MS', 'Comic Neue', cursive",
+          };
+          var r = document.documentElement;
+          r.setAttribute('data-mode', mode);
+          r.setAttribute('data-theme', s.theme || 'ocean');
+          r.style.setProperty('--font-app', fonts[s.font] || fonts.inter);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

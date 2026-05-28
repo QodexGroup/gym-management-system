@@ -188,9 +188,9 @@ const CalendarView = ({
                       <span className="font-bold text-dark-50">{s.startTime ? format(new Date(s.startTime), 'HH:mm') : ''}</span>
                       <div className="flex items-center gap-2">
                         {badgeLabel && (
-                          <Badge size="sm" className={colors.badge}>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${colors.badge}`}>
                             {badgeLabel}
-                          </Badge>
+                          </span>
                         )}
                         {s.status && (
                           <Badge 

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useMembershipPlans } from '../../../shared/hooks/useMembershipPlans';
@@ -214,7 +214,7 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
       {/* Payments History */}
       {billId && (
         <div className="pt-4 border-t border-dark-100">
-          <h4 className="text-sm font-semibold text-dark-800 mb-2">Payment History</h4>
+          <h4 className="text-sm font-semibold text-dark-50 mb-2">Payment History</h4>
           {isLoadingPayments ? (
             <div className="text-sm text-dark-400 py-4">Loading payment history...</div>
           ) : payments && payments.length > 0 ? (

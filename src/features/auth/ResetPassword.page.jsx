@@ -97,24 +97,24 @@ const ResetPassword = () => {
 
   if (!oobCode || codeError) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black px-4">
-        <div className="max-w-md w-full bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 p-8 text-center">
+      <div data-mode="dark" className="min-h-screen flex items-center justify-center bg-dark-900 px-4">
+        <div className="max-w-md w-full bg-dark-800 rounded-2xl shadow-2xl border border-dark-700 p-8 text-center">
           <div className="flex justify-center mb-6">
             <img src="/img/gymhubph.png" alt="GymHubPH" className="w-40 h-20 object-cover" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Link invalid</h1>
-          <p className="text-gray-300 text-sm mb-6">
+          <h1 className="text-2xl font-bold text-dark-50 mb-2">Link invalid</h1>
+          <p className="text-dark-300 text-sm mb-6">
             This reset link may be missing, expired, or already used. You can request a new password reset email.
           </p>
           <Link
             to="/forgot-password"
-            className="inline-block w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+            className="inline-block w-full bg-primary-500 text-white py-3 rounded-lg font-semibold hover:bg-primary-600 transition"
           >
             Request a new link
           </Link>
           <Link
             to="/login"
-            className="block mt-4 text-sm text-blue-500 hover:text-blue-400 font-medium"
+            className="block mt-4 text-sm text-primary-500 hover:text-primary-400 font-medium"
           >
             Back to Login
           </Link>
@@ -124,8 +124,8 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black px-4">
-      <div className="max-w-md w-full bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 p-8">
+    <div data-mode="dark" className="min-h-screen flex items-center justify-center bg-dark-900 px-4">
+      <div className="max-w-md w-full bg-dark-800 rounded-2xl shadow-2xl border border-dark-700 p-8">
         <div className="flex justify-center mb-8">
           <div className="w-48 h-24 flex items-center justify-center">
             <img
@@ -137,25 +137,25 @@ const ResetPassword = () => {
         </div>
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Set a new password</h1>
-          <p className="text-gray-300">Choose a strong password for your account.</p>
+          <h1 className="text-3xl font-bold text-dark-50 mb-2">Set a new password</h1>
+          <p className="text-dark-300">Choose a strong password for your account.</p>
         </div>
 
         {authInitState === 'loading' && (
-          <p className="text-gray-400 text-sm text-center mb-4">Initializing…</p>
+          <p className="text-dark-400 text-sm text-center mb-4">Initializing…</p>
         )}
 
         {authInitState === 'failed' && (
-          <div className="mb-6 rounded-lg bg-red-900/40 border border-red-600 text-red-100 px-4 py-3 text-sm text-left space-y-3">
+          <div className="mb-6 rounded-lg bg-danger-500/10 border border-danger-500/40 text-danger-500 px-4 py-3 text-sm text-left space-y-3">
             <p>Firebase did not load. You can reload the page or try again later.</p>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="w-full bg-red-700/80 hover:bg-red-700 text-white py-2 rounded-lg font-medium transition"
+              className="w-full bg-danger-600 hover:bg-danger-700 text-white py-2 rounded-lg font-medium transition"
             >
               Reload page
             </button>
-            <Link to="/forgot-password" className="block text-center text-blue-400 hover:text-blue-300 text-sm font-medium">
+            <Link to="/forgot-password" className="block text-center text-primary-400 hover:text-primary-300 text-sm font-medium">
               Request a new reset link
             </Link>
           </div>
@@ -164,7 +164,7 @@ const ResetPassword = () => {
         {authInitState !== 'failed' && (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="new-password" className="block text-sm font-medium text-gray-200 mb-2">
+              <label htmlFor="new-password" className="block text-sm font-medium text-dark-200 mb-2">
                 New password
               </label>
               <input
@@ -172,7 +172,7 @@ const ResetPassword = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-white placeholder-gray-400"
+                className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition text-dark-50 placeholder-dark-400"
                 placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
                 required
                 minLength={MIN_PASSWORD_LENGTH}
@@ -182,7 +182,7 @@ const ResetPassword = () => {
             </div>
 
             <div>
-              <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-200 mb-2">
+              <label htmlFor="confirm-password" className="block text-sm font-medium text-dark-200 mb-2">
                 Confirm password
               </label>
               <input
@@ -190,7 +190,7 @@ const ResetPassword = () => {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-white placeholder-gray-400"
+                className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition text-dark-50 placeholder-dark-400"
                 placeholder="Confirm new password"
                 required
                 minLength={MIN_PASSWORD_LENGTH}
@@ -202,17 +202,17 @@ const ResetPassword = () => {
             <button
               type="submit"
               disabled={loading || authInitState !== 'ready'}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="w-full bg-primary-500 text-white py-3 rounded-lg font-semibold hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-dark-900 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               {loading ? 'Updating...' : 'Reset password'}
             </button>
 
-            <p className="text-center text-sm text-gray-400">
-              <Link to="/forgot-password" className="text-blue-500 hover:text-blue-400 font-medium">
+            <p className="text-center text-sm text-dark-400">
+              <Link to="/forgot-password" className="text-primary-500 hover:text-primary-400 font-medium">
                 Request a new reset link
               </Link>
               {' · '}
-              <Link to="/login" className="text-blue-500 hover:text-blue-400 font-medium">
+              <Link to="/login" className="text-primary-500 hover:text-primary-400 font-medium">
                 Login
               </Link>
             </p>

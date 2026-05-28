@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+﻿import { useState, useEffect, useCallback, useRef } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { FileText, Upload, X } from 'lucide-react';
@@ -245,7 +245,7 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
               {uploadingFile ? (
                 <>
                   <Upload className="w-12 h-12 text-primary-500 mx-auto mb-3 animate-pulse" />
-                  <p className="text-dark-600 font-medium">Uploading file...</p>
+                  <p className="text-dark-200 font-medium">Uploading file...</p>
                   <p className="text-sm text-dark-400 mt-1">Progress: {Math.round(uploadProgress)}%</p>
                   <div className="w-full bg-dark-200 h-2 rounded mt-2">
                     <div className="bg-primary-500 h-2 rounded transition-all" style={{ width: `${uploadProgress}%` }} />
@@ -254,7 +254,7 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
               ) : (
                 <>
                   <Upload className="w-12 h-12 text-dark-300 mx-auto mb-3" />
-                  <p className="text-dark-600 font-medium">Click or drag files here</p>
+                  <p className="text-dark-200 font-medium">Click or drag files here</p>
                   <p className="text-sm text-dark-400 mt-1">PDF, PNG, JPG, WebP up to 2MB</p>
                 </>
               )}
@@ -276,7 +276,7 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <FileText className="w-5 h-5 text-primary-600 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-dark-800 truncate">{file.fileName}</p>
+                        <p className="text-sm font-medium text-dark-50 truncate">{file.fileName}</p>
                         {file.fileSize && <p className="text-xs text-dark-500">{file.fileSize} KB</p>}
                       </div>
                     </div>

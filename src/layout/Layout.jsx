@@ -27,10 +27,14 @@ const Layout = ({ children, title, subtitle }) => {
   return (
     <div className="h-screen overflow-hidden bg-dark-900">
       <Sidebar isCollapsed={isCollapsed} setIsCollapsed={handleSetCollapsed} isMobile={isMobile} />
-      <div className={`transition-all duration-300 ${marginLeft} h-full overflow-y-auto`}>
+      <div className={`transition-all duration-300 ${marginLeft} h-full overflow-y-auto flex flex-col`}>
         <EmailVerificationBanner />
         <Header title={title} subtitle={subtitle} />
-        <main className="p-6 bg-dark-900">{children}</main>
+        <main className="flex-1 p-6 bg-dark-900">{children}</main>
+        <footer className="bg-dark-800 border-t border-dark-700 text-dark-400 text-xs px-6 py-3 flex items-center justify-between">
+          <span>&copy; 2026 GymHubPH. All rights reserved.</span>
+          <span className="hidden sm:inline">Powered by GymHubPH</span>
+        </footer>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { CalendarDays, CheckCircle, AlertCircle, XCircle, UserCheck, Plus } from 'lucide-react';
 import { Badge, Modal, Avatar } from '../../../components/common';
 import { mockTrainers, appointmentTypes } from '../../../data/mockData';
@@ -58,7 +58,7 @@ const AppointmentsTab = ({ member, appointments }) => {
 
       {/* Upcoming Appointments */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-dark-800 mb-4">Upcoming Appointments</h3>
+        <h3 className="text-lg font-semibold text-dark-50 mb-4">Upcoming Appointments</h3>
         {upcomingAppointments.length > 0 ? (
           <div className="space-y-3">
             {upcomingAppointments.map((apt) => (
@@ -69,7 +69,7 @@ const AppointmentsTab = ({ member, appointments }) => {
                     <p className="text-xs text-primary-500">{apt.duration} min</p>
                   </div>
                   <div>
-                    <p className="font-semibold text-dark-800">{apt.type}</p>
+                    <p className="font-semibold text-dark-50">{apt.type}</p>
                     <p className="text-sm text-dark-500">{apt.date} • with {apt.trainer}</p>
                   </div>
                 </div>
@@ -90,17 +90,17 @@ const AppointmentsTab = ({ member, appointments }) => {
       {/* Past Appointments */}
       {pastAppointments.length > 0 && (
         <div className="card">
-          <h3 className="text-lg font-semibold text-dark-800 mb-4">Past Appointments</h3>
+          <h3 className="text-lg font-semibold text-dark-50 mb-4">Past Appointments</h3>
           <div className="space-y-3">
             {pastAppointments.map((apt) => (
               <div key={apt.id} className="flex items-center justify-between p-4 bg-dark-50 rounded-xl opacity-75">
                 <div className="flex items-center gap-4">
                   <div className="text-center px-4 py-2 bg-dark-200 rounded-lg min-w-[80px]">
-                    <p className="text-lg font-bold text-dark-600">{apt.time}</p>
+                    <p className="text-lg font-bold text-dark-200">{apt.time}</p>
                     <p className="text-xs text-dark-400">{apt.duration} min</p>
                   </div>
                   <div>
-                    <p className="font-semibold text-dark-700">{apt.type}</p>
+                    <p className="font-semibold text-dark-100">{apt.type}</p>
                     <p className="text-sm text-dark-500">{apt.date} • with {apt.trainer}</p>
                   </div>
                 </div>
@@ -122,7 +122,7 @@ const AppointmentsTab = ({ member, appointments }) => {
           <div className="p-4 bg-dark-50 rounded-xl flex items-center gap-4">
             <Avatar src={member.avatar} name={member.name} size="md" />
             <div>
-              <p className="font-semibold text-dark-800">{member.name}</p>
+              <p className="font-semibold text-dark-50">{member.name}</p>
               <p className="text-sm text-dark-500">{member.membership}</p>
             </div>
           </div>

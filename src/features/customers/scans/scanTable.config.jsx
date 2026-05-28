@@ -47,9 +47,9 @@ export const scanTableColumns = ({
       const scanType = String(row.scanType || '').toUpperCase();
       let typeClass;
       if (scanType === SCAN_TYPE.INBODY) {
-        typeClass = 'bg-primary-500 text-white';
+        typeClass = 'bg-primary-100 text-primary-700';
       } else if (scanType === SCAN_TYPE.STYKU) {
-        typeClass = 'bg-accent-500 text-white';
+        typeClass = 'bg-accent-100 text-accent-700';
       } else {
         typeClass = 'bg-dark-700 text-dark-200';
       }
