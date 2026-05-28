@@ -2,6 +2,7 @@
 import { useReactToPrint } from 'react-to-print';
 import Layout from '../../layout/Layout';
 import { DateRangeExportBar, PrintArea, MessageCard, StatsCards } from '../../components/common';
+import DataTable from '../../components/DataTable';
 import {
   Download,
   Calendar,
@@ -259,6 +260,11 @@ const SummaryReportPage = () => {
     { label: "Today's Revenue", value: formatCurrency(todayRevenue), icon: PieChartIcon, gradient: 'from-warning-500 to-warning-600', textBg: 'text-warning-100', iconBg: 'text-warning-200' },
   ];
 
+  const expenseByCategoryColumns = useMemo(() => [
+    { key: 'name', label: 'Category', render: (row) => row.name },
+    { key: 'value', label: 'Amount', render: (row) => formatCurrency(row.value) },
+  ], []);
+
   const summaryExtraFilters = (
     <select
       value={filterCategory}
@@ -283,25 +289,12 @@ const SummaryReportPage = () => {
         summaryRows={summaryRows}
       >
         <p className="text-sm font-semibold mb-2">Expense by Category</p>
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="bg-slate-100">
-              <th className="table-header text-left p-2 border border-slate-300">Category</th>
-              <th className="table-header text-left p-2 border border-slate-300">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {expenseByCategory.map((cat) => (
-              <tr key={cat.name}>
-                <td className="p-2 border border-slate-300">{cat.name}</td>
-                <td className="p-2 border border-slate-300">{formatCurrency(cat.value)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {expenseByCategory.length === 0 && (
-          <p className="text-center py-4 text-slate-500">No expense data</p>
-        )}
+        <DataTable
+          columns={expenseByCategoryColumns}
+          data={expenseByCategory}
+          keyField="name"
+          emptyMessage="No expense data"
+        />
       </PrintArea>
 
       <DateRangeExportBar

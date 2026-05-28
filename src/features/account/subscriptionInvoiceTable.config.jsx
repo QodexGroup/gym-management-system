@@ -1,6 +1,29 @@
+import { createActionColumn } from '../../components/DataTable';
+import { CreditCard } from 'lucide-react';
 import { SUBSCRIPTION_PAYMENT_STATUS } from '../../shared/constants/subscriptionConstants';
 
+export const getSubscriptionInvoiceActionMenuItems = (row, { onPayInvoice }) => {
+  const canPay =
+    row.status === SUBSCRIPTION_PAYMENT_STATUS.PENDING ||
+    row.status === SUBSCRIPTION_PAYMENT_STATUS.REJECTED;
+
+  if (!canPay) {
+    return [];
+  }
+
+  return [
+    {
+      key: 'pay',
+      label: 'Pay Invoice',
+      icon: CreditCard,
+      variant: 'success',
+      onClick: () => onPayInvoice?.(row),
+    },
+  ];
+};
+
 export const subscriptionInvoiceColumns = ({ formatMoney, formatDate, formatStatusLabel, getStatusBadgeClass, onOpenReceipt, onPayInvoice }) => [
+  createActionColumn((row) => getSubscriptionInvoiceActionMenuItems(row, { onPayInvoice })),
   {
     key: 'invoiceNo',
     label: 'Invoice No',
@@ -53,28 +76,5 @@ export const subscriptionInvoiceColumns = ({ formatMoney, formatDate, formatStat
       ) : (
         <span className="text-dark-400">-</span>
       ),
-  },
-  {
-    key: 'actions',
-    label: 'Actions',
-    render: (row) => {
-      // Allow payment on first-time pending and resubmission after rejection.
-      const canPay =
-        row.status === SUBSCRIPTION_PAYMENT_STATUS.PENDING ||
-        row.status === SUBSCRIPTION_PAYMENT_STATUS.REJECTED;
-
-      if (canPay) {
-        return (
-          <button
-            type="button"
-            onClick={() => onPayInvoice?.(row)}
-            className="btn-primary btn-sm"
-          >
-            Pay Invoice
-          </button>
-        );
-      }
-      return <span className="text-dark-400">-</span>;
-    },
   },
 ];

@@ -123,7 +123,7 @@ const CalendarListView = ({ sessions = [] }) => {
                   {!shouldHideButtons && actions?.onEdit && (
                     <button
                       onClick={actions.onEdit}
-                      className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                      className="table-action-btn table-action-btn--default"
                       title="Edit session"
                     >
                       <Edit className="w-4 h-4" />
@@ -132,7 +132,7 @@ const CalendarListView = ({ sessions = [] }) => {
                   {!shouldHideButtons && actions?.onCancel && (
                     <button
                       onClick={actions.onCancel}
-                      className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+                      className="table-action-btn table-action-btn--danger"
                       title="Cancel session"
                     >
                       <X className="w-4 h-4" />
@@ -141,7 +141,7 @@ const CalendarListView = ({ sessions = [] }) => {
                   {actions?.onMarkAttendance && (
                     <button
                       onClick={actions.onMarkAttendance}
-                      className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                      className="table-action-btn table-action-btn--default"
                       title="Mark attendance"
                     >
                       <CheckCircle className="w-4 h-4" />

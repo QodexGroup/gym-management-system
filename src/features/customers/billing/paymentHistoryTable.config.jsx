@@ -1,29 +1,20 @@
+import { createActionColumn } from '../../../components/DataTable';
 import { Banknote, CreditCard, Smartphone, Trash2 } from 'lucide-react';
 import { formatCurrency, formatDate } from '../../../shared/utils/formatters';
 import { PAYMENT_METHOD } from '../../../shared/constants/paymentConstants';
 
-export const paymentHistoryTableColumns = (handleDeletePayment) => [
+export const getPaymentHistoryActionMenuItems = (row, handleDeletePayment) => [
   {
-    key: 'actions',
-    label: 'Actions',
-    align: 'right',
-    render: (row) => (
-      <div onClick={(e) => e.stopPropagation()}>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleDeletePayment(row);
-          }}
-          className="p-2 text-danger-600 hover:bg-danger-50 rounded"
-          title="Delete Payment"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
-      </div>
-    ),
+    key: 'delete',
+    label: 'Delete Payment',
+    icon: Trash2,
+    variant: 'danger',
+    onClick: () => handleDeletePayment?.(row),
   },
+];
+
+export const paymentHistoryTableColumns = (handleDeletePayment) => [
+  createActionColumn((row) => getPaymentHistoryActionMenuItems(row, handleDeletePayment)),
   {
     key: 'paymentDate',
     label: 'Date',

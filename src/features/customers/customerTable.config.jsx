@@ -1,32 +1,58 @@
 import { Avatar, Badge } from '../../components/common';
+import { createActionColumn } from '../../components/DataTable';
 import { Phone, Mail, Calendar, Edit, Trash, ChevronRight } from 'lucide-react';
 import { formatDate, formatCurrency } from '../../shared/utils/formatters';
 
+export const getCustomerActionMenuItems = ({
+  customer,
+  canEdit,
+  canDelete,
+  onEdit,
+  onDelete,
+  onView,
+}) => {
+  const items = [
+    {
+      key: 'view',
+      label: 'View',
+      icon: ChevronRight,
+      onClick: () => onView?.(customer.id),
+    },
+  ];
+
+  if (canEdit) {
+    items.push({
+      key: 'edit',
+      label: 'Edit',
+      icon: Edit,
+      onClick: () => onEdit?.(customer),
+    });
+  }
+
+  if (canDelete) {
+    items.push({
+      key: 'delete',
+      label: 'Delete',
+      icon: Trash,
+      variant: 'danger',
+      onClick: () => onDelete?.(customer.id),
+    });
+  }
+
+  return items;
+};
+
 export const customerTableColumns = ({ canEdit, canDelete, onEdit, onDelete, onView }) => [
-  {
-    key: 'actions',
-    label: 'Actions',
-    align: 'right',
-    render: (c) => (
-      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        <button onClick={() => onView(c.id)} title="View">
-          <ChevronRight className="w-4 h-4" />
-        </button>
-
-        {canEdit && (
-          <button onClick={() => onEdit(c)} title="Edit">
-            <Edit className="w-4 h-4" />
-          </button>
-        )}
-
-        {canDelete && (
-          <button onClick={() => onDelete(c.id)} title="Delete">
-            <Trash className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-    ),
-  },
+  createActionColumn((customer) =>
+    getCustomerActionMenuItems({
+      customer,
+      canEdit,
+      canDelete,
+      onEdit,
+      onDelete,
+      onView,
+    })
+  ),
   {
     key: 'client',
     label: 'Client',

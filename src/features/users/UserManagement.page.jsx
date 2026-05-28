@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import Layout from '../../layout/Layout';
 import { Modal, SearchAndFilter, Badge } from '../../components/common';
 import StatsCards from '../../components/common/StatsCards';
-import DataTable, { DataTableActions } from '../../components/DataTable';
+import DataTable from '../../components/DataTable';
 import {
   Plus,
   Shield,
@@ -15,14 +15,13 @@ import {
   useDeleteUser,
   useDeactivateUser,
   useActivateUser,
-  useResetPassword,
 } from '../../shared/hooks/useUsers';
 import { useAccountLimit } from '../../shared/hooks/useAccountLimit';
 import { useAuth } from '../../shared/context/AuthContext';
 import UserForm from './UserForm';
 import ResetPasswordForm from './ResetPasswordForm';
 import { USER_ROLES } from '../../shared/constants/userRoles';
-import { userTableColumns, getUserActionMenuItems } from './userTable.config';
+import { userTableColumns } from './userTable.config';
 import { mapUsersData } from '../../shared/models/userModel';
 import { useConfirmAction } from '../../shared/hooks/useConfirmAction';
 
@@ -150,21 +149,16 @@ const UserManagement = () => {
 
   // Table columns
   const columns = useMemo(
-    () => userTableColumns({ getRoleBadge }),
-    [getRoleBadge]
-  );
-
-  // Get action menu items for a user
-  const getActionMenuItems = useCallback((user) => {
-    return getUserActionMenuItems({
-      user,
+    () => userTableColumns({
+      getRoleBadge,
       onEdit: handleEditUser,
       onResetPassword: handleResetPassword,
       onDeactivate: handleDeactivateUser,
       onActivate: handleActivateUser,
       onDelete: handleDeleteUser,
-    });
-  }, []);
+    }),
+    [getRoleBadge, handleDeleteUser]
+  );
 
   return (
     <Layout title="User Management" subtitle="Manage users and their access permissions">
@@ -194,11 +188,6 @@ const UserManagement = () => {
           data={filteredUsers}
           loading={isLoading}
           emptyMessage={error ? `Error loading users: ${error.message}` : 'No users found'}
-          renderActions={(user) => (
-            <DataTableActions
-              items={getActionMenuItems(user)}
-            />
-          )}
         />
       </div>
 

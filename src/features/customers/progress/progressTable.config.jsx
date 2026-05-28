@@ -1,7 +1,49 @@
+import { createActionColumn } from '../../../components/DataTable';
 import { Calendar, Edit, Trash, ChevronRight } from 'lucide-react';
 import { formatDate } from '../../../shared/utils/formatters';
 import { getDataSourceBadge } from '../../../shared/utils/uiHelpers';
 import PhotoThumbnail from '../../../components/common/PhotoThumbnail';
+
+export const getProgressActionMenuItems = ({
+  row,
+  canViewLogs,
+  canEdit,
+  canDelete,
+  onEdit,
+  onDelete,
+}) => {
+  const items = [];
+
+  if (canViewLogs) {
+    items.push({
+      key: 'view',
+      label: 'View',
+      icon: ChevronRight,
+      onClick: () => onEdit?.(row, { view: true }),
+    });
+  }
+
+  if (canEdit) {
+    items.push({
+      key: 'edit',
+      label: 'Edit',
+      icon: Edit,
+      onClick: () => onEdit?.(row),
+    });
+  }
+
+  if (canDelete) {
+    items.push({
+      key: 'delete',
+      label: 'Delete',
+      icon: Trash,
+      variant: 'danger',
+      onClick: () => onDelete?.(row.id),
+    });
+  }
+
+  return items;
+};
 
 export const progressTableColumns = ({
   canViewLogs = true,
@@ -11,32 +53,16 @@ export const progressTableColumns = ({
   onDelete,
   onImageClick,
 }) => [
-  {
-    key: 'actions',
-    label: 'Actions',
-    align: 'right',
-    render: (row) => (
-      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        {canViewLogs && (
-          <button onClick={() => onEdit?.(row, { view: true })} title="View">
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        )}
-
-        {canEdit && (
-          <button onClick={() => onEdit(row)} title="Edit">
-            <Edit className="w-4 h-4" />
-          </button>
-        )}
-
-        {canDelete && (
-          <button onClick={() => onDelete(row.id)} title="Delete">
-            <Trash className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-    ),
-  },
+  createActionColumn((row) =>
+    getProgressActionMenuItems({
+      row,
+      canViewLogs,
+      canEdit,
+      canDelete,
+      onEdit,
+      onDelete,
+    })
+  ),
   {
     key: 'recordedDate',
     label: 'Date',
@@ -54,9 +80,6 @@ export const progressTableColumns = ({
       </div>
     ),
   },
-
-
-
   {
     key: 'photos',
     label: 'Photos',
@@ -103,31 +126,26 @@ export const progressTableColumns = ({
       );
     },
   },
-
   {
     key: 'weight',
     label: 'Weight',
     render: (row) => row.weight ? `${row.weight} kg` : '-',
   },
-
   {
     key: 'bodyFatPercentage',
     label: 'Body Fat',
     render: (row) => row.bodyFatPercentage ? `${row.bodyFatPercentage}%` : '-',
   },
-
   {
     key: 'skeletalMuscleMass',
     label: 'Muscle',
     render: (row) => row.skeletalMuscleMass ? `${row.skeletalMuscleMass} kg` : '-',
   },
-
   {
     key: 'bmi',
     label: 'BMI',
     render: (row) => row.bmi || '-',
   },
-
   {
     key: 'dataSource',
     label: 'Source',
@@ -137,7 +155,6 @@ export const progressTableColumns = ({
       </span>
     ),
   },
-
   {
     key: 'notes',
     label: 'Notes',

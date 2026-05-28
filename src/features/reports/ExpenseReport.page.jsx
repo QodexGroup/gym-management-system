@@ -327,31 +327,12 @@ const ExpenseReportPage = () => {
         generatedAt={generatedAt}
         summaryRows={summaryRows}
       >
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="bg-slate-100">
-              <th className="table-header text-left p-2 border border-slate-300">Date</th>
-              <th className="table-header text-left p-2 border border-slate-300">Category</th>
-              <th className="table-header text-left p-2 border border-slate-300">Description</th>
-              <th className="table-header text-left p-2 border border-slate-300">Amount</th>
-              <th className="table-header text-left p-2 border border-slate-300">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transformedExpenses.map((expense) => (
-              <tr key={expense.id}>
-                <td className="p-2 border border-slate-300">{expense.formattedDate}</td>
-                <td className="p-2 border border-slate-300">{expense.category}</td>
-                <td className="p-2 border border-slate-300">{expense.description}</td>
-                <td className="p-2 border border-slate-300">{formatCurrency(expense.amount)}</td>
-                <td className="p-2 border border-slate-300">{EXPENSE_STATUS_LABELS[expense.status] || expense.status}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {transformedExpenses.length === 0 && (
-          <p className="text-center py-4 text-slate-500">No expenses match filters</p>
-        )}
+        <DataTable
+          columns={expenseColumns}
+          data={transformedExpenses}
+          keyField="id"
+          emptyMessage="No expenses match filters"
+        />
       </PrintArea>
 
       <DateRangeExportBar

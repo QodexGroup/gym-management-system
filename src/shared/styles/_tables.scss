@@ -6,6 +6,67 @@
   .table-cell {
     @apply px-6 py-4 whitespace-nowrap text-sm text-dark-200 border-b border-dark-700/50;
   }
+
+  // Inline icon actions + overflow menu — theme-aware via dark-* / primary-* scales.
+  .table-action-group {
+    @apply flex items-center gap-2;
+  }
+
+  .table-action-btn {
+    @apply p-2 text-dark-400 rounded-lg transition-colors;
+  }
+
+  .table-action-btn--default {
+    @apply hover:text-primary-500 hover:bg-primary-500/10;
+  }
+
+  .table-action-btn--danger {
+    @apply hover:text-danger-500 hover:bg-danger-500/10;
+  }
+
+  .table-action-btn--warning {
+    @apply hover:text-warning-500 hover:bg-warning-500/10;
+  }
+
+  .table-action-btn--success {
+    @apply hover:text-success-500 hover:bg-success-500/10;
+  }
+
+  .table-action-btn--disabled {
+    @apply text-dark-500 cursor-not-allowed opacity-50;
+  }
+
+  .table-action-menu-trigger {
+    @apply p-2 text-dark-400 hover:text-dark-50 hover:bg-dark-700 rounded-lg transition-colors;
+  }
+
+  .table-action-menu {
+    @apply fixed w-48 bg-dark-800 rounded-lg shadow-xl border border-dark-700 py-1 z-[100];
+  }
+
+  .table-action-menu-divider {
+    @apply my-1 border-dark-700;
+  }
+
+  .table-action-menu-item {
+    @apply w-full flex items-center gap-2 px-4 py-2.5 text-sm text-dark-50 transition-colors hover:bg-dark-700;
+  }
+
+  .table-action-menu-item--danger {
+    @apply text-danger-500 hover:bg-danger-500/10;
+  }
+
+  .table-action-menu-item--warning {
+    @apply text-warning-500 hover:bg-warning-500/10;
+  }
+
+  .table-action-menu-item--success {
+    @apply text-success-500 hover:bg-success-500/10;
+  }
+
+  .table-action-menu-item--disabled {
+    @apply text-dark-500 cursor-not-allowed opacity-50 hover:bg-transparent;
+  }
 }
 
 @layer components {

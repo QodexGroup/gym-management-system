@@ -66,7 +66,7 @@ const CardList = ({
         <button
           key="view"
           onClick={() => resolvedActions.onView(card)}
-          className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+          className="table-action-btn table-action-btn--default"
           title="View"
         >
           <Eye className="w-4 h-4" />
@@ -79,7 +79,7 @@ const CardList = ({
         <button
           key="edit"
           onClick={() => resolvedActions.onEdit(card)}
-          className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+          className="table-action-btn table-action-btn--default"
           title="Edit"
         >
           <Edit className="w-4 h-4" />
@@ -92,7 +92,7 @@ const CardList = ({
         <button
           key="delete"
           onClick={() => resolvedActions.onDelete(card.id || card.key)}
-          className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+          className="table-action-btn table-action-btn--danger"
           title="Delete"
         >
           <Trash className="w-4 h-4" />
@@ -105,7 +105,7 @@ const CardList = ({
         <button
           key="cancel"
           onClick={() => resolvedActions.onCancel(card.id || card.key)}
-          className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+          className="table-action-btn table-action-btn--danger"
           title="Cancel"
         >
           <X className="w-4 h-4" />

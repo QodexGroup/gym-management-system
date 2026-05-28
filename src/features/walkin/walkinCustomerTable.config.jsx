@@ -1,40 +1,57 @@
 ﻿import { Avatar, Badge } from '../../components/common';
+import { createActionColumn } from '../../components/DataTable';
 import { Clock, UserX, Ban } from 'lucide-react';
 import { formatTimeFromDate } from '../../shared/utils/formatters';
 import { WALKIN_CUSTOMER_STATUS, WALKIN_CUSTOMER_STATUS_LABELS } from '../../shared/constants/walkinConstant';
 
+export const getWalkinCustomerActionMenuItems = ({
+  wc,
+  onCheckOut,
+  onCancel,
+  isCheckingOut = false,
+  isCancelling = false,
+}) => {
+  if (wc.status !== WALKIN_CUSTOMER_STATUS.INSIDE) {
+    return [];
+  }
+
+  const items = [];
+
+  if (onCheckOut) {
+    items.push({
+      key: 'checkout',
+      label: isCheckingOut ? 'Checking Out...' : 'Check Out',
+      icon: UserX,
+      variant: 'danger',
+      disabled: isCheckingOut,
+      onClick: () => onCheckOut?.(wc.id),
+    });
+  }
+
+  if (onCancel) {
+    items.push({
+      key: 'cancel',
+      label: isCancelling ? 'Cancelling...' : 'Cancel',
+      icon: Ban,
+      variant: 'warning',
+      disabled: isCancelling,
+      onClick: () => onCancel?.(wc.id),
+    });
+  }
+
+  return items;
+};
+
 export const walkinCustomerTableColumns = ({ onCheckOut, onCancel, isCheckingOut = false, isCancelling = false }) => [
-  {
-    key: 'actions',
-    label: 'Actions',
-    align: 'right',
-    render: (wc) => (
-      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        {wc.status === WALKIN_CUSTOMER_STATUS.INSIDE && onCheckOut && (
-          <button
-            onClick={() => onCheckOut(wc.id)}
-            disabled={isCheckingOut}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm text-danger-600 hover:bg-danger-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Check Out"
-          >
-            <UserX className="w-4 h-4" />
-            {isCheckingOut ? 'Checking Out...' : 'Check Out'}
-          </button>
-        )}
-        {wc.status === WALKIN_CUSTOMER_STATUS.INSIDE && onCancel && (
-          <button
-            onClick={() => onCancel(wc.id)}
-            disabled={isCancelling}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm text-dark-200 hover:bg-dark-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Cancel"
-          >
-            <Ban className="w-4 h-4" />
-            {isCancelling ? 'Cancelling...' : 'Cancel'}
-          </button>
-        )}
-      </div>
-    ),
-  },
+  createActionColumn((wc) =>
+    getWalkinCustomerActionMenuItems({
+      wc,
+      onCheckOut,
+      onCancel,
+      isCheckingOut,
+      isCancelling,
+    })
+  ),
   {
     key: 'customer',
     label: 'Member',

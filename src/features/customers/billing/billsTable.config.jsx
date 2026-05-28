@@ -1,48 +1,65 @@
-import { Edit, Trash2, Plus, Calendar } from 'lucide-react';
+import { createActionColumn } from '../../../components/DataTable';
+import { Edit, Trash2, Plus } from 'lucide-react';
 import { Badge } from '../../../components/common';
 import { formatCurrency, formatDate } from '../../../shared/utils/formatters';
 import { BILL_TYPE } from '../../../shared/constants/billConstants';
 import { BILL_STATUS, BILL_STATUS_LABELS, BILL_STATUS_VARIANTS } from '../../../shared/constants/billConstants';
 
+export const getBillActionMenuItems = ({
+  row,
+  canEdit,
+  canDelete,
+  canAddPayment,
+  onEdit,
+  onDelete,
+  onAddPayment,
+}) => {
+  const items = [];
+
+  if (canAddPayment && row.billStatus !== BILL_STATUS.PAID && row.billStatus !== BILL_STATUS.VOIDED) {
+    items.push({
+      key: 'add-payment',
+      label: 'Add Payment',
+      icon: Plus,
+      variant: 'success',
+      onClick: () => onAddPayment?.(row),
+    });
+  }
+
+  if (canEdit && row.billStatus !== BILL_STATUS.VOIDED) {
+    items.push({
+      key: 'edit',
+      label: 'Edit Bill',
+      icon: Edit,
+      onClick: () => onEdit?.(row),
+    });
+  }
+
+  if (canDelete && row.billStatus !== BILL_STATUS.PAID && row.billStatus !== BILL_STATUS.VOIDED) {
+    items.push({
+      key: 'delete',
+      label: 'Delete Bill',
+      icon: Trash2,
+      variant: 'danger',
+      onClick: () => onDelete?.(row.id),
+    });
+  }
+
+  return items;
+};
+
 export const billsTableColumns = ({ canEdit, canDelete, canAddPayment, onEdit, onDelete, onAddPayment }) => [
-  {
-    key: 'actions',
-    label: 'Actions',
-    align: 'right',
-    render: (row) => {
-      return (
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          {canAddPayment && row.billStatus !== BILL_STATUS.PAID && row.billStatus !== BILL_STATUS.VOIDED && (
-            <button
-              onClick={() => onAddPayment?.(row)}
-              className="p-2 rounded-lg text-dark-400 hover:text-success-600 hover:bg-success-50 transition-colors"
-              title="Add Payment"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          )}
-          {canEdit && row.billStatus !== BILL_STATUS.VOIDED && (
-            <button
-              onClick={() => onEdit?.(row)}
-              className="p-2 rounded-lg text-dark-400 hover:text-primary-400 hover:bg-dark-700 transition-colors"
-              title="Edit Bill"
-            >
-              <Edit className="w-4 h-4" />
-            </button>
-          )}
-          {canDelete && row.billStatus !== BILL_STATUS.PAID && row.billStatus !== BILL_STATUS.VOIDED && (
-            <button
-              onClick={() => onDelete?.(row.id)}
-              className="p-2 rounded-lg text-dark-400 hover:text-danger-600 hover:bg-danger-50 transition-colors"
-              title="Delete Bill"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      );
-    },
-  },
+  createActionColumn((row) =>
+    getBillActionMenuItems({
+      row,
+      canEdit,
+      canDelete,
+      canAddPayment,
+      onEdit,
+      onDelete,
+      onAddPayment,
+    })
+  ),
   {
     key: 'billDate',
     label: 'Bill Date',

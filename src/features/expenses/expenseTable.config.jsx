@@ -1,7 +1,65 @@
 import { Badge } from '../../components/common';
+import { createActionColumn } from '../../components/DataTable';
 import { Edit, Trash, CheckCircle, XCircle } from 'lucide-react';
 import { EXPENSE_STATUS, EXPENSE_STATUS_LABELS, EXPENSE_STATUS_VARIANTS } from '../../shared/constants/expenseConstants';
 import { formatCurrency } from '../../shared/utils/formatters';
+
+export const getExpenseActionMenuItems = ({
+  expense,
+  isAdmin,
+  hasUpdatePermission,
+  hasDeletePermission,
+  onEdit,
+  onPost,
+  onVoid,
+  onDelete,
+}) => {
+  const isPosted = expense.status === EXPENSE_STATUS.POSTED;
+  const items = [];
+
+  if (!isPosted && hasUpdatePermission) {
+    items.push({
+      key: 'edit',
+      label: 'Edit',
+      icon: Edit,
+      onClick: () => onEdit?.(expense),
+    });
+  }
+
+  if (isPosted) {
+    if (isAdmin) {
+      items.push({
+        key: 'void',
+        label: 'Void',
+        icon: XCircle,
+        variant: 'danger',
+        onClick: () => onVoid?.(expense.id),
+      });
+    }
+  } else {
+    if (isAdmin) {
+      items.push({
+        key: 'post',
+        label: 'Post',
+        icon: CheckCircle,
+        variant: 'success',
+        onClick: () => onPost?.(expense.id),
+      });
+    }
+
+    if (hasDeletePermission) {
+      items.push({
+        key: 'delete',
+        label: 'Delete',
+        icon: Trash,
+        variant: 'danger',
+        onClick: () => onDelete?.(expense.id),
+      });
+    }
+  }
+
+  return items;
+};
 
 export const expenseTableColumns = ({
   isAdmin,
@@ -12,60 +70,18 @@ export const expenseTableColumns = ({
   onVoid,
   onDelete,
 }) => [
-  {
-    key: 'actions',
-    label: 'Actions',
-    align: 'right',
-    render: (expense) => {
-      const isPosted = expense.status === EXPENSE_STATUS.POSTED;
-
-      return (
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          {!isPosted && hasUpdatePermission && (
-            <button
-              onClick={() => onEdit?.(expense)}
-              className="p-2 text-dark-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-              title="Edit expense"
-            >
-              <Edit className="w-4 h-4" />
-            </button>
-          )}
-          {isPosted ? (
-            isAdmin && (
-              <button
-                onClick={() => onVoid?.(expense.id)}
-                className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
-                title="Void expense"
-              >
-                <XCircle className="w-4 h-4" />
-              </button>
-            )
-          ) : (
-            <>
-              {isAdmin && (
-                <button
-                  onClick={() => onPost?.(expense.id)}
-                  className="p-2 text-dark-400 hover:text-success-600 hover:bg-success-50 rounded-lg transition-colors"
-                  title="Post expense"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                </button>
-              )}
-              {hasDeletePermission && (
-                <button
-                  onClick={() => onDelete?.(expense.id)}
-                  className="p-2 text-dark-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
-                  title="Delete expense"
-                >
-                  <Trash className="w-4 h-4" />
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      );
-    },
-  },
+  createActionColumn((expense) =>
+    getExpenseActionMenuItems({
+      expense,
+      isAdmin,
+      hasUpdatePermission,
+      hasDeletePermission,
+      onEdit,
+      onPost,
+      onVoid,
+      onDelete,
+    })
+  ),
   {
     key: 'date',
     label: 'Date',

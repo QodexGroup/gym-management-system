@@ -1,7 +1,39 @@
-import { FileText, Activity, Calendar, Edit, Trash, ChevronRight } from 'lucide-react';
+import { createActionColumn } from '../../../components/DataTable';
+import { FileText, Activity, Calendar, Edit, Trash } from 'lucide-react';
 import { formatDate } from '../../../shared/utils/formatters';
 import { PhotoThumbnail, FileIcon } from '../../../components/common';
 import { SCAN_TYPE } from '../../../shared/constants/scanTypeConstant';
+
+export const getScanActionMenuItems = ({
+  row,
+  canEdit,
+  canDelete,
+  onEdit,
+  onDelete,
+}) => {
+  const items = [];
+
+  if (canEdit) {
+    items.push({
+      key: 'edit',
+      label: 'Edit',
+      icon: Edit,
+      onClick: () => onEdit?.(row),
+    });
+  }
+
+  if (canDelete) {
+    items.push({
+      key: 'delete',
+      label: 'Delete',
+      icon: Trash,
+      variant: 'danger',
+      onClick: () => onDelete?.(row.id),
+    });
+  }
+
+  return items;
+};
 
 export const scanTableColumns = ({
   canEdit,
@@ -10,26 +42,9 @@ export const scanTableColumns = ({
   onDelete,
   onViewImage,
 }) => [
-  {
-    key: 'actions',
-    label: 'Actions',
-    align: 'right',
-    render: (row) => (
-      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        {canEdit && (
-          <button onClick={() => onEdit?.(row)} title="Edit">
-            <Edit className="w-4 h-4" />
-          </button>
-        )}
-
-        {canDelete && (
-          <button onClick={() => onDelete?.(row.id)} title="Delete">
-            <Trash className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-    ),
-  },
+  createActionColumn((row) =>
+    getScanActionMenuItems({ row, canEdit, canDelete, onEdit, onDelete })
+  ),
   {
     key: 'scanDate',
     label: 'Date',
