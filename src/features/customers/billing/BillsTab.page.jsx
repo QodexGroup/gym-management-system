@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle, Clock, AlertCircle, Receipt, UserCheck, Plus, Calendar, X, User } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
-import { Pagination, Modal, Badge } from '../../../components/common';
+import { Pagination, Modal, Badge, ReloadButton } from '../../../components/common';
 import StatsCards from '../../../components/common/StatsCards';
 import BillsForm from './BillsForm';
 import PaymentForm from './PaymentForm';
@@ -50,7 +50,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
   const [showMembershipModal, setShowMembershipModal] = useState(false);
   const [showPtPackageModal, setShowPtPackageModal] = useState(false);
 
-  const { data, isLoading } = useCustomerBills(member?.id, { page: currentPage, pagelimit: 50 });
+  const { data, isLoading, refetch, isRefetching } = useCustomerBills(member?.id, { page: currentPage, pagelimit: 50 });
   const createBillMutation = useCreateCustomerBill();
   const updateBillMutation = useUpdateCustomerBill();
   const deleteBillMutation = useDeleteCustomerBill();
@@ -327,9 +327,10 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
       {/* Stats */}
       <StatsCards stats={stats} size="lg" iconPosition="right" iconColor="light" columns={3} />
 
-      {/* Create Bill Button */}
-      {hasPermission('bill_create') && (
-        <div className="flex justify-end">
+      {/* Action bar */}
+      <div className="flex items-center justify-end gap-2">
+        <ReloadButton onReload={refetch} isReloading={isRefetching} />
+        {hasPermission('bill_create') && (
           <button
             onClick={() => { setSelectedBill(null); setShowBillModal(true); }}
             className="btn-primary flex items-center gap-2"
@@ -337,12 +338,12 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
             <Receipt className="w-4 h-4" />
             Create Bill
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Bills Table */}
       <div className="card">
-        <DataTable columns={columns} data={bills} loading={isLoading} />
+        <DataTable columns={columns} data={bills} loading={isLoading || isRefetching} />
       </div>
 
       {/* Pagination */}

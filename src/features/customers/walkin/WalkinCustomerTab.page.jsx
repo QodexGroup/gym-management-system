@@ -1,11 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Pagination, CardList } from '../../../components/common';
-import {
-  Calendar,
-  Clock,
-  LogIn,
-  LogOut,
-} from 'lucide-react';
+import { Pagination, Badge, ReloadButton } from '../../../components/common';
+import DataTable from '../../../components/DataTable';
+import { Calendar, LogIn, LogOut } from 'lucide-react';
 import {
   WALKIN_CUSTOMER_STATUS,
   WALKIN_CUSTOMER_STATUS_LABELS,
@@ -21,6 +17,8 @@ const WalkinCustomerTab = ({ member }) => {
   const {
     data: historyData,
     isLoading: isLoadingHistory,
+    refetch: refetchHistory,
+    isRefetching: isRefetchingHistory,
   } = useWalkinsByCustomer(member?.id, {
     page: historyPage,
     pagelimit: historyPageSize,
@@ -41,43 +39,79 @@ const WalkinCustomerTab = ({ member }) => {
   const walkinHistory = useMemo(() => {
     return [...historyWalkins].sort((a, b) => {
       if (!a.checkInTime || !b.checkInTime) return 0;
-      const dateA = new Date(a.checkInTime);
-      const dateB = new Date(b.checkInTime);
-      return dateB - dateA;
+      return new Date(b.checkInTime) - new Date(a.checkInTime);
     });
   }, [historyWalkins]);
 
-  const handleHistoryPageChange = (newPage) => {
-    setHistoryPage(newPage);
-  };
+  const handleHistoryPageChange = (newPage) => setHistoryPage(newPage);
 
   /* ---------------- Helpers ---------------- */
   const getStatusBadge = (status) => {
     const statusKey = status?.toUpperCase() || WALKIN_CUSTOMER_STATUS.INSIDE;
-    const label = WALKIN_CUSTOMER_STATUS_LABELS[statusKey] || status;
     const variantMap = {
       [WALKIN_CUSTOMER_STATUS.INSIDE]: 'success',
       [WALKIN_CUSTOMER_STATUS.OUTSIDE]: 'default',
       [WALKIN_CUSTOMER_STATUS.CANCELLED]: 'danger',
     };
-    const variant = variantMap[statusKey] || 'default';
-    return { label, variant };
+    return {
+      label: WALKIN_CUSTOMER_STATUS_LABELS[statusKey] || status,
+      variant: variantMap[statusKey] || 'default',
+    };
   };
 
-  const getWalkinDate = (walkinCustomer) => {
-    if (!walkinCustomer.checkInTime) return null;
-    return new Date(walkinCustomer.checkInTime).toISOString().split('T')[0];
-  };
-
-  const getCheckInTime = (walkinCustomer) => {
-    if (!walkinCustomer.checkInTime) return null;
-    return formatTimeFromDate(walkinCustomer.checkInTime);
-  };
-
-  const getCheckOutTime = (walkinCustomer) => {
-    if (!walkinCustomer.checkOutTime) return null;
-    return formatTimeFromDate(walkinCustomer.checkOutTime);
-  };
+  /* ---------------- Columns ---------------- */
+  const columns = [
+    {
+      key: 'date',
+      label: 'Date',
+      render: (walkinCustomer) => {
+        const walkinDate = walkinCustomer.checkInTime;
+        return walkinDate
+          ? <span className="font-medium text-dark-50">{formatDate(walkinDate)}</span>
+          : <span className="text-dark-400">—</span>;
+      },
+    },
+    {
+      key: 'checkIn',
+      label: 'Check-in',
+      render: (walkinCustomer) => {
+        const t = walkinCustomer.checkInTime ? formatTimeFromDate(walkinCustomer.checkInTime) : null;
+        if (!t) return <span className="text-dark-400">—</span>;
+        return (
+          <span className="flex items-center gap-1 text-sm text-dark-200">
+            <LogIn className="w-3.5 h-3.5 text-dark-400" />
+            {t}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'checkOut',
+      label: 'Check-out',
+      render: (walkinCustomer) => {
+        const t = walkinCustomer.checkOutTime ? formatTimeFromDate(walkinCustomer.checkOutTime) : null;
+        if (!t) {
+          return walkinCustomer.checkInTime
+            ? <span className="text-sm text-dark-400">Still inside</span>
+            : <span className="text-dark-400">—</span>;
+        }
+        return (
+          <span className="flex items-center gap-1 text-sm text-dark-200">
+            <LogOut className="w-3.5 h-3.5 text-dark-400" />
+            {t}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (walkinCustomer) => {
+        const { label, variant } = getStatusBadge(walkinCustomer.status);
+        return <Badge variant={variant}>{label}</Badge>;
+      },
+    },
+  ];
 
   /* ---------------- Render ---------------- */
   return (
@@ -85,84 +119,30 @@ const WalkinCustomerTab = ({ member }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-dark-50">Walk-In Attendance</h3>
+        <ReloadButton onReload={refetchHistory} isReloading={isRefetchingHistory} />
       </div>
 
       {/* Walkin History */}
-      {isLoadingHistory ? (
-        <div className="text-center py-8 text-dark-400">Loading attendance records...</div>
-      ) : (
-        <div>
-          <CardList
-            cards={walkinHistory}
-            renderTitle={(walkinCustomer) => {
-              const walkin = walkinCustomer.walkin;
-              const walkinDate = walkin?.date;
-              return walkinDate ? formatDate(walkinDate) : 'Walk-In Session';
-            }}
-            renderContent={(walkinCustomer) => {
-              const checkInTime = getCheckInTime(walkinCustomer);
-              const checkOutTime = getCheckOutTime(walkinCustomer);
+      <div className="card">
+        <DataTable
+          columns={columns}
+          data={walkinHistory}
+          loading={isLoadingHistory || isRefetchingHistory}
+          emptyMessage="No walk-in attendance records found"
+        />
+      </div>
 
-              return (
-                <div className="flex items-center gap-4">
-                  {checkInTime && (
-                    <div className="flex items-center gap-1">
-                      <LogIn className="w-4 h-4" />
-                      {checkInTime}
-                    </div>
-                  )}
-                  {checkOutTime && (
-                    <div className="flex items-center gap-1">
-                      <LogOut className="w-4 h-4" />
-                      {checkOutTime}
-                    </div>
-                  )}
-                  {!checkOutTime && checkInTime && (
-                    <span className="text-sm text-dark-400">Still inside</span>
-                  )}
-                </div>
-              );
-            }}
-            showFooter={false}
-            badges={[
-              {
-                label: '',
-                getValue: (walkinCustomer) => {
-                  const walkinDate = getWalkinDate(walkinCustomer);
-                  return walkinDate ? formatDate(walkinDate) : '';
-                },
-                variant: 'default',
-              },
-              {
-                label: '',
-                getValue: (walkinCustomer) => {
-                  const statusInfo = getStatusBadge(walkinCustomer.status);
-                  return statusInfo.label;
-                },
-                getVariant: (walkinCustomer) => {
-                  const statusInfo = getStatusBadge(walkinCustomer.status);
-                  return statusInfo.variant;
-                },
-              },
-            ]}
-            showActions={false}
-            emptyStateMessage="No walk-in attendance records found"
-            emptyStateIcon={Calendar}
-          />
-
-          {/* Pagination */}
-          {historyPagination.lastPage > 1 && (
-            <Pagination
-              currentPage={historyPage}
-              lastPage={historyPagination.lastPage}
-              from={historyPagination.from}
-              to={historyPagination.to}
-              total={historyPagination.total}
-              onPrev={() => handleHistoryPageChange(Math.max(historyPage - 1, 1))}
-              onNext={() => handleHistoryPageChange(Math.min(historyPage + 1, historyPagination.lastPage || 1))}
-            />
-          )}
-        </div>
+      {/* Pagination */}
+      {historyPagination.lastPage > 1 && (
+        <Pagination
+          currentPage={historyPage}
+          lastPage={historyPagination.lastPage}
+          from={historyPagination.from}
+          to={historyPagination.to}
+          total={historyPagination.total}
+          onPrev={() => handleHistoryPageChange(Math.max(historyPage - 1, 1))}
+          onNext={() => handleHistoryPageChange(Math.min(historyPage + 1, historyPagination.lastPage || 1))}
+        />
       )}
     </div>
   );

@@ -4,7 +4,7 @@ import Layout from '../../layout/Layout';
 import DataTable from '../../components/DataTable';
 import { Avatar, Badge } from '../../components/common';
 import StatCard from '../../components/common/StatCard';
-import { Users, CalendarDays, ChevronRight } from 'lucide-react';
+import { Users, CalendarDays } from 'lucide-react';
 import { useAuth } from '../../shared/context/AuthContext';
 import { dashboardService } from '../../shared/services/dashboardService';
 import DashboardUpcomingSessions from '../../components/dashboard/DashboardUpcomingSessions';
@@ -204,7 +204,7 @@ const TrainerDashboard = () => {
         />
       </div>
 
-      <div className="mb-5">
+      <div className="mb-6">
         <DashboardUpcomingSessions
           sessions={sessions}
           loading={sessionsLoading}
@@ -212,106 +212,82 @@ const TrainerDashboard = () => {
         />
       </div>
 
-      <div className="card !p-3 sm:!p-4 mb-8">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-dark-50 sm:text-base">Assigned PT clients</h3>
-            <p className="mt-0.5 truncate text-[11px] text-dark-500">
-              Tap a row to open the member profile
-            </p>
-          </div>
-        </div>
-        {ptLoading ? (
-          <p className="py-5 text-center text-xs text-dark-400">Loading clients…</p>
-        ) : ptError ? (
-          <div className="py-6 text-center">
-            <p className="mb-3 text-danger-500 text-sm">{ptError}</p>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => setPtRefresh((n) => n + 1)}
-            >
-              Retry
-            </button>
-          </div>
-        ) : ptPayload.members.length === 0 ? (
-          <p className="py-5 text-center text-xs text-dark-400">No PT clients assigned</p>
-        ) : (
-          <>
-            <ul
-              role="list"
-              className="overflow-hidden rounded-md border border-dark-600/70 bg-dark-900/20"
-            >
-              {ptPayload.members.map((member) => (
-                <li key={member.id} className="border-b border-dark-700/50 last:border-b-0">
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/members/${member.id}`)}
-                    className="group grid w-full grid-cols-[auto_1fr_auto] items-center gap-2 px-2 py-1 text-left transition-colors hover:bg-dark-700/40 sm:gap-3 sm:px-2.5 sm:py-1"
-                  >
-                    <Avatar src={member.photo} name={member.name} size="xs" />
-                    <div className="min-w-0 py-px">
-                      <p className="truncate text-[13px] font-medium leading-tight text-dark-50">{member.name}</p>
-                      <p className="truncate text-[11px] leading-tight text-dark-400">{member.membership}</p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Badge
-                        size="sm"
-                        className="!px-1.5 !py-px text-[10px]"
-                        variant={
-                          member.membershipStatus === 'active'
-                            ? 'success'
-                            : member.membershipStatus === 'expiring'
-                              ? 'warning'
-                              : 'danger'
-                        }
-                      >
-                        {member.membershipStatus}
-                      </Badge>
-                      <ChevronRight
-                        className="size-3.5 text-dark-500 opacity-0 transition-opacity group-hover:opacity-80"
-                        aria-hidden
-                      />
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
-            {ptPayload.total > 10 && (
-              <div className="mt-4 flex justify-center">
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={() => navigate('/members?assignedPtCoach=self')}
-                >
-                  Load more
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {stats && (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Assigned PT Clients */}
         <div className="card">
           <DataTable
-            title="Memberships expiring soon"
+            title="Assigned PT Clients"
+            actionButton={
+              ptPayload.total > 10 ? (
+                <button
+                  type="button"
+                  onClick={() => navigate('/members?assignedPtCoach=self')}
+                  className="text-sm text-primary-500 hover:text-primary-400 font-medium cursor-pointer"
+                >
+                  View all →
+                </button>
+              ) : null
+            }
+            columns={[
+              {
+                key: 'member',
+                label: 'Member',
+                render: (row) => (
+                  <div className="flex items-center gap-3">
+                    <Avatar src={row.photo} name={row.name} size="sm" />
+                    <div>
+                      <p className="font-medium text-dark-50">{row.name}</p>
+                      <p className="text-xs text-dark-400">{row.membership}</p>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: 'membershipStatus',
+                label: 'Status',
+                render: (row) => (
+                  <Badge
+                    variant={
+                      row.membershipStatus === 'active'
+                        ? 'success'
+                        : row.membershipStatus === 'expiring'
+                          ? 'warning'
+                          : 'danger'
+                    }
+                  >
+                    {row.membershipStatus}
+                  </Badge>
+                ),
+              },
+            ]}
+            data={ptPayload.members}
+            loading={ptLoading}
+            onRowClick={(row) => navigate(`/members/${row.id}`)}
+            emptyMessage="No PT clients assigned"
+          />
+        </div>
+
+        {/* Memberships Expiring Soon */}
+        <div className="card">
+          <DataTable
+            title="Memberships Expiring Soon"
             actionButton={
               <button
                 type="button"
                 onClick={() => navigate('/members')}
-                className="text-sm text-primary-500 hover:text-primary-600 font-medium cursor-pointer"
+                className="text-sm text-primary-500 hover:text-primary-400 font-medium cursor-pointer"
               >
                 View all members →
               </button>
             }
             columns={expiringColumns}
-            data={stats.expiringMembersList || []}
+            data={stats?.expiringMembersList || []}
+            loading={!stats && statsLoading}
             onRowClick={(member) => navigate(`/members/${member.id}`)}
             emptyMessage="No memberships expiring in the next 7 days"
           />
         </div>
-      )}
+      </div>
     </Layout>
   );
 };

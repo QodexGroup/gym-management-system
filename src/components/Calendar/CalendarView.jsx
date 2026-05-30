@@ -77,27 +77,30 @@ const CalendarView = ({
       <div className="lg:col-span-2 card">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <button onClick={prevMonth} className="p-2 hover:bg-dark-700 rounded-lg">
-              <ChevronLeft className="w-5 h-5 text-dark-300" />
-            </button>
-            <h2 className="text-xl font-semibold text-dark-50 min-w-[180px] text-center">{format(calendarDate, 'MMMM yyyy')}</h2>
-            <button onClick={nextMonth} className="p-2 hover:bg-dark-700 rounded-lg">
-              <ChevronRight className="w-5 h-5 text-dark-300" />
-            </button>
+          <button onClick={prevMonth} className="p-2 hover:bg-dark-700 rounded-lg flex-shrink-0">
+            <ChevronLeft className="w-5 h-5 text-dark-300" />
+          </button>
+          <div className="flex flex-col items-center">
+            <h2 className="text-lg sm:text-xl font-semibold text-dark-50">{format(calendarDate, 'MMMM yyyy')}</h2>
+            <button onClick={goToToday} className="text-xs sm:text-sm font-medium text-primary-500 hover:text-primary-400 transition-colors mt-0.5">Today</button>
           </div>
-          <button onClick={goToToday} className="px-4 py-2 text-sm font-medium text-primary-500 hover:bg-primary-500/10 rounded-lg">Today</button>
+          <button onClick={nextMonth} className="p-2 hover:bg-dark-700 rounded-lg flex-shrink-0">
+            <ChevronRight className="w-5 h-5 text-dark-300" />
+          </button>
         </div>
 
-        {/* Week Days */}
+        {/* Week Days — single letter on mobile, abbreviated on sm+ */}
         <div className="grid grid-cols-7 mb-2">
           {weekDays.map(day => (
-            <div key={day} className="text-center text-sm font-semibold text-dark-400 py-2">{day}</div>
+            <div key={day} className="text-center text-xs sm:text-sm font-semibold text-dark-400 py-2">
+              <span className="sm:hidden">{day[0]}</span>
+              <span className="hidden sm:inline">{day}</span>
+            </div>
           ))}
         </div>
 
         {/* Days */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
           {calendarDays.map((day, idx) => {
             const daySessions = sessionsForDate(day);
             const isToday = isSameDay(day, new Date());
@@ -108,14 +111,39 @@ const CalendarView = ({
               <div
                 key={idx}
                 onClick={() => handleSelectDate(day)}
-                className={`min-h-[100px] p-2 border border-dark-700 rounded-lg cursor-pointer transition-all ${
+                className={`min-h-[44px] sm:min-h-[80px] md:min-h-[100px] p-1 sm:p-2 border border-dark-700 rounded-lg cursor-pointer transition-all ${
                   !isCurrentMonth ? 'bg-dark-900 opacity-50' : 'bg-dark-800'
                 } ${isSelected ? 'ring-2 ring-primary-500' : ''} ${isToday ? 'bg-primary-500/10' : ''} hover:bg-dark-700`}
               >
-                <div className={`text-sm font-medium mb-1 ${isToday ? 'w-7 h-7 bg-primary-500 text-white rounded-full flex items-center justify-center' : isCurrentMonth ? 'text-dark-50' : 'text-dark-400'}`}>
+                {/* Date number */}
+                <div className={`text-xs sm:text-sm font-medium mb-1 flex items-center justify-center sm:justify-start ${
+                  isToday
+                    ? 'w-6 h-6 sm:w-7 sm:h-7 bg-primary-500 text-white rounded-full'
+                    : isCurrentMonth ? 'text-dark-50' : 'text-dark-400'
+                }`}>
                   {format(day, 'd')}
                 </div>
-                <div className="space-y-1">
+
+                {/* Mobile: colored dots */}
+                {daySessions.length > 0 && (
+                  <div className="flex sm:hidden flex-wrap gap-0.5 justify-center mt-0.5">
+                    {daySessions.slice(0, 3).map(s => {
+                      const colors = getSessionTypeColors(s.type);
+                      return (
+                        <span
+                          key={s.id}
+                          className={`w-1.5 h-1.5 rounded-full ${colors.dot}`}
+                        />
+                      );
+                    })}
+                    {daySessions.length > 3 && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-dark-400" />
+                    )}
+                  </div>
+                )}
+
+                {/* sm+: text event pills */}
+                <div className="hidden sm:block space-y-1">
                   {daySessions.slice(0, 2).map(s => {
                     const colors = getSessionTypeColors(s.type);
                     return (

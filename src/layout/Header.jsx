@@ -37,18 +37,28 @@ const Header = ({ title, subtitle }) => {
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-dark-800/80 backdrop-blur-md border-b border-dark-700">
-      <div className="flex items-center justify-between px-6 py-4">
-        {/* Title */}
-        <div>
+    <header className="sticky top-0 z-[41] bg-dark-800/80 backdrop-blur-md border-b border-dark-700">
+      <div className="flex items-center gap-3 px-6 py-4">
+        {/* Title — desktop only; mr-auto pushes the right section to the far right */}
+        <div className="hidden lg:block shrink-0 mr-auto">
           <h1 className="text-2xl font-bold text-dark-50">{title}</h1>
           {subtitle && <p className="text-sm text-dark-400 mt-0.5">{subtitle}</p>}
         </div>
 
+        {/* Search — mobile/tablet: fills the empty left space; hidden on desktop where the
+            right-section version takes over */}
+        <div className="flex-1 min-w-0 lg:hidden">
+          <SearchableClientInput
+            placeholder="Search client by name"
+            onSelect={handleCustomerSelect}
+            label=""
+          />
+        </div>
+
         {/* Right Section */}
-        <div className="flex items-center gap-4">
-          {/* Search */}
-          <div className="hidden md:block">
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Search — desktop only */}
+          <div className="hidden lg:block">
             <SearchableClientInput
               placeholder="Search client by name"
               className="w-64"
@@ -57,18 +67,19 @@ const Header = ({ title, subtitle }) => {
             />
           </div>
 
+          {/* QR Scanner — tablet (md) and up, hidden on mobile */}
           <button
             onClick={() => navigate('/kiosk/qr-scanner')}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-dark-700 text-dark-100 hover:bg-dark-600 transition-colors"
+            className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-dark-700 text-dark-100 hover:bg-dark-600 transition-colors"
           >
             <QrCode className="w-4 h-4" />
-            <span className="hidden sm:inline text-sm font-medium">QR Scanner</span>
+            <span className="hidden lg:inline text-sm font-medium">QR Scanner</span>
           </button>
 
-          {/* Notifications */}
+          {/* Notifications — always visible */}
           <NotificationBell />
 
-          {/* User Menu */}
+          {/* User Menu — always visible */}
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}

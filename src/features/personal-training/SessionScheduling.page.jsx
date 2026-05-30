@@ -4,12 +4,13 @@ import CalendarView from '../../components/Calendar/CalendarView';
 import CalendarListView from '../../components/Calendar/CalendarListView';
 import CalendarToolbar from '../../components/Calendar/CalendarToolbar';
 import SessionModals from './SessionModals';
-import { Plus, User } from 'lucide-react';
+import { Users, Dumbbell, User } from 'lucide-react';
 import { Alert } from '../../shared/utils/alert';
 import { SESSION_STATUS } from '../../shared/constants/ptConstants';
 import {
   SESSION_TYPES,
   SESSION_TYPE_LABELS,
+  SESSION_TYPE_SHORT_LABELS,
   VIEW_MODE,
   getFilterButtonColor,
   getSessionStyle,
@@ -391,6 +392,7 @@ const SessionScheduling = () => {
       .map(([key, label]) => ({
         key,
         label,
+        shortLabel: SESSION_TYPE_SHORT_LABELS[key],
         isActive: typeFilters[key] !== false,
         getColorClass: getFilterButtonColor,
       }));
@@ -404,7 +406,7 @@ const SessionScheduling = () => {
       buttons.push({
         key: 'book-group-class',
         label: 'Book Group Class',
-        icon: Plus,
+        icon: Users,
         onClick: () => {
           setSelectedBooking(null);
           setShowGroupClassModal(true);
@@ -416,7 +418,7 @@ const SessionScheduling = () => {
       buttons.push({
         key: 'book-pt-session',
         label: 'Book PT Session',
-        icon: Plus,
+        icon: Dumbbell,
         onClick: () => {
           setSelectedSession(null);
           setShowModal(true);

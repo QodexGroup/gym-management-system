@@ -4,7 +4,7 @@
   }
 
   .stat-card {
-    @apply bg-dark-800 rounded-xl shadow-soft p-6 border-l-4 border-dark-700;
+    @apply bg-dark-800 rounded-xl shadow-soft p-6 border-l-4 border-dark-700 overflow-hidden;
   }
 
   /* Card heading defaults — headings without an explicit text-* class inherit dark-50 */

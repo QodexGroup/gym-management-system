@@ -24,13 +24,15 @@ const Avatar = ({ src, name, size = 'md', status }) => {
   };
 
   return (
-    <div className="relative inline-block">
+    <div className="relative inline-block shrink-0">
       {src ? (
-        <img
-          src={src}
-          alt={name}
-          className={`${sizeClasses[size]} rounded-full object-cover`}
-        />
+        <div className={`${sizeClasses[size]} rounded-full overflow-hidden shrink-0`}>
+          <img
+            src={src}
+            alt={name}
+            className="w-full h-full object-cover"
+          />
+        </div>
       ) : (
         <div
           className={`${sizeClasses[size]} rounded-full bg-primary-100 text-primary-600 font-semibold flex items-center justify-center ${size === 'xs' ? 'text-[10px]' : ''}`}

@@ -1,138 +1,177 @@
-﻿import { format, parseISO, isToday } from 'date-fns';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { format, parseISO } from 'date-fns';
+import DataTable from '../DataTable';
 import { Badge } from '../common';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, Users, Dumbbell } from 'lucide-react';
 import { CLASS_SCHEDULE_TYPE } from '../../shared/constants/classScheduleConstants';
 
-/**
- * Compact dashboard list: dense rows, minimal chrome, scan-friendly hierarchy.
- *
- * @param {Object} props
- * @param {Array} props.sessions
- * @param {boolean} props.loading
- * @param {string|null} props.error
- */
+/* ─── helpers ─── */
+const fmtTime = (iso) => {
+  try { return format(parseISO(iso), 'h:mm a'); } catch { return '—'; }
+};
+const fmtDate = (iso) => {
+  try { return format(parseISO(iso), 'MMM d'); } catch { return '—'; }
+};
+
+/* ─── resolve coach name from API shape: fullname | firstname + lastname ─── */
+const coachName = (coach) =>
+  coach?.fullname ||
+  `${coach?.firstname || ''} ${coach?.lastname || ''}`.trim() ||
+  '—';
+
+/* ─── shared "Date & Time" column ─── */
+const dateTimeCol = {
+  key: 'startTime',
+  label: 'Date & Time',
+  render: (s) => (
+    <div>
+      <p className="font-medium text-dark-50 text-sm">{fmtTime(s.startTime)}</p>
+      <p className="text-xs text-dark-400 mt-0.5">{fmtDate(s.startTime)}</p>
+    </div>
+  ),
+};
+
+/* ─── Group Schedule columns ─── */
+const groupColumns = [
+  dateTimeCol,
+  {
+    key: 'className',
+    label: 'Class',
+    render: (s) => (
+      <span className="font-medium text-dark-50 text-sm">{s.className || '—'}</span>
+    ),
+  },
+  {
+    key: 'coach',
+    label: 'Coach',
+    render: (s) => (
+      <span className="text-sm text-dark-200">{coachName(s.coach)}</span>
+    ),
+  },
+  {
+    key: 'participants',
+    label: 'Clients',
+    render: (s) => {
+      const count = s.participants?.length ?? 0;
+      return (
+        <Badge variant={count > 0 ? 'primary' : 'default'}>
+          {count} enrolled
+        </Badge>
+      );
+    },
+  },
+];
+
+/* ─── PT Training columns ─── */
+const ptColumns = [
+  dateTimeCol,
+  {
+    key: 'client',
+    label: 'Client',
+    render: (s) => {
+      const names = s.participants?.map((p) => p.name).join(', ') || '—';
+      return <span className="text-sm text-dark-50">{names}</span>;
+    },
+  },
+  {
+    key: 'coach',
+    label: 'Coach',
+    render: (s) => (
+      <span className="text-sm text-dark-200">{coachName(s.coach)}</span>
+    ),
+  },
+];
+
+/* ─── Sub-panel heading ─── */
+const PanelHeading = ({ icon: Icon, label, count }) => (
+  <div className="flex items-center gap-2 mb-4">
+    <Icon className="w-4 h-4 text-primary-400 flex-shrink-0" />
+    <h4 className="text-sm font-semibold text-dark-50">{label}</h4>
+    {count != null && (
+      <Badge variant="default" size="sm">{count}</Badge>
+    )}
+  </div>
+);
+
+/* ─── Main component ─── */
 const DashboardUpcomingSessions = ({ sessions = [], loading, error }) => {
   const navigate = useNavigate();
 
-  const shellCls = 'card !p-3 sm:!p-4';
-
-  const header = (
-    <div className="flex items-start justify-between gap-3 mb-2 sm:items-center">
-      <div className="flex min-w-0 items-center gap-2">
-        <CalendarDays className="size-4 shrink-0 text-primary-400 sm:size-[1.125rem]" aria-hidden />
-        <h3 className="text-sm font-semibold leading-tight text-dark-50 sm:text-base">
-          Today&apos;s schedule & upcoming
-        </h3>
-      </div>
-      <button
-        type="button"
-        onClick={() => navigate('/sessions')}
-        className="shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-medium text-primary-400 underline-offset-2 hover:bg-dark-700/60 hover:text-primary-300 hover:underline sm:text-xs"
-      >
-        Calendar →
-      </button>
-    </div>
-  );
-
-  if (loading) {
-    return (
-      <div className={shellCls}>
-        {header}
-        <p className="py-6 text-center text-xs text-dark-400">Loading sessions…</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={shellCls}>
-        {header}
-        <p className="text-danger-500 text-xs">{error}</p>
-      </div>
-    );
-  }
+  const { groupSessions, ptSessions } = useMemo(() => ({
+    groupSessions: sessions.filter(
+      (s) => s.classType !== CLASS_SCHEDULE_TYPE.PERSONAL_TRAINING
+    ),
+    ptSessions: sessions.filter(
+      (s) => s.classType === CLASS_SCHEDULE_TYPE.PERSONAL_TRAINING
+    ),
+  }), [sessions]);
 
   return (
-    <div className={shellCls}>
-      {header}
-
-      {sessions.length === 0 ? (
-        <p className="py-5 text-center text-xs text-dark-400">No upcoming group or PT sessions</p>
-      ) : (
-        <div
-          role="list"
-          aria-label={`Upcoming sessions, ${sessions.length} total — scroll to see more`}
-          className="min-h-0 max-h-[min(24rem,calc(100vh-13rem))] overflow-y-auto overflow-x-hidden scroll-smooth rounded-md border border-dark-600/70 bg-dark-900/20 [scrollbar-color:rgb(71_85_105)_rgb(15_23_42)] [scrollbar-width:thin]"
+    <div className="card">
+      {/* Card header */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <CalendarDays className="w-5 h-5 text-primary-400" />
+          <h3 className="text-base font-semibold text-dark-50">Upcoming Schedule</h3>
+        </div>
+        <button
+          type="button"
+          onClick={() => navigate('/sessions')}
+          className="text-xs font-medium text-primary-400 hover:text-primary-300 transition-colors"
         >
-          {sessions.map((s, idx) => {
-            const start = s.startTime ? parseISO(s.startTime) : null;
-            const prev = idx > 0 ? sessions[idx - 1] : null;
-            const prevStart = prev?.startTime ? parseISO(prev.startTime) : null;
-            const bucket = start && isToday(start) ? 'today' : 'upcoming';
-            const prevBucket = prevStart && isToday(prevStart) ? 'today' : 'upcoming';
-            const showHeading = idx === 0 || bucket !== prevBucket;
+          View Calendar →
+        </button>
+      </div>
 
-            const typeLabel =
-              s.classType === CLASS_SCHEDULE_TYPE.PERSONAL_TRAINING ? 'PT' : 'Group';
-            const typeVariant = s.classType === CLASS_SCHEDULE_TYPE.PERSONAL_TRAINING ? 'accent' : 'primary';
+      {/* Loading */}
+      {loading && (
+        <div className="text-center py-10 text-dark-400 text-sm">Loading sessions…</div>
+      )}
 
-            const participantLine =
-              s.participants && s.participants.length > 0
-                ? s.participants.map((p) => p.name).join(', ')
-                : '—';
-            const coachName = s.coach?.fullName || '—';
+      {/* Error */}
+      {!loading && error && (
+        <div className="text-center py-10 text-danger-500 text-sm">{error}</div>
+      )}
 
-            return (
-              <div key={s.id} role="listitem" className="border-b border-dark-700/50 last:border-b-0">
-                {showHeading && (
-                  <div className="sticky top-0 z-[1] border-b border-dark-700/60 bg-dark-800/95 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-dark-400 backdrop-blur-sm">
-                    {bucket === 'today' ? 'Today' : 'Upcoming'}
-                  </div>
-                )}
-                <div className="grid grid-cols-[3rem_minmax(0,1fr)] items-start gap-x-2 px-2 py-1 sm:grid-cols-[4.75rem_minmax(0,1fr)_auto] sm:items-center sm:gap-x-3 sm:px-2.5 sm:py-1">
-                  {/* Time */}
-                  <div className="pt-px tabular-nums sm:pt-0">
-                    {start ? (
-                      <div className="leading-none">
-                        <span className="block text-[11px] font-bold tracking-tight text-primary-400 sm:text-xs">
-                          {format(start, 'h:mm a')}
-                        </span>
-                        <span className="mt-0.5 block text-[10px] text-dark-500">{format(start, 'MMM d')}</span>
-                      </div>
-                    ) : (
-                      <span className="text-[11px] text-dark-400">—</span>
-                    )}
-                  </div>
+      {/* Two-column split */}
+      {!loading && !error && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-dark-700">
 
-                  {/* Title + meta (stacked keeps rows short on mobile) */}
-                  <div className="min-w-0">
-                    <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                      <span className="truncate text-[13px] font-medium leading-snug text-dark-50 sm:text-sm">
-                        {s.className || 'Session'}
-                      </span>
-                    </div>
-                    <div className="mt-0.5 truncate text-[11px] leading-snug text-dark-400">
-                      <span className="text-dark-500">Coach</span>{' '}
-                      <span className="font-medium text-dark-200">{coachName}</span>
-                      <span className="text-dark-200" aria-hidden>
-                        {' · '}
-                      </span>
-                      <span className="text-dark-500">Clients</span>{' '}
-                      <span className="font-medium text-dark-100">{participantLine}</span>
-                    </div>
-                  </div>
+          {/* ── Group Schedule ── */}
+          <div className="pb-6 lg:pb-0 lg:pr-6">
+            <PanelHeading
+              icon={Users}
+              label="Group Schedule"
+              count={groupSessions.length}
+            />
+            <div className="card !p-0 overflow-hidden">
+              <DataTable
+                columns={groupColumns}
+                data={groupSessions}
+                loading={false}
+                emptyMessage="No upcoming group classes"
+              />
+            </div>
+          </div>
 
-                  {/* Badge: own column on sm+ to avoid widening the title block */}
-                  <div className="col-span-2 flex justify-start pl-[calc(3rem+0.5rem)] sm:col-span-1 sm:justify-self-end sm:pl-0">
-                    <Badge size="sm" variant={typeVariant} className="!px-1.5 !py-px text-[10px]">
-                      {typeLabel}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {/* ── PT Training ── */}
+          <div className="pt-6 lg:pt-0 lg:pl-6">
+            <PanelHeading
+              icon={Dumbbell}
+              label="PT Training"
+              count={ptSessions.length}
+            />
+            <div className="card !p-0 overflow-hidden">
+              <DataTable
+                columns={ptColumns}
+                data={ptSessions}
+                loading={false}
+                emptyMessage="No upcoming PT sessions"
+              />
+            </div>
+          </div>
+
         </div>
       )}
     </div>

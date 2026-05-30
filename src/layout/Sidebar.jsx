@@ -174,15 +174,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile = false }) => {
           </div>
         </div>
 
-        {/* Collapse Toggle — desktop only */}
-        {!isMobile && (
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="absolute -right-3 top-20 w-6 h-6 bg-chrome-elevated border border-chrome-border rounded-full flex items-center justify-center text-chrome-muted hover:text-chrome-text hover:bg-chrome-hover transition-colors shadow-sm"
-          >
-            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </button>
-        )}
+        {/* Collapse Toggle — rendered inside aside for layout but escaped via portal-like fixed z */}
+        {/* Intentionally NOT inside the aside stacking context to stay above the z-[41] header */}
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto scrollbar-thin py-4 px-2">
@@ -255,6 +248,17 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile = false }) => {
           ))}
         </nav>
       </aside>
+
+      {/* Collapse toggle — fixed outside aside so it stays above z-[41] header */}
+      {!isMobile && (
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          style={{ left: `${sidebarWidth - 12}px` }}
+          className="fixed top-[72px] z-[45] w-6 h-6 bg-chrome-elevated border border-chrome-border rounded-full flex items-center justify-center text-chrome-muted hover:text-chrome-text hover:bg-chrome-hover transition-[left] duration-300 shadow-sm"
+        >
+          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
+      )}
 
       {/* Flyout — rendered outside aside to escape overflow clipping */}
       {flyout && (

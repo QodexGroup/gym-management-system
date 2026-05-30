@@ -13,6 +13,7 @@ const BELL_LIST_LIMIT = 5;
 const NotificationBell = () => {
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
+  const wrapperRef = useRef(null);
   const dropdownRef = useRef(null);
 
   const { data: listData, isLoading: listLoading } = useNotifications(1, BELL_LIST_LIMIT);
@@ -25,7 +26,9 @@ const NotificationBell = () => {
   useEffect(() => {
     if (!showDropdown) return;
     const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowDropdown(false);
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -56,21 +59,21 @@ const NotificationBell = () => {
 
   const getNotificationIcon = (type) => {
     switch (type) {
-      case 'membership_expiring':
-        return '⏰';
-      case 'payment_received':
-        return '💰';
-      case 'customer_registered':
-        return '👤';
-      default:
-        return '🔔';
+      case 'membership_expiring': return '⏰';
+      case 'payment_received':    return '💰';
+      case 'customer_registered': return '👤';
+      default:                    return '🔔';
     }
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    // md:relative — on desktop, containing block = this wrapper (bell button)
+    // on mobile (no relative), containing block = sticky <header>
+    // so right-4/top-full on mobile pins the dropdown to the header's right edge
+    // instead of the bell button, keeping it fully within the visible viewport.
+    <div className="md:relative" ref={wrapperRef}>
       <button
-        onClick={() => setShowDropdown(!showDropdown)}
+        onClick={() => setShowDropdown((prev) => !prev)}
         className="relative p-2.5 hover:bg-dark-700 rounded-xl transition-colors"
       >
         <Bell className="w-5 h-5 text-dark-300" />
@@ -82,8 +85,12 @@ const NotificationBell = () => {
       </button>
 
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-96 bg-dark-800 rounded-xl shadow-lg border border-dark-700 overflow-hidden z-50">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-dark-700">
+        <div
+          ref={dropdownRef}
+          className="absolute top-full mt-1 right-4 w-[calc(100vw-5.5rem)] md:right-0 md:mt-2 md:w-96 max-h-[80vh] z-50 bg-dark-800 rounded-xl shadow-lg border border-dark-700 overflow-hidden flex flex-col"
+        >
+          {/* Header — pinned, never scrolls */}
+          <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-dark-700">
             <div>
               <h3 className="font-semibold text-dark-50">Notifications</h3>
               {unreadCount > 0 && (
@@ -101,7 +108,8 @@ const NotificationBell = () => {
             )}
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
+          {/* Scrollable list — takes all remaining height */}
+          <div className="flex-1 overflow-y-auto min-h-0">
             {listLoading && notifications.length === 0 ? (
               <div className="px-4 py-8 text-center text-dark-400">
                 <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full mx-auto" />
@@ -117,7 +125,9 @@ const NotificationBell = () => {
                 <button
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
-                  className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-dark-700 transition-colors border-b border-dark-700/50 ${!notification.isRead ? 'bg-dark-700/30' : ''}`}
+                  className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-dark-700 transition-colors border-b border-dark-700/50 ${
+                    !notification.isRead ? 'bg-dark-700/30' : ''
+                  }`}
                 >
                   <div className="flex-shrink-0 text-2xl">
                     {getNotificationIcon(notification.type)}
@@ -139,8 +149,9 @@ const NotificationBell = () => {
             )}
           </div>
 
+          {/* Footer — pinned, never scrolls */}
           {notifications.length > 0 && (
-            <div className="px-4 py-3 border-t border-dark-700">
+            <div className="flex-shrink-0 px-4 py-3 border-t border-dark-700">
               <button
                 onClick={handleViewAll}
                 className="w-full text-sm text-primary-500 hover:text-primary-400 transition-colors font-medium"

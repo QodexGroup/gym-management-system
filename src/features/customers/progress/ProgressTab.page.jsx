@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Plus, Scale, Heart, Dumbbell, Target, Heart as HeartIcon, Droplet, Zap, Ruler } from 'lucide-react';
 
 import DataTable from '../../../components/DataTable';
-import { Pagination, ImageLightbox } from '../../../components/common';
+import { Pagination, ImageLightbox, ReloadButton } from '../../../components/common';
 import StatsCards from '../../../components/common/StatsCards';
 
 import { useCustomerProgress, useDeleteCustomerProgress } from '../../../shared/hooks/useCustomerProgress';
@@ -28,7 +28,7 @@ const ProgressTab = ({ member }) => {
   const [lightboxImages, setLightboxImages] = useState([]);
   const [lightboxCurrentIndex, setLightboxCurrentIndex] = useState(0);
 
-  const { data, isLoading } = useCustomerProgress(member?.id, {
+  const { data, isLoading, refetch, isRefetching } = useCustomerProgress(member?.id, {
     page: currentPage,
     pagelimit: 50,
     relations: 'recordedByUser,files'
@@ -220,21 +220,22 @@ const ProgressTab = ({ member }) => {
       <StatsCards stats={stats} dark={true} size="sm" iconPosition="left" iconColor='light' />
 
       {/* Header */}
-      {hasPermission('progress_tracking_create') && (
-        <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-2">
+        <ReloadButton onReload={refetch} isReloading={isRefetching} />
+        {hasPermission('progress_tracking_create') && (
           <button onClick={() => setShowModal(true)} className="btn-primary flex items-center gap-2">
             <Plus className="w-4 h-4" />
             Create Progress Tracking
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Table */}
       <div className="card">
         <DataTable
           columns={columns}
           data={progressLogs}
-          loading={isLoading}
+          loading={isLoading || isRefetching}
           onRowClick={handleRowClick}
         />
       </div>

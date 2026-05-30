@@ -5,11 +5,11 @@ const StatsCards = ({ stats = [], dark = true, size = 'md', iconPosition = 'righ
 
   const gridColsClass = {
     1: 'grid-cols-1',
-    2: 'md:grid-cols-2',
-    3: 'md:grid-cols-3',
-    4: 'md:grid-cols-4',
-    5: 'md:grid-cols-5',
-  }[columns] || 'md:grid-cols-4';
+    2: 'sm:grid-cols-2',
+    3: 'sm:grid-cols-2 lg:grid-cols-3',
+    4: 'sm:grid-cols-2 lg:grid-cols-4',
+    5: 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5',
+  }[columns] || 'sm:grid-cols-2 lg:grid-cols-4';
 
   return (
     <div className={`grid grid-cols-1 ${gridColsClass} gap-6 mb-6 ${variant === 'gradient' ? 'no-print' : ''}`}>

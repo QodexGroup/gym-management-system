@@ -1,4 +1,4 @@
-﻿import { useRef, useState, useMemo, useCallback, useEffect } from 'react';
+﻿import { useRef, useState, useMemo, useCallback } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import Layout from '../../layout/Layout';
 import { DateRangeExportBar, PrintArea, MessageCard, StatsCards } from '../../components/common';
@@ -39,7 +39,7 @@ import { useReportCollection } from '../../shared/hooks/useReportCollection';
 import { reportService } from '../../shared/services/reportService';
 import { exportReportToPdf, exportReportToExcel } from '../../shared/utils/reportPrintExport';
 import { APP_NAME } from '../../shared/constants/appConfig';
-import { REPORT_DATE_RANGE_OPTIONS, getReportDateRange, MAX_REPORT_ROWS, CHART_TOOLTIP_STYLE, CHART_CURSOR, CHART_PIE_ACTIVE } from '../../shared/constants/reportConstants';
+import { DEFAULT_REPORT_DATE_FROM, DEFAULT_REPORT_DATE_TO, MAX_REPORT_ROWS, CHART_TOOLTIP_STYLE, CHART_CURSOR, CHART_PIE_ACTIVE } from '../../shared/constants/reportConstants';
 import { Alert, Toast } from '../../shared/utils/alert';
 
 const categoryColors = [
@@ -48,41 +48,29 @@ const categoryColors = [
 
 const SummaryReportPage = () => {
   const printRef = useRef(null);
-  const [dateRange, setDateRange] = useState('this_month');
-  const [customDateFrom, setCustomDateFrom] = useState('');
-  const [customDateTo, setCustomDateTo] = useState('');
-  const [inputDateFrom, setInputDateFrom] = useState('');
-  const [inputDateTo, setInputDateTo] = useState('');
-  const [appliedDateRange, setAppliedDateRange] = useState('this_month');
-  const [appliedCustomFrom, setAppliedCustomFrom] = useState('');
-  const [appliedCustomTo, setAppliedCustomTo] = useState('');
+  const [dateFrom, setDateFrom] = useState(DEFAULT_REPORT_DATE_FROM);
+  const [dateTo, setDateTo] = useState(DEFAULT_REPORT_DATE_TO);
+  const [appliedFrom, setAppliedFrom] = useState(DEFAULT_REPORT_DATE_FROM);
+  const [appliedTo, setAppliedTo] = useState(DEFAULT_REPORT_DATE_TO);
   const [filterCategory, setFilterCategory] = useState('all');
 
-  const { start: dateFrom, end: dateTo } = getReportDateRange(appliedDateRange, appliedCustomFrom, appliedCustomTo);
   const { data: dashboardStats } = useReportCollection({
-    dateRange: appliedDateRange,
-    customDateFrom: appliedDateRange === 'custom' ? appliedCustomFrom : undefined,
-    customDateTo: appliedDateRange === 'custom' ? appliedCustomTo : undefined,
+    dateRange: 'custom',
+    customDateFrom: appliedFrom,
+    customDateTo: appliedTo,
   });
+
   const expenseOptions = useMemo(() => ({
     page: 1,
     pagelimit: MAX_REPORT_ROWS,
     relations: 'category',
-    filters: { dateFrom, dateTo },
-  }), [dateFrom, dateTo]);
+    filters: { dateFrom: appliedFrom, dateTo: appliedTo },
+  }), [appliedFrom, appliedTo]);
 
   const handleApply = useCallback(() => {
-    setAppliedDateRange(dateRange);
-    setAppliedCustomFrom(dateRange === 'custom' ? customDateFrom : '');
-    setAppliedCustomTo(dateRange === 'custom' ? customDateTo : '');
-  }, [dateRange, customDateFrom, customDateTo]);
-
-  useEffect(() => {
-    if (dateRange === 'custom') {
-      setInputDateFrom(customDateFrom);
-      setInputDateTo(customDateTo);
-    }
-  }, [dateRange]);
+    setAppliedFrom(dateFrom);
+    setAppliedTo(dateTo);
+  }, [dateFrom, dateTo]);
 
   const { data: expensesData } = useExpenses(expenseOptions);
   const { data: categoriesData } = useExpenseCategories({});
@@ -155,17 +143,15 @@ const SummaryReportPage = () => {
     }));
   }, [transformedExpenses, totalCollectedFromBills]);
 
-  const periodLabel =
-    appliedDateRange === 'custom' && appliedCustomFrom && appliedCustomTo
-      ? `${appliedCustomFrom} – ${appliedCustomTo}`
-      : REPORT_DATE_RANGE_OPTIONS.find((o) => o.value === appliedDateRange)?.label || appliedDateRange;
+  const periodLabel = `${appliedFrom} – ${appliedTo}`;
+
   const handleEmailReport = async () => {
     try {
       const res = await reportService.emailReport({
         reportType: 'summary',
-        dateRange: appliedDateRange,
-        dateFrom,
-        dateTo,
+        dateRange: 'custom',
+        dateFrom: appliedFrom,
+        dateTo: appliedTo,
       });
       Toast.success(res.message || 'Report request submitted. You will receive it by email.');
     } catch (err) {
@@ -217,14 +203,10 @@ const SummaryReportPage = () => {
 
   const handleExportPdf = async () => {
     try {
-      const res = await reportService.checkExportSize({ reportType: 'summary', dateFrom, dateTo });
+      const res = await reportService.checkExportSize({ reportType: 'summary', dateFrom: appliedFrom, dateTo: appliedTo });
       if (res.tooLarge) {
-        await Alert.warning(
-          'Data is too large',
-          'We will send the report to your email (PDF). The full report will be delivered via email.',
-          { confirmButtonText: 'OK' }
-        );
-        await reportService.emailReport({ reportType: 'summary', dateRange: appliedDateRange, dateFrom, dateTo, format: 'pdf' });
+        await Alert.warning('Data is too large', 'We will send the report to your email (PDF).', { confirmButtonText: 'OK' });
+        await reportService.emailReport({ reportType: 'summary', dateRange: 'custom', dateFrom: appliedFrom, dateTo: appliedTo, format: 'pdf' });
         Toast.success('Report request submitted. You will receive it by email.');
       } else {
         doExportPdf();
@@ -236,14 +218,10 @@ const SummaryReportPage = () => {
 
   const handleExportExcel = async () => {
     try {
-      const res = await reportService.checkExportSize({ reportType: 'summary', dateFrom, dateTo });
+      const res = await reportService.checkExportSize({ reportType: 'summary', dateFrom: appliedFrom, dateTo: appliedTo });
       if (res.tooLarge) {
-        await Alert.warning(
-          'Data is too large',
-          'We will send the report to your email (Excel). The full report will be delivered via email.',
-          { confirmButtonText: 'OK' }
-        );
-        await reportService.emailReport({ reportType: 'summary', dateRange: appliedDateRange, dateFrom, dateTo, format: 'excel' });
+        await Alert.warning('Data is too large', 'We will send the report to your email (Excel).', { confirmButtonText: 'OK' });
+        await reportService.emailReport({ reportType: 'summary', dateRange: 'custom', dateFrom: appliedFrom, dateTo: appliedTo, format: 'excel' });
         Toast.success('Report request submitted. You will receive it by email.');
       } else {
         doExportExcel();
@@ -266,16 +244,19 @@ const SummaryReportPage = () => {
   ], []);
 
   const summaryExtraFilters = (
-    <select
-      value={filterCategory}
-      onChange={(e) => setFilterCategory(e.target.value)}
-      className="px-4 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
-    >
-      <option value="all">All Categories</option>
-      {categories.map((cat) => (
-        <option key={cat.id} value={cat.name}>{cat.name}</option>
-      ))}
-    </select>
+    <div className="flex flex-col gap-1">
+      <label className="text-xs font-semibold text-dark-400 uppercase tracking-wide">Category</label>
+      <select
+        value={filterCategory}
+        onChange={(e) => setFilterCategory(e.target.value)}
+        className="px-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 rounded-lg focus:border-primary-500 outline-none"
+      >
+        <option value="all">All Categories</option>
+        {categories.map((cat) => (
+          <option key={cat.id} value={cat.name}>{cat.name}</option>
+        ))}
+      </select>
+    </div>
   );
 
   return (
@@ -298,13 +279,10 @@ const SummaryReportPage = () => {
       </PrintArea>
 
       <DateRangeExportBar
-        dateRange={dateRange}
-        onDateRangeChange={setDateRange}
-        dateRangeOptions={REPORT_DATE_RANGE_OPTIONS}
-        inputDateFrom={inputDateFrom}
-        inputDateTo={inputDateTo}
-        onCustomDateFromChange={(v) => { setInputDateFrom(v); setCustomDateFrom(v); }}
-        onCustomDateToChange={(v) => { setInputDateTo(v); setCustomDateTo(v); }}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        onDateFromChange={setDateFrom}
+        onDateToChange={setDateTo}
         onApply={handleApply}
         extraFilters={summaryExtraFilters}
         reportTooLarge={reportTooLarge}
@@ -335,9 +313,9 @@ const SummaryReportPage = () => {
               {profitLossData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={profitLossData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
-                    <YAxis stroke="#64748b" fontSize={12} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="month" stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} />
                     <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={CHART_TOOLTIP_STYLE} />
                     <Legend />
                     <Bar dataKey="revenue" name="Revenue" fill="#22c55e" radius={[4, 4, 0, 0]} cursor={CHART_CURSOR} />
@@ -389,9 +367,9 @@ const SummaryReportPage = () => {
               {monthlyExpenseTrend.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={monthlyExpenseTrend}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
-                    <YAxis stroke="#64748b" fontSize={12} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="month" stroke="#9ca3af" fontSize={12} />
+                    <YAxis stroke="#9ca3af" fontSize={12} />
                     <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={CHART_TOOLTIP_STYLE} />
                     <Legend />
                     <Line type="monotone" dataKey="expenses" name="Actual" stroke="#ef4444" strokeWidth={2} dot={{ fill: '#ef4444' }} />
@@ -411,14 +389,14 @@ const SummaryReportPage = () => {
                 return (
                   <div
                     key={cat.name}
-                    className="p-4 bg-dark-200/80 rounded-xl border-l-4 border-dark-600"
+                    className="p-4 bg-dark-700 rounded-xl border-l-4"
                     style={{ borderLeftColor: categoryColors[index % categoryColors.length] }}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-dark-200">{cat.name}</span>
-                      <span className="text-sm text-dark-400">{percentage}%</span>
+                      <span className="font-medium text-dark-50">{cat.name}</span>
+                      <span className="text-sm text-dark-300">{percentage}%</span>
                     </div>
-                    <p className="text-2xl font-bold text-dark-100">{formatCurrency(cat.value)}</p>
+                    <p className="text-2xl font-bold text-primary-400">{formatCurrency(cat.value)}</p>
                     <div className="mt-2 bg-dark-600 rounded-full h-2 overflow-hidden">
                       <div
                         className="h-full rounded-full opacity-90"

@@ -180,8 +180,8 @@ const CustomerList = () => {
 
       {/* Action bar */}
       <div className="card mb-6">
-        <div className="flex items-center justify-between gap-4">
-          <div className="relative max-w-md flex-1">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative sm:flex-1 sm:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
             <input
               value={searchQuery}
@@ -192,18 +192,18 @@ const CustomerList = () => {
           </div>
 
           {hasPermission('members_list_add') && (
-            <>
+            <div className="flex items-center justify-end gap-3">
               {limitMessage && <span className="text-sm text-warning-500">{limitMessage}</span>}
               <button
                 onClick={() => handleOpenModal()}
                 disabled={!canAddMember}
                 title={!canAddMember ? limitMessage : ''}
-                className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="shrink-0 whitespace-nowrap btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <UserPlus className="w-4 h-4" />
                 Add Client
               </button>
-            </>
+            </div>
           )}
         </div>
       </div>

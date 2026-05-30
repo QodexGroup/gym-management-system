@@ -153,7 +153,7 @@ const AdminDashboard = () => {
     <Layout title={pageTitle} subtitle={pageSubtitle}>
       <StatsCards stats={dashboardStats} columns={4} dark iconColor="light" />
 
-      <div className="mb-8">
+      <div className="mb-6">
         <DashboardUpcomingSessions
           sessions={sessions}
           loading={sessionsLoading}

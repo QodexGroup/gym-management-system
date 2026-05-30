@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { MoreVertical } from 'lucide-react';
 
-const DEFAULT_MAX_INLINE_ACTIONS = 3;
+const DEFAULT_MAX_INLINE_ACTIONS = 2;
 const MENU_GAP = 4;
 const VIEWPORT_PADDING = 8;
 const MENU_WIDTH_FALLBACK = 192;
@@ -186,7 +187,7 @@ const DataTableActions = ({
         <MoreVertical className="w-5 h-5" />
       </button>
 
-      {isOpen && (
+      {isOpen && createPortal(
         <div
           ref={menuRef}
           className="table-action-menu"
@@ -215,7 +216,8 @@ const DataTableActions = ({
               </button>
             );
           })}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

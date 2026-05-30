@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
-import { Modal, Pagination, CardList } from '../../../components/common';
+import { Modal, Pagination, Badge, ReloadButton } from '../../../components/common';
+import DataTable from '../../../components/DataTable';
 import {
   Calendar,
   Clock,
@@ -49,6 +50,8 @@ const ClassAttendanceTab = ({ member }) => {
   const {
     data: historyData,
     isLoading: isLoadingHistory,
+    refetch: refetchHistory,
+    isRefetching: isRefetchingHistory,
   } = useCustomerClassSessionBookingHistory(
     member?.id,
     {
@@ -74,9 +77,7 @@ const ClassAttendanceTab = ({ member }) => {
       const sessionA = a.classScheduleSession;
       const sessionB = b.classScheduleSession;
       if (!sessionA?.startTime || !sessionB?.startTime) return 0;
-      const dateA = new Date(sessionA.startTime);
-      const dateB = new Date(sessionB.startTime);
-      return dateB - dateA;
+      return new Date(sessionB.startTime) - new Date(sessionA.startTime);
     });
   }, [historyBookings]);
 
@@ -89,39 +90,98 @@ const ClassAttendanceTab = ({ member }) => {
     setShowModal(true);
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-  };
+  const handleCloseModal = () => setShowModal(false);
 
-  const handleHistoryPageChange = (newPage) => {
-    setHistoryPage(newPage);
-  };
+  const handleHistoryPageChange = (newPage) => setHistoryPage(newPage);
 
   /* ---------------- Helpers ---------------- */
   const getStatusBadge = (status) => {
     const statusKey = status?.toUpperCase() || BOOKING_STATUS.BOOKED;
-    const label = BOOKING_STATUS_LABELS[statusKey] || status;
-    const variant = BOOKING_STATUS_VARIANTS[statusKey] || 'default';
-    return { label, variant };
+    return {
+      label: BOOKING_STATUS_LABELS[statusKey] || status,
+      variant: BOOKING_STATUS_VARIANTS[statusKey] || 'default',
+    };
   };
 
   const getSessionDate = (booking) => {
-    const session = booking.classScheduleSession;
-    if (!session?.startTime) return null;
-    return new Date(session.startTime).toISOString().split('T')[0];
+    const t = booking.classScheduleSession?.startTime;
+    return t ? new Date(t).toISOString().split('T')[0] : null;
   };
 
   const getSessionTime = (booking) => {
-    const session = booking.classScheduleSession;
-    if (!session?.startTime) return null;
-    return new Date(session.startTime).toTimeString().slice(0, 5);
+    const t = booking.classScheduleSession?.startTime;
+    return t ? new Date(t).toTimeString().slice(0, 5) : null;
   };
 
   const getEndTime = (booking) => {
-    const session = booking.classScheduleSession;
-    if (!session?.endTime) return null;
-    return new Date(session.endTime).toTimeString().slice(0, 5);
+    const t = booking.classScheduleSession?.endTime;
+    return t ? new Date(t).toTimeString().slice(0, 5) : null;
   };
+
+  /* ---------------- Columns ---------------- */
+  const columns = [
+    {
+      key: 'class',
+      label: 'Class',
+      render: (booking) => {
+        const schedule = booking.classScheduleSession?.classSchedule;
+        const sessionDate = getSessionDate(booking);
+        return (
+          <div>
+            <p className="font-medium text-dark-50">{schedule?.className || 'Unknown Class'}</p>
+            {sessionDate && (
+              <p className="text-xs text-dark-400 mt-0.5">{formatDate(sessionDate)}</p>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'time',
+      label: 'Time',
+      render: (booking) => {
+        const startTime = getSessionTime(booking);
+        const endTime = getEndTime(booking);
+        if (!startTime) return <span className="text-dark-400">—</span>;
+        return (
+          <span className="flex items-center gap-1 text-sm text-dark-200">
+            <Clock className="w-3.5 h-3.5 text-dark-400" />
+            {startTime}{endTime ? ` – ${endTime}` : ''}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'coach',
+      label: 'Coach',
+      render: (booking) => {
+        const coach = booking.classScheduleSession?.classSchedule?.coach;
+        if (!coach?.firstname) return <span className="text-dark-400">—</span>;
+        return (
+          <span className="flex items-center gap-1 text-sm text-dark-200">
+            <UserCog className="w-3.5 h-3.5 text-dark-400" />
+            {coach.firstname} {coach.lastname}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (booking) => {
+        const { label, variant } = getStatusBadge(booking.status);
+        return <Badge variant={variant}>{label}</Badge>;
+      },
+    },
+    {
+      key: 'notes',
+      label: 'Notes',
+      render: (booking) =>
+        booking.notes
+          ? <span className="text-sm text-dark-400">{booking.notes}</span>
+          : <span className="text-dark-500">—</span>,
+    },
+  ];
 
   /* ---------------- Render ---------------- */
   return (
@@ -129,92 +189,38 @@ const ClassAttendanceTab = ({ member }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-dark-50">Class Attendance</h3>
-        {canCreate && (
-          <button
-            onClick={handleOpenModal}
-            className="btn-primary flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Book Class
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <ReloadButton onReload={refetchHistory} isReloading={isRefetchingHistory} />
+          {canCreate && (
+            <button onClick={handleOpenModal} className="btn-primary flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Book Class
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Session History */}
-      {isLoadingHistory ? (
-        <div className="text-center py-8 text-dark-400">Loading attendance records...</div>
-      ) : (
-        <div>
-          <CardList
-            cards={sessionHistory}
-            renderTitle={(booking) => {
-              const schedule = booking.classScheduleSession?.classSchedule;
-              return schedule?.className || 'Unknown Class';
-            }}
-            renderContent={(booking) => {
-              const schedule = booking.classScheduleSession?.classSchedule;
-              const coach = schedule?.coach;
-              const startTime = getSessionTime(booking);
-              const endTime = getEndTime(booking);
+      <div className="card">
+        <DataTable
+          columns={columns}
+          data={sessionHistory}
+          loading={isLoadingHistory || isRefetchingHistory}
+          emptyMessage="No attendance records found"
+        />
+      </div>
 
-              return (
-                <div className="flex items-center gap-4">
-                  {startTime && (
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {startTime}{endTime ? ` - ${endTime}` : ''}
-                    </div>
-                  )}
-                  {coach?.firstname && (
-                    <div className="flex items-center gap-1">
-                      <UserCog className="w-4 h-4" />
-                      {coach.firstname} {coach.lastname}
-                    </div>
-                  )}
-                </div>
-              );
-            }}
-            showFooter={true}
-            footerConfig="notes"
-            badges={[
-              {
-                label: '',
-                getValue: (booking) => {
-                  const sessionDate = getSessionDate(booking);
-                  return sessionDate ? formatDate(sessionDate) : '';
-                },
-                variant: 'default',
-              },
-              {
-                label: '',
-                getValue: (booking) => {
-                  const statusInfo = getStatusBadge(booking.status);
-                  return statusInfo.label;
-                },
-                getVariant: (booking) => {
-                  const statusInfo = getStatusBadge(booking.status);
-                  return statusInfo.variant;
-                },
-              },
-            ]}
-            showActions={false}
-            emptyStateMessage="No attendance records found"
-            emptyStateIcon={Calendar}
-          />
-
-          {/* Pagination */}
-          {historyPagination.lastPage > 1 && (
-            <Pagination
-              currentPage={historyPage}
-              lastPage={historyPagination.lastPage}
-              from={historyPagination.from}
-              to={historyPagination.to}
-              total={historyPagination.total}
-              onPrev={() => handleHistoryPageChange(Math.max(historyPage - 1, 1))}
-              onNext={() => handleHistoryPageChange(Math.min(historyPage + 1, historyPagination.lastPage || 1))}
-            />
-          )}
-        </div>
+      {/* Pagination */}
+      {historyPagination.lastPage > 1 && (
+        <Pagination
+          currentPage={historyPage}
+          lastPage={historyPagination.lastPage}
+          from={historyPagination.from}
+          to={historyPagination.to}
+          total={historyPagination.total}
+          onPrev={() => handleHistoryPageChange(Math.max(historyPage - 1, 1))}
+          onNext={() => handleHistoryPageChange(Math.min(historyPage + 1, historyPagination.lastPage || 1))}
+        />
       )}
 
       {/* Book Group Class Modal */}

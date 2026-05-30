@@ -14,12 +14,12 @@ export const CHART_CURSOR = { fill: 'transparent' };
 export const CHART_PIE_ACTIVE = { opacity: 0.85 };
 export const MAX_REPORT_MONTHS = 3;
 
-export const REPORT_DATE_RANGE_OPTIONS = [
-  { value: 'this_month', label: 'This Month' },
-  { value: 'last_month', label: 'Last Month' },
-  { value: 'last_3_months', label: 'Last 3 Months' },
-  { value: 'custom', label: 'Custom range' },
-];
+/** Default date range: first day of current month → today (timezone-safe YYYY-MM-DD strings) */
+const _now = new Date();
+const _fmt = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+export const DEFAULT_REPORT_DATE_FROM = _fmt(new Date(_now.getFullYear(), _now.getMonth(), 1));
+export const DEFAULT_REPORT_DATE_TO   = _fmt(_now);
 
 /**
  * Get date range (YYYY-MM-DD) for report filter

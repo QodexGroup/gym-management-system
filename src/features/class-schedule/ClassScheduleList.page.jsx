@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import Layout from '../../layout/Layout';
-import { Modal, CardList, Pagination, SearchAndFilter } from '../../components/common';
-import { Plus, Calendar, Clock, Users, UserCog } from 'lucide-react';
+import { Modal, Pagination, SearchAndFilter } from '../../components/common';
+import DataTable from '../../components/DataTable';
+import { Plus, Calendar } from 'lucide-react';
 import { Alert } from '../../shared/utils/alert';
 import {
   useClassSchedules,
@@ -12,8 +13,7 @@ import { useCoaches } from '../../shared/hooks/useUsers';
 import { useAuth } from '../../shared/context/AuthContext';
 import { useAccountLimit } from '../../shared/hooks/useAccountLimit';
 import ClassScheduleForm from './ClassScheduleForm';
-import { formatDate, formatTimeFromDate } from '../../shared/utils/formatters';
-import { SCHEDULE_TYPE_LABELS, RECURRING_INTERVAL_LABELS, getCapacityStatus, CLASS_SCHEDULE_TYPE, CLASS_SCHEDULE_TYPE_LABELS } from '../../shared/constants/classScheduleConstants';
+import { classScheduleTableColumns } from './classScheduleTable.config';
 import { usePagination } from '../../shared/hooks/usePagination';
 
 const ClassScheduleList = () => {
@@ -116,16 +116,6 @@ const ClassScheduleList = () => {
     }));
   }, [coaches, isTrainer]);
 
-  if (loading) {
-    return (
-      <Layout title="Class Schedules" subtitle="Manage group class schedules">
-        <div className="flex items-center justify-center h-64">
-          <p className="text-dark-500">Loading class schedules...</p>
-        </div>
-      </Layout>
-    );
-  }
-
   return (
     <Layout title="Class Schedules" subtitle="Manage group class schedules">
       <div className="card">
@@ -146,84 +136,16 @@ const ClassScheduleList = () => {
         </div>
 
         {/* Class Schedules List */}
-        <CardList
-          cards={schedules}
-          renderTitle={(schedule) => schedule.className}
-          renderSubtitle={(schedule) => schedule.description}
-          renderContent={(schedule) => {
-            const coach = schedule.coach;
-            const enrolled = schedule.attendanceCount || 0;
-            const capacity = schedule.capacity || 0;
-
-            return (
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1">
-                  <UserCog className="w-4 h-4" />
-                  {coach?.firstname} {coach?.lastname}
-                </div>
-                {schedule.startDate && (
-                  <>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      {formatDate(schedule.startDate)}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {formatTimeFromDate(schedule.startDate)}
-                    </div>
-                  </>
-                )}
-                <div className="flex items-center gap-1">
-                  <Users className="w-4 h-4" />
-                  {enrolled}/{capacity} enrolled
-                </div>
-              </div>
-            );
-          }}
-          showFooter={true}
-          footerConfig={{
-            field: 'recurringInterval',
-            condition: (schedule) => schedule.scheduleType === 2 && schedule.recurringInterval,
-            format: (value, schedule) => {
-              const interval = RECURRING_INTERVAL_LABELS[value] || value;
-              const sessions = schedule.numberOfSessions ? ` (${schedule.numberOfSessions} sessions)` : '';
-              return `Repeats: ${interval}${sessions}`;
-            },
-          }}
-          badges={[
-            {
-              variant: 'primary',
-              getValue: (schedule) =>
-                schedule.classType === CLASS_SCHEDULE_TYPE.PERSONAL_TRAINING
-                  ? CLASS_SCHEDULE_TYPE_LABELS[CLASS_SCHEDULE_TYPE.PERSONAL_TRAINING]
-                  : null,
-            },
-            {
-              variant: 'default',
-              getValue: (schedule) => SCHEDULE_TYPE_LABELS[schedule.scheduleType] || 'One-time',
-            },
-            {
-              getVariant: (schedule) => {
-                const status = getCapacityStatus(schedule.attendanceCount || 0, schedule.capacity || 0);
-                return status.color;
-              },
-              getValue: (schedule) => {
-                const status = getCapacityStatus(schedule.attendanceCount || 0, schedule.capacity || 0);
-                return status.text;
-              },
-            },
-          ]}
-          actions={(schedule) => {
-            if (schedule.classType === CLASS_SCHEDULE_TYPE.PERSONAL_TRAINING) {
-              return {};
-            }
-            if (isTrainer && schedule.coachId !== user?.id) {
-              return {};
-            }
-            return { onEdit: handleOpenModal, onDelete: handleDeleteSchedule };
-          }}
-          emptyStateMessage="No class schedules found"
-          emptyStateIcon={Calendar}
+        <DataTable
+          columns={classScheduleTableColumns({
+            onEdit: handleOpenModal,
+            onDelete: handleDeleteSchedule,
+            isTrainer,
+            userId: user?.id,
+          })}
+          data={schedules}
+          loading={loading}
+          emptyMessage="No class schedules found"
         />
 
         {/* Pagination */}

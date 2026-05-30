@@ -1,11 +1,14 @@
 import { useState, useMemo } from 'react';
-import { Modal, Pagination, CardList } from '../../../components/common';
+import { Modal, Pagination, Badge, ReloadButton } from '../../../components/common';
+import DataTable from '../../../components/DataTable';
+import { createActionColumn } from '../../../components/DataTable';
 import {
   Plus,
-  Calendar,
   Clock,
   UserCog,
   CheckCircle,
+  Edit,
+  X,
 } from 'lucide-react';
 import { useConfirmAction } from '../../../shared/hooks/useConfirmAction';
 import { usePermissions } from '../../../shared/hooks/usePermissions';
@@ -21,7 +24,7 @@ import {
   useCancelPtBooking,
 } from '../../../shared/hooks/usePtBookings';
 import { useCustomerPtPackages } from '../../../shared/hooks/useCustomerPtPackages';
-import { transformPtBookingToApiFormat, mapPtBookingToFormData } from '../../../shared/models/ptBookingModel';
+import { transformPtBookingToApiFormat } from '../../../shared/models/ptBookingModel';
 
 const PtSessionsTab = ({ member }) => {
   const { hasPermission } = usePermissions();
@@ -42,18 +45,17 @@ const PtSessionsTab = ({ member }) => {
   // Fetch upcoming PT bookings (non-paginated - returns all upcoming)
   const { data: upcomingBookingsData, isLoading: isLoadingUpcoming } = useCustomerUpcomingPtBookings(
     member?.id,
-    {
-      relations: 'ptPackage,customer,coach',
-    }
+    { relations: 'ptPackage,customer,coach' }
   );
 
-  // Ensure upcomingBookings is always an array
   const upcomingBookings = Array.isArray(upcomingBookingsData) ? upcomingBookingsData : [];
 
   // Fetch paginated PT booking history
   const {
     data: historyData,
     isLoading: isLoadingHistory,
+    refetch: refetchHistory,
+    isRefetching: isRefetchingHistory,
   } = useCustomerPtBookingHistory(
     member?.id,
     {
@@ -82,21 +84,15 @@ const PtSessionsTab = ({ member }) => {
     return customerPtPackages.filter((pkg) => pkg.status === 'active');
   }, [customerPtPackages]);
 
-  // Sort upcoming sessions by date and time
   const upcomingSessions = useMemo(() => {
     return [...upcomingBookings].sort((a, b) => {
-      const dateA = new Date(`${a.bookingDate}T${a.bookingTime}`);
-      const dateB = new Date(`${b.bookingDate}T${b.bookingTime}`);
-      return dateA - dateB;
+      return new Date(`${a.bookingDate}T${a.bookingTime}`) - new Date(`${b.bookingDate}T${b.bookingTime}`);
     });
   }, [upcomingBookings]);
 
-  // Sort history sessions by date and time (descending)
   const sessionHistory = useMemo(() => {
     return [...historyBookings].sort((a, b) => {
-      const dateA = new Date(`${a.bookingDate}T${a.bookingTime}`);
-      const dateB = new Date(`${b.bookingDate}T${b.bookingTime}`);
-      return dateB - dateA;
+      return new Date(`${b.bookingDate}T${b.bookingTime}`) - new Date(`${a.bookingDate}T${a.bookingTime}`);
     });
   }, [historyBookings]);
 
@@ -114,16 +110,11 @@ const PtSessionsTab = ({ member }) => {
   const handleSubmit = async (formData) => {
     try {
       const apiData = transformPtBookingToApiFormat(formData);
-
       if (selectedSession) {
-        await updatePtBookingMutation.mutateAsync({
-          id: selectedSession.id,
-          data: apiData,
-        });
+        await updatePtBookingMutation.mutateAsync({ id: selectedSession.id, data: apiData });
       } else {
         await createPtBookingMutation.mutateAsync(apiData);
       }
-
       handleCloseModal();
     } catch (error) {
       if (import.meta.env.DEV) console.error('Failed to save PT session:', error);
@@ -135,17 +126,117 @@ const PtSessionsTab = ({ member }) => {
     { title: 'Cancel Session?', text: 'Are you sure you want to cancel this session?', icon: 'warning', confirmText: 'Yes, cancel it' }
   );
 
-  const handleHistoryPageChange = (newPage) => {
-    setHistoryPage(newPage);
-  };
+  const handleHistoryPageChange = (newPage) => setHistoryPage(newPage);
 
   /* ---------------- Helpers ---------------- */
   const getStatusBadge = (status) => {
     const statusKey = status?.toUpperCase() || BOOKING_STATUS.BOOKED;
-    const label = BOOKING_STATUS_LABELS[statusKey] || status;
-    const variant = BOOKING_STATUS_VARIANTS[statusKey] || 'default';
-    return { label, variant };
+    return {
+      label: BOOKING_STATUS_LABELS[statusKey] || status,
+      variant: BOOKING_STATUS_VARIANTS[statusKey] || 'default',
+    };
   };
+
+  /* ---------------- Shared session columns (no actions) ---------------- */
+  const sharedSessionColumns = [
+    {
+      key: 'datetime',
+      label: 'Date & Time',
+      render: (session) => (
+        <div>
+          <p className="font-medium text-dark-50">{formatDate(session.bookingDate)}</p>
+          <p className="text-xs text-dark-400 mt-0.5">{formatTime(session.bookingTime)}</p>
+        </div>
+      ),
+    },
+    {
+      key: 'coach',
+      label: 'Coach',
+      render: (session) => {
+        const coach = session.coach || {};
+        if (!coach.firstname) return <span className="text-dark-400">—</span>;
+        return (
+          <span className="flex items-center gap-1 text-sm text-dark-200">
+            <UserCog className="w-3.5 h-3.5 text-dark-400" />
+            {coach.firstname} {coach.lastname}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'duration',
+      label: 'Duration',
+      render: (session) => (
+        <span className="flex items-center gap-1 text-sm text-dark-200">
+          <Clock className="w-3.5 h-3.5 text-dark-400" />
+          {session.duration || 60} min
+        </span>
+      ),
+    },
+    {
+      key: 'package',
+      label: 'Package',
+      render: (session) => {
+        const name = session.packageName || session.ptPackage?.packageName || 'N/A';
+        return <Badge variant="default">{name}</Badge>;
+      },
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (session) => {
+        const { label, variant } = getStatusBadge(session.status);
+        return <Badge variant={variant}>{label}</Badge>;
+      },
+    },
+    {
+      key: 'notes',
+      label: 'Notes',
+      render: (session) =>
+        session.bookingNotes
+          ? <span className="text-sm text-dark-400">{session.bookingNotes}</span>
+          : <span className="text-dark-500">—</span>,
+    },
+  ];
+
+  /* ---------------- Upcoming columns (with actions) ---------------- */
+  const upcomingColumns = [
+    createActionColumn(
+      (session) => {
+        const items = [];
+        if (canUpdate) {
+          items.push({ key: 'edit', label: 'Edit', icon: Edit, onClick: () => handleOpenModal(session) });
+        }
+        if (canCancel) {
+          items.push({ key: 'cancel', label: 'Cancel', icon: X, variant: 'danger', onClick: () => handleCancelSession(session.id) });
+        }
+        return items;
+      },
+      { menuPosition: 'bottom-left' }
+    ),
+    ...sharedSessionColumns,
+  ];
+
+  /* ---------------- History columns (read-only, swap package col for icon) ---------------- */
+  const historyColumns = [
+    ...sharedSessionColumns.map((col) =>
+      col.key === 'duration'
+        ? {
+            ...col,
+            label: 'Package',
+            render: (session) => {
+              const name = session.packageName || session.ptPackage?.packageName || 'N/A';
+              return (
+                <span className="flex items-center gap-1 text-sm text-dark-200">
+                  <CheckCircle className="w-3.5 h-3.5 text-dark-400" />
+                  {name}
+                </span>
+              );
+            },
+          }
+        : col
+    ).filter((col) => col.key !== 'package'),
+  ];
 
   /* ---------------- Render ---------------- */
   return (
@@ -153,134 +244,53 @@ const PtSessionsTab = ({ member }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-dark-50">PT Sessions</h3>
-        {canCreate && activePackages.length > 0 && (
-          <button
-            onClick={() => handleOpenModal()}
-            className="btn-primary flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Book Session
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <ReloadButton onReload={refetchHistory} isReloading={isRefetchingHistory} />
+          {canCreate && activePackages.length > 0 && (
+            <button onClick={() => handleOpenModal()} className="btn-primary flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Book Session
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Upcoming Sessions */}
-      {isLoadingUpcoming ? (
-        <div className="text-center py-8 text-dark-400">Loading upcoming sessions...</div>
-      ) : (
-        <div>
-          <h4 className="text-md font-medium text-dark-300 mb-4">Upcoming Sessions</h4>
-          <CardList
-            cards={upcomingSessions}
-            renderTitle={(session) => `${formatDate(session.bookingDate)} at ${formatTime(session.bookingTime)}`}
-            renderContent={(session) => {
-              const ptPackage = session.ptPackage || {};
-              const coach = session.coach || {};
-              return (
-                <div className="flex items-center gap-4">
-                  {coach.firstname && (
-                    <div className="flex items-center gap-1">
-                      <UserCog className="w-4 h-4" />
-                      {coach.firstname} {coach.lastname}
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    {session.duration || 60} minutes
-                  </div>
-                </div>
-              );
-            }}
-            showFooter={true}
-            footerConfig="bookingNotes"
-            badges={[
-              {
-                label: '',
-                getValue: (session) => {
-                  const ptPackage = session.ptPackage || {};
-                  return session.packageName || ptPackage.packageName || 'N/A';
-                },
-                variant: 'default',
-              },
-              {
-                label: '',
-                getValue: (session) => {
-                  const statusInfo = getStatusBadge(session.status);
-                  return statusInfo.label;
-                },
-                getVariant: (session) => {
-                  const statusInfo = getStatusBadge(session.status);
-                  return statusInfo.variant;
-                },
-              },
-            ]}
-            actions={{
-              ...(canUpdate && { onEdit: handleOpenModal }),
-              ...(canCancel && { onCancel: handleCancelSession }),
-            }}
-            emptyStateMessage="No upcoming sessions"
+      <div>
+        <h4 className="text-md font-medium text-dark-300 mb-4">Upcoming Sessions</h4>
+        <div className="card">
+          <DataTable
+            columns={upcomingColumns}
+            data={upcomingSessions}
+            loading={isLoadingUpcoming}
+            emptyMessage="No upcoming sessions"
           />
         </div>
-      )}
+      </div>
 
       {/* Session History */}
-      {isLoadingHistory ? (
-        <div className="text-center py-8 text-dark-400">Loading session history...</div>
-      ) : (
-        <div>
-          <h4 className="text-md font-medium text-dark-300 mb-4">Session History</h4>
-          <CardList
-            cards={sessionHistory}
-            renderTitle={(session) => `${formatDate(session.bookingDate)} at ${formatTime(session.bookingTime)}`}
-            renderContent={(session) => {
-              const ptPackage = session.ptPackage || {};
-              const coach = session.coach || {};
-              return (
-                <div className="flex items-center gap-4">
-                  {coach.firstname && (
-                    <div className="flex items-center gap-1">
-                      <UserCog className="w-4 h-4" />
-                      {coach.firstname} {coach.lastname}
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1">
-                    <CheckCircle className="w-4 h-4" />
-                    {session.packageName || ptPackage.packageName || 'N/A'}
-                  </div>
-                </div>
-              );
-            }}
-            showFooter={true}
-            footerConfig="bookingNotes"
-            badges={[
-              {
-                label: '',
-                getValue: (session) => {
-                  const statusInfo = getStatusBadge(session.status);
-                  return statusInfo.label;
-                },
-                getVariant: (session) => {
-                  const statusInfo = getStatusBadge(session.status);
-                  return statusInfo.variant;
-                },
-              },
-            ]}
-            showActions={false}
-            emptyStateMessage="No session history"
-          />
-
-          {/* Pagination */}
-          <Pagination
-            currentPage={historyPage}
-            lastPage={historyPagination.lastPage}
-            from={historyPagination.from}
-            to={historyPagination.to}
-            total={historyPagination.total}
-            onPrev={() => handleHistoryPageChange(Math.max(historyPage - 1, 1))}
-            onNext={() => handleHistoryPageChange(Math.min(historyPage + 1, historyPagination.lastPage || 1))}
+      <div>
+        <h4 className="text-md font-medium text-dark-300 mb-4">Session History</h4>
+        <div className="card">
+          <DataTable
+            columns={historyColumns}
+            data={sessionHistory}
+            loading={isLoadingHistory || isRefetchingHistory}
+            emptyMessage="No session history"
           />
         </div>
-      )}
+
+        {/* Pagination */}
+        <Pagination
+          currentPage={historyPage}
+          lastPage={historyPagination.lastPage}
+          from={historyPagination.from}
+          to={historyPagination.to}
+          total={historyPagination.total}
+          onPrev={() => handleHistoryPageChange(Math.max(historyPage - 1, 1))}
+          onNext={() => handleHistoryPageChange(Math.min(historyPage + 1, historyPagination.lastPage || 1))}
+        />
+      </div>
 
       {/* Book/Edit Session Modal */}
       <Modal

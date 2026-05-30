@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Plus, FileText, Activity, Calendar } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
-import { Pagination, ImageLightbox } from '../../../components/common';
+import { Pagination, ImageLightbox, ReloadButton } from '../../../components/common';
 import StatsCards from '../../../components/common/StatsCards';
 import { useCustomerScans, useDeleteCustomerScan } from '../../../shared/hooks/useCustomerScan';
 import { usePermissions } from '../../../shared/hooks/usePermissions';
@@ -21,7 +21,7 @@ const ScansTab = ({ member }) => {
   const [lightboxImages, setLightboxImages] = useState([]);
   const [lightboxCurrentIndex, setLightboxCurrentIndex] = useState(0);
 
-  const { data, isLoading } = useCustomerScans(member?.id, { page: currentPage, pagelimit: 50, relations: 'uploadedByUser,files' });
+  const { data, isLoading, refetch, isRefetching } = useCustomerScans(member?.id, { page: currentPage, pagelimit: 50, relations: 'uploadedByUser,files' });
   const deleteMutation = useDeleteCustomerScan();
 
   const handleDeleteScan = useConfirmAction(
@@ -114,9 +114,10 @@ const ScansTab = ({ member }) => {
           {/* Stats */}
           <StatsCards stats={stats} dark={true} size="sm" iconPosition="left" iconColor="light" columns={3} />
 
-          {/* Upload Button */}
-          {hasPermission('scans_create') && (
-            <div className="flex justify-end">
+          {/* Action bar */}
+          <div className="flex items-center justify-end gap-2">
+            <ReloadButton onReload={refetch} isReloading={isRefetching} />
+            {hasPermission('scans_create') && (
               <button
                 onClick={() => { setSelectedScan(null); setShowModal(true); }}
                 className="btn-primary flex items-center gap-2"
@@ -124,12 +125,12 @@ const ScansTab = ({ member }) => {
                 <Plus className="w-4 h-4" />
                 Upload Scan
               </button>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Table */}
           <div className="card">
-            <DataTable columns={columns} data={scans} loading={isLoading} />
+            <DataTable columns={columns} data={scans} loading={isLoading || isRefetching} />
           </div>
 
           {/* Pagination */}

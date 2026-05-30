@@ -1,4 +1,4 @@
-﻿import { useRef, useState, useMemo, useCallback, useEffect } from 'react';
+﻿import { useRef, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
 import Layout from '../../layout/Layout';
@@ -28,7 +28,7 @@ import { useReportCollection } from '../../shared/hooks/useReportCollection';
 import { reportService } from '../../shared/services/reportService';
 import { exportReportToPdf, exportReportToExcel } from '../../shared/utils/reportPrintExport';
 import { APP_NAME } from '../../shared/constants/appConfig';
-import { REPORT_DATE_RANGE_OPTIONS, getReportDateRange, MAX_REPORT_ROWS, CHART_TOOLTIP_STYLE, CHART_CURSOR, CHART_PIE_ACTIVE } from '../../shared/constants/reportConstants';
+import { DEFAULT_REPORT_DATE_FROM, DEFAULT_REPORT_DATE_TO, MAX_REPORT_ROWS, CHART_TOOLTIP_STYLE, CHART_CURSOR, CHART_PIE_ACTIVE } from '../../shared/constants/reportConstants';
 import { Alert, Toast } from '../../shared/utils/alert';
 
 const PAYMENT_METHOD_OPTIONS = ['all', 'cash', 'card', 'transfer'];
@@ -36,34 +36,22 @@ const PAYMENT_METHOD_OPTIONS = ['all', 'cash', 'card', 'transfer'];
 const CollectionReportPage = () => {
   const navigate = useNavigate();
   const printRef = useRef(null);
-  const [dateRange, setDateRange] = useState('this_month');
-  const [customDateFrom, setCustomDateFrom] = useState('');
-  const [customDateTo, setCustomDateTo] = useState('');
-  const [inputDateFrom, setInputDateFrom] = useState('');
-  const [inputDateTo, setInputDateTo] = useState('');
-  const [appliedDateRange, setAppliedDateRange] = useState('this_month');
-  const [appliedCustomFrom, setAppliedCustomFrom] = useState('');
-  const [appliedCustomTo, setAppliedCustomTo] = useState('');
+  const [dateFrom, setDateFrom] = useState(DEFAULT_REPORT_DATE_FROM);
+  const [dateTo, setDateTo] = useState(DEFAULT_REPORT_DATE_TO);
+  const [appliedFrom, setAppliedFrom] = useState(DEFAULT_REPORT_DATE_FROM);
+  const [appliedTo, setAppliedTo] = useState(DEFAULT_REPORT_DATE_TO);
   const [paymentMethod, setPaymentMethod] = useState('all');
 
   const { data: reportData, isLoading, isError, error } = useReportCollection({
-    dateRange: appliedDateRange,
-    customDateFrom: appliedDateRange === 'custom' ? appliedCustomFrom : undefined,
-    customDateTo: appliedDateRange === 'custom' ? appliedCustomTo : undefined,
+    dateRange: 'custom',
+    customDateFrom: appliedFrom,
+    customDateTo: appliedTo,
   });
 
   const handleApply = useCallback(() => {
-    setAppliedDateRange(dateRange);
-    setAppliedCustomFrom(dateRange === 'custom' ? customDateFrom : '');
-    setAppliedCustomTo(dateRange === 'custom' ? customDateTo : '');
-  }, [dateRange, customDateFrom, customDateTo]);
-
-  useEffect(() => {
-    if (dateRange === 'custom') {
-      setInputDateFrom(customDateFrom);
-      setInputDateTo(customDateTo);
-    }
-  }, [dateRange]);
+    setAppliedFrom(dateFrom);
+    setAppliedTo(dateTo);
+  }, [dateFrom, dateTo]);
 
   const todayRevenue = reportData?.todayRevenue ?? 0;
   const membershipDistribution = reportData?.membershipDistribution ?? [];
@@ -105,16 +93,11 @@ const CollectionReportPage = () => {
     documentTitle: 'Collection Report',
   });
 
-  const resolvedDates = getReportDateRange(appliedDateRange, appliedCustomFrom, appliedCustomTo);
-  const periodLabel =
-    appliedDateRange === 'custom' && appliedCustomFrom && appliedCustomTo
-      ? `${appliedCustomFrom} – ${appliedCustomTo}`
-      : REPORT_DATE_RANGE_OPTIONS.find((o) => o.value === appliedDateRange)?.label || appliedDateRange;
+  const periodLabel = `${appliedFrom} – ${appliedTo}`;
 
   const handleEmailReport = async () => {
     try {
-      const { start: dateFrom, end: dateTo } = resolvedDates;
-      const res = await reportService.emailReport({ reportType: 'collection', dateRange: appliedDateRange, dateFrom, dateTo });
+      const res = await reportService.emailReport({ reportType: 'collection', dateRange: 'custom', dateFrom: appliedFrom, dateTo: appliedTo });
       Toast.success(res.message || 'Report request submitted. You will receive it by email.');
     } catch (err) {
       Toast.error(err.message || 'Failed to request report');
@@ -171,15 +154,10 @@ const CollectionReportPage = () => {
 
   const handleExportPdf = async () => {
     try {
-      const { start: dateFrom, end: dateTo } = resolvedDates;
-      const res = await reportService.checkExportSize({ reportType: 'collection', dateFrom, dateTo });
+      const res = await reportService.checkExportSize({ reportType: 'collection', dateFrom: appliedFrom, dateTo: appliedTo });
       if (res.tooLarge) {
-        await Alert.warning(
-          'Data is too large',
-          'We will send the report to your email (PDF). The full report will be delivered via email.',
-          { confirmButtonText: 'OK' }
-        );
-        await reportService.emailReport({ reportType: 'collection', dateRange: appliedDateRange, dateFrom, dateTo, format: 'pdf' });
+        await Alert.warning('Data is too large', 'We will send the report to your email (PDF).', { confirmButtonText: 'OK' });
+        await reportService.emailReport({ reportType: 'collection', dateRange: 'custom', dateFrom: appliedFrom, dateTo: appliedTo, format: 'pdf' });
         Toast.success('Report request submitted. You will receive it by email.');
       } else {
         doExportPdf();
@@ -191,15 +169,10 @@ const CollectionReportPage = () => {
 
   const handleExportExcel = async () => {
     try {
-      const { start: dateFrom, end: dateTo } = resolvedDates;
-      const res = await reportService.checkExportSize({ reportType: 'collection', dateFrom, dateTo });
+      const res = await reportService.checkExportSize({ reportType: 'collection', dateFrom: appliedFrom, dateTo: appliedTo });
       if (res.tooLarge) {
-        await Alert.warning(
-          'Data is too large',
-          'We will send the report to your email (Excel). The full report will be delivered via email.',
-          { confirmButtonText: 'OK' }
-        );
-        await reportService.emailReport({ reportType: 'collection', dateRange: appliedDateRange, dateFrom, dateTo, format: 'excel' });
+        await Alert.warning('Data is too large', 'We will send the report to your email (Excel).', { confirmButtonText: 'OK' });
+        await reportService.emailReport({ reportType: 'collection', dateRange: 'custom', dateFrom: appliedFrom, dateTo: appliedTo, format: 'excel' });
         Toast.success('Report request submitted. You will receive it by email.');
       } else {
         doExportExcel();
@@ -228,16 +201,19 @@ const CollectionReportPage = () => {
   }
 
   const filterExtra = (
-    <select
-      value={paymentMethod}
-      onChange={(e) => setPaymentMethod(e.target.value)}
-      className="px-4 py-2 bg-transparent border border-dark-200 rounded-lg focus:border-primary-500 outline-none"
-    >
-      <option value="all">All Payment Methods</option>
-      <option value="card">Credit Card</option>
-      <option value="cash">Cash</option>
-      <option value="transfer">Bank Transfer</option>
-    </select>
+    <div className="flex flex-col gap-1">
+      <label className="text-xs font-semibold text-dark-400 uppercase tracking-wide">Payment Method</label>
+      <select
+        value={paymentMethod}
+        onChange={(e) => setPaymentMethod(e.target.value)}
+        className="px-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 rounded-lg focus:border-primary-500 outline-none"
+      >
+        <option value="all">All Payment Methods</option>
+        <option value="card">Credit Card</option>
+        <option value="cash">Cash</option>
+        <option value="transfer">Bank Transfer</option>
+      </select>
+    </div>
   );
 
   const stats = [
@@ -274,13 +250,10 @@ const CollectionReportPage = () => {
       </PrintArea>
 
       <DateRangeExportBar
-        dateRange={dateRange}
-        onDateRangeChange={setDateRange}
-        dateRangeOptions={REPORT_DATE_RANGE_OPTIONS}
-        inputDateFrom={inputDateFrom}
-        inputDateTo={inputDateTo}
-        onCustomDateFromChange={(v) => { setInputDateFrom(v); setCustomDateFrom(v); }}
-        onCustomDateToChange={(v) => { setInputDateTo(v); setCustomDateTo(v); }}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        onDateFromChange={setDateFrom}
+        onDateToChange={setDateTo}
         onApply={handleApply}
         extraFilters={filterExtra}
         reportTooLarge={reportTooLarge}
