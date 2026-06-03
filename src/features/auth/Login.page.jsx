@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { Shield } from 'lucide-react';
 import { initializeFirebaseServices } from '../../shared/services/firebaseService';
 import { useAuth } from '../../shared/context/AuthContext';
 import { setLoggingIn } from '../../shared/services/authService';
 import { Toast } from '../../shared/utils/alert';
 import { ACCOUNT_STATE } from '../../shared/constants/accountState';
 import { isValidEmail, normalizeEmail } from '../../shared/utils/validators/email';
+import LegalDocumentViewerModal from './LegalDocumentViewerModal';
+import { PRIVACY_INTRO, PRIVACY_SECTIONS } from './privacyPolicy.content';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -15,6 +18,7 @@ const Login = () => {
   const [deactivatedMessage, setDeactivatedMessage] = useState('');
   const [trialExpiredMessage, setTrialExpiredMessage] = useState('');
   const [firebaseAuth, setFirebaseAuth] = useState(null);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const { login, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -235,8 +239,35 @@ const Login = () => {
               'Sign In'
             )}
           </button>
+
+          <div className="relative pt-6">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-dark-600/80 to-transparent" />
+            <p className="text-center text-xs text-dark-400 mb-3">
+              By signing in, you agree to our
+            </p>
+            <div className="flex items-center justify-center">
+              <button
+                type="button"
+                onClick={() => setShowPrivacyModal(true)}
+                className="group inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-dark-700/40 border border-dark-600/70 text-xs font-medium text-dark-300 hover:text-emerald-300 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all duration-200"
+              >
+                <Shield className="w-3.5 h-3.5 text-dark-400 group-hover:text-emerald-400 transition-colors" />
+                Privacy Policy
+              </button>
+            </div>
+          </div>
         </form>
       </div>
+
+      <LegalDocumentViewerModal
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+        title="Privacy Policy"
+        subtitle="Learn how GymHub PH handles and protects your data."
+        intro={PRIVACY_INTRO}
+        sections={PRIVACY_SECTIONS}
+        variant="privacy"
+      />
     </div>
   );
 };
