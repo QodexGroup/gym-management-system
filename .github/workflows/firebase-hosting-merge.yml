@@ -19,7 +19,7 @@ jobs:
         env:
           FIREBASE_ADMIN_CREDENTIALS: ${{ secrets.FIREBASE_ADMIN_CREDENTIALS }}
           VITE_APP_ENV: staging
-          VITE_CLOSE_BETA: 'false'
+          VITE_CLOSE_BETA: 'true'
           VITE_API_BASE_URL: https://gym-management-api-staging.up.railway.app/api
           VITE_R2_PUBLIC_URL: https://pub-27483e01ea69463095e830b7bb1444c9.r2.dev
         run: |
