@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tansta
 import { useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { customerProgressService } from '../services/customerProgressService';
-import { deleteFiles } from '../services/fileUploadService';
 import { Toast } from '../utils/alert';
 
 /**
@@ -129,13 +128,12 @@ export const useDeleteCustomerProgress = () => {
         queryKey: customerProgressKeys.lists(),
       });
       
-      // Delete files from Firebase Storage if database deletion was successful
+      // R2 file deletion is handled by the backend when progress records are deleted
       if (response?.data?.fileUrls && response.data.fileUrls.length > 0) {
         try {
-          await deleteFiles(response.data.fileUrls);
-          // Files deleted successfully (errors are logged in deleteFiles)
+          // Backend handles R2 storage deletion
         } catch (error) {
-          if (import.meta.env.DEV) console.error('Failed to delete files from Firebase:', error);
+          if (import.meta.env.DEV) console.error('Failed to delete files from R2:', error);
           // Don't show error to user since database deletion was successful
         }
       }

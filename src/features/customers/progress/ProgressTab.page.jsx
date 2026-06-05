@@ -8,7 +8,7 @@ import StatsCards from '../../../components/common/StatsCards';
 import { useCustomerProgress, useDeleteCustomerProgress } from '../../../shared/hooks/useCustomerProgress';
 import { usePermissions } from '../../../shared/hooks/usePermissions';
 import { useConfirmAction } from '../../../shared/hooks/useConfirmAction';
-import { getFileUrl } from '../../../shared/services/firebaseUrlService';
+import { getFileUrl } from '../../../shared/services/storageService';
 
 import ProgressForm from './ProgressForm';
 import ProgressViewModal from './ProgressViewModal';

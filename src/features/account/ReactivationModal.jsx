@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Modal } from '../../components/common';
 import PaymentTypeInfo from '../../components/common/PaymentTypeInfo';
 import { useAuth } from '../../shared/context/AuthContext';
-import { uploadReceipt } from '../../shared/services/fileUploadService';
+import { uploadReceipt } from '../../shared/services/storageService';
 import { useCreateReactivationPaymentRequest } from '../../shared/hooks/useReactivationPaymentRequest';
 import { SUBSCRIPTION_PAYMENT_TYPE } from '../../shared/constants/subscriptionConstants';
 import { Toast } from '../../shared/utils/alert';

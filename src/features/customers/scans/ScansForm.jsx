@@ -6,9 +6,8 @@ import { Modal } from '../../../components/common';
 import { useCreateCustomerScan, useUpdateCustomerScan, customerScanKeys } from '../../../shared/hooks/useCustomerScan';
 import { formatDateForInput } from '../../../shared/utils/formatters';
 import { Alert, Toast } from '../../../shared/utils/alert';
-import { uploadFile, deleteFile } from '../../../shared/services/fileUploadService';
+import { uploadFile, getFileUrl } from '../../../shared/services/storageService';
 import { customerFileService } from '../../../shared/services/customerFileService';
-import { getFileUrl } from '../../../shared/services/firebaseUrlService';
 import { useQueryClient } from '@tanstack/react-query';
 import { getInitialScanFormData, mapScanToFormData } from '../../../shared/models/scanModel';
 
@@ -112,8 +111,7 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
       if (!result.isConfirmed) return;
 
       try {
-        const response = await customerFileService.delete(file.id);
-        if (response?.fileUrl) await deleteFile(response.fileUrl);
+        await customerFileService.delete(file.id); // backend handles R2 deletion
 
         setUploadedFiles(prev => prev.filter(f => f.id !== file.id));
         Toast.success('File removed');

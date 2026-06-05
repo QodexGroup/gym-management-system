@@ -9,7 +9,7 @@ import { ACCOUNT_STATE } from '../../../shared/constants/accountState';
 import { SUBSCRIPTION_PAYMENT_TYPE } from '../../../shared/constants/subscriptionConstants';
 import { useCreateSubscriptionRequest } from '../../../shared/hooks/useSubscriptionRequests';
 import { Alert } from '../../../shared/utils/alert';
-import { uploadReceipt } from '../../../shared/services/fileUploadService';
+import { uploadReceipt } from '../../../shared/services/storageService';
 import TrialUpgradeModal from '../TrialUpgradeModal';
 
 const SubscriptionMyPlanTab = () => {

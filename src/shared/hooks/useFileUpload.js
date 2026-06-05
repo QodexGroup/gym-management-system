@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { uploadMultipleFiles, deleteFile } from '../services/fileUploadService';
+import { uploadMultipleFiles, getFileUrl } from '../services/storageService';
 import { customerFileService } from '../services/customerFileService';
-import { getFileUrl } from '../services/firebaseUrlService';
 import { Toast, Alert } from '../utils/alert';
 import { useQueryClient } from '@tanstack/react-query';
 import { customerProgressKeys } from './useCustomerProgress';
@@ -48,18 +47,8 @@ export const useFileUpload = ({ customerId, accountId = 1, onInvalidate }) => {
       }
 
       try {
-        // Delete from database (backend will return fileUrl)
-        const response = await customerFileService.delete(fileToRemove.id);
-        
-        // Delete from Firebase Storage if fileUrl is returned
-        if (response?.fileUrl) {
-          try {
-            await deleteFile(response.fileUrl);
-          } catch (firebaseError) {
-            if (import.meta.env.DEV) console.error('Failed to delete file from Firebase:', firebaseError);
-            // Continue even if Firebase deletion fails
-          }
-        }
+        // Delete from database — backend also handles R2 deletion
+        await customerFileService.delete(fileToRemove.id);
 
         // Remove the file from the array
         setUploadedFiles(prev => prev.filter(file => file.id !== fileToRemove.id));

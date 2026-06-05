@@ -3,7 +3,7 @@ import { Edit, Camera } from 'lucide-react';
 import { Modal } from '../../../components/common';
 import { formatDate } from '../../../shared/utils/formatters';
 import { getDataSourceBadge } from '../../../shared/utils/uiHelpers';
-import { getFileUrl } from '../../../shared/services/firebaseUrlService';
+import { getFileUrl } from '../../../shared/services/storageService';
 import PhotoThumbnail from '../../../components/common/PhotoThumbnail';
 import { usePermissions } from '../../../shared/hooks/usePermissions';
 
