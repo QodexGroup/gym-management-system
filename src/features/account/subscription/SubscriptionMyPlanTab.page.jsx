@@ -6,7 +6,7 @@ import { useSubscriptionPlans } from '../../../shared/hooks/useSubscriptionPlans
 import { formatCurrency } from '../../../shared/utils/formatters';
 import { formatDate } from '../../../shared/utils/formatters';
 import { ACCOUNT_STATE } from '../../../shared/constants/accountState';
-import { SUBSCRIPTION_PAYMENT_TYPE } from '../../../shared/constants/subscriptionConstants';
+import { SUBSCRIPTION_PAYMENT_TYPE, TRIAL_DAYS } from '../../../shared/constants/subscriptionConstants';
 import { useCreateSubscriptionRequest } from '../../../shared/hooks/useSubscriptionRequests';
 import { Alert } from '../../../shared/utils/alert';
 import { uploadReceipt } from '../../../shared/services/storageService';
@@ -240,7 +240,7 @@ const SubscriptionMyPlanTab = () => {
                 ? `Trial ends: ${formatDate(activePlan.trialEndsAt)}`
                 : activePlan?.subscriptionEndsAt
                   ? `Current period ends: ${formatDate(activePlan.subscriptionEndsAt)}`
-                  : '7-day free trial'}
+                  : `${TRIAL_DAYS}-day free trial`}
             </p>
 
             {isLocked && (

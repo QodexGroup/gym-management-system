@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Modal } from '../../components/common';
 import PaymentTypeInfo from '../../components/common/PaymentTypeInfo';
+import StagingLockedNotice from './StagingLockedNotice';
 import { useAuth } from '../../shared/context/AuthContext';
 import { uploadReceipt } from '../../shared/services/storageService';
 import { useCreateReactivationPaymentRequest } from '../../shared/hooks/useReactivationPaymentRequest';
@@ -10,11 +11,14 @@ import { formatCurrency } from '../../shared/utils/formatters';
 
 const REACTIVATION_FEE_PHP = 1200;
 
+// True when close beta mode is active — hides payment reactivation regardless of environment.
+// Set VITE_CLOSE_BETA=true in CI/env to enable; set to false (or remove) to show full payment flow.
+const IS_CLOSE_BETA = import.meta.env.VITE_CLOSE_BETA === 'true';
+
 /**
- * Global reactivation modal shown when the account is locked.
- * - Shows reactivation fee upload and submit flow.
+ * Production view — full reactivation fee upload and submit flow.
  */
-const ReactivationModal = () => {
+const ProductionReactivationModal = () => {
   const { account } = useAuth();
   const [file, setFile] = useState(null);
   const [paymentType, setPaymentType] = useState(SUBSCRIPTION_PAYMENT_TYPE.GCASH);
@@ -40,8 +44,8 @@ const ReactivationModal = () => {
       const { receiptUrl, receiptFileName } = await uploadReceipt(file, account.id);
 
       await createPaymentRequest.mutateAsync({
-        receiptUrl: receiptUrl,
-        receiptFileName: receiptFileName,
+        receiptUrl,
+        receiptFileName,
         paymentType,
       });
 
@@ -76,9 +80,7 @@ const ReactivationModal = () => {
           </div>
           <div className="flex justify-between">
             <span className="text-dark-400">Amount</span>
-            <span className="font-semibold">
-              {formatCurrency(REACTIVATION_FEE_PHP)}
-            </span>
+            <span className="font-semibold">{formatCurrency(REACTIVATION_FEE_PHP)}</span>
           </div>
         </div>
 
@@ -112,6 +114,16 @@ const ReactivationModal = () => {
       </form>
     </Modal>
   );
+};
+
+/**
+ * Global reactivation modal shown when the account is locked.
+ * - Staging: simple locked notice, no payment (close beta).
+ * - Production: full reactivation fee upload and submit flow.
+ */
+const ReactivationModal = () => {
+  if (IS_CLOSE_BETA) return <StagingLockedNotice />;
+  return <ProductionReactivationModal />;
 };
 
 export default ReactivationModal;

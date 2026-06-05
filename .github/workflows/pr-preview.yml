@@ -113,6 +113,8 @@ jobs:
       - name: Secure Config Injection and Build
         env:
           FIREBASE_ADMIN_CREDENTIALS: ${{ secrets.FIREBASE_ADMIN_CREDENTIALS }}
+          VITE_APP_ENV: staging
+          VITE_CLOSE_BETA: 'true'
           VITE_API_BASE_URL: ${{ env.BACKEND_API_URL }}
           PREVIEW_API_KEY: ${{ secrets.FIREBASE_PREVIEW_API_KEY }}
         run: |

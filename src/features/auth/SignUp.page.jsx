@@ -6,6 +6,7 @@ import { authService } from '../../shared/services/authService';
 import { useAuth } from '../../shared/context/AuthContext';
 import { Toast } from '../../shared/utils/alert';
 import { isValidEmail, normalizeEmail } from '../../shared/utils/validators/email';
+import { TRIAL_DAYS } from '../../shared/constants/subscriptionConstants';
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -175,7 +176,7 @@ const SignUp = () => {
       );
 
       await login(idToken, userCredential.user.uid);
-      Toast.success('Account created! Check your email to verify your address. Your 7-day free trial has started.');
+      Toast.success(`Account created! Check your email to verify your address. Your ${TRIAL_DAYS}-day free trial has started.`);
       navigate('/dashboard', { replace: true });
     } catch (error) {
       if (import.meta.env.DEV) console.error('Sign-up error:', error);
@@ -196,7 +197,7 @@ const SignUp = () => {
           <img src="/img/gymhubph.png" alt="GymHubPH" className="w-40 h-20 object-cover" />
         </div>
         <h1 className="text-2xl font-bold text-dark-50 mb-2 text-center">Create Your Gym Account</h1>
-        <p className="text-dark-300 text-sm mb-2 text-center">Start your 7-day free trial</p>
+        <p className="text-dark-300 text-sm mb-2 text-center">Start your {TRIAL_DAYS}-day free trial</p>
         <p className="text-dark-400 text-xs mb-6 text-center">
           Step {step} of 2
         </p>

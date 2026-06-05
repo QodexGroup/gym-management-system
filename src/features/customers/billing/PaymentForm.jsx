@@ -40,15 +40,15 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false })
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
-      <div className="p-4 bg-dark-50 rounded-xl flex items-center gap-4">
+      <div className="p-4 bg-dark-700 border border-dark-600 rounded-xl flex items-center gap-4">
         <Avatar src={member.avatar} name={member.name} size="md" />
         <div className="space-y-1">
           <p className="font-semibold text-dark-50">{member.name}</p>
-          <p className="text-sm text-dark-500">
+          <p className="text-sm text-dark-400">
             Bill Date: {formatDate(bill.billDate)} • Net: {formatCurrency(bill.netAmount)} • Paid:{' '}
             {formatCurrency(bill.paidAmount)}
           </p>
-          <p className="text-sm text-success-600 font-medium">
+          <p className="text-sm text-success-400 font-medium">
             Remaining: {formatCurrency(remainingAmount)}
           </p>
         </div>
@@ -143,10 +143,10 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false })
               className={`flex items-center justify-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all ${
                 method === value
                   ? 'border-primary-500 bg-primary-500 text-white shadow-lg shadow-primary-500/30'
-                  : 'border-dark-200 bg-dark-50 text-dark-100 hover:border-primary-400 hover:bg-primary-50'
+                  : 'border-dark-600 bg-dark-700 text-dark-200 hover:border-primary-500 hover:bg-dark-600'
               }`}
             >
-              <Icon className={`w-5 h-5 ${method === value ? 'text-white' : 'text-dark-200'}`} />
+              <Icon className={`w-5 h-5 ${method === value ? 'text-white' : 'text-dark-400'}`} />
               <span className="font-medium">{PAYMENT_METHOD_LABELS[value]}</span>
             </button>
           ))}
