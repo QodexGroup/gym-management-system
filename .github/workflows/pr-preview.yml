@@ -52,7 +52,7 @@ jobs:
         id: backend-url
         run: |
           REGION="asia-southeast1"
-          STAGING_BACKEND="https://gym-management-api-21018123230.asia-southeast1.run.app/api"
+          STAGING_BACKEND="https://staging.api.gymhubph.com/api"
           MAX_WAIT_TIME=180  # Wait up to 3 minutes for backend to be ready
           CHECK_INTERVAL=10   # Check every 10 seconds
           
