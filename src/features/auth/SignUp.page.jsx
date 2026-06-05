@@ -6,6 +6,7 @@ import { authService } from '../../shared/services/authService';
 import { useAuth } from '../../shared/context/AuthContext';
 import { Toast } from '../../shared/utils/alert';
 import { isValidEmail, normalizeEmail } from '../../shared/utils/validators/email';
+import { validatePhPhone, sanitizePhoneInput, toLocalPhFormat } from '../../shared/utils/validators/phone';
 import { TRIAL_DAYS } from '../../shared/constants/subscriptionConstants';
 
 const SignUp = () => {
@@ -66,6 +67,10 @@ const SignUp = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'phone') {
+      setFormData((prev) => ({ ...prev, phone: sanitizePhoneInput(value) }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -94,6 +99,13 @@ const SignUp = () => {
     if (formData.password.length < 6) {
       Toast.error('Password must be at least 6 characters.');
       return;
+    }
+    if (formData.phone) {
+      const phoneError = validatePhPhone(formData.phone);
+      if (phoneError) {
+        Toast.error(phoneError);
+        return;
+      }
     }
     setStep(2);
   };
@@ -160,7 +172,7 @@ const SignUp = () => {
         firstname: formData.firstname,
         lastname: formData.lastname,
         email: normalizeEmail(formData.email),
-        phone: formData.phone || null,
+        phone: formData.phone ? toLocalPhFormat(formData.phone) : null,
         billingName: formData.billingName,
         billingEmail: normalizeEmail(formData.billingEmail),
         billingPhone: formData.billingPhone,
