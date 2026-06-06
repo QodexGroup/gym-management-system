@@ -42,12 +42,13 @@ async function fetchPresignedUrl(path, contentType) {
     body: JSON.stringify({ path, content_type: contentType }),
   });
 
+  const json = await response.json().catch(() => ({}));
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'Failed to get upload URL');
+    throw new Error(json.message || 'Failed to get upload URL');
   }
 
-  return response.json();
+  return json.data;
 }
 
 async function putToR2(presignedUrl, file, onProgress = null) {

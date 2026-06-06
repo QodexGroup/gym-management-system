@@ -92,7 +92,7 @@ export const mapCustomerToUI = (customer) => {
     membershipExpiry,
     membershipStatus,
     balance: customer.balance || 0,
-    trainer: customer.currentTrainer?.name || null,
+    trainer: customer.currentTrainer?.fullname || null,
     email: customer.email || 'N/A',
     phone: customer.phoneNumber || 'N/A',
     birthDate: birthDate,

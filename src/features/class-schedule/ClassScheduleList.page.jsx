@@ -117,7 +117,7 @@ const ClassScheduleList = () => {
   }, [coaches, isTrainer]);
 
   return (
-    <Layout title="Class Schedules" subtitle="Manage group class schedules">
+    <Layout title="Class Schedules" subtitle="Manage upcoming group class and PT sessions">
       <div className="card">
         <div className="mb-6">
           <SearchAndFilter
