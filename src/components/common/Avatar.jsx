@@ -15,6 +15,7 @@ const Avatar = ({ src, name, size = 'md', status }) => {
   };
 
   const getInitials = (name) => {
+    if (!name) return '?';
     return name
       .split(' ')
       .map((n) => n[0])
