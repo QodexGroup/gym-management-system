@@ -23,16 +23,21 @@ const TermsAndConditionsModal = ({ isOpen, onAccept, onDecline }) => {
     setScrollProgress(progress);
     setHasReadAll(reachedBottom);
 
-    const sectionEls = container.querySelectorAll('[data-terms-section]');
-    let current = 0;
-    sectionEls.forEach((el, index) => {
-      const rect = el.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
-      if (rect.top <= containerRect.top + containerRect.height * 0.35) {
-        current = index;
-      }
-    });
-    setActiveSection(current);
+    // If the user hit the absolute bottom, force the active bubble indicator to the last index
+    if (reachedBottom) {
+      setActiveSection(TERMS_SECTIONS.length - 1);
+    } else {
+      const sectionEls = container.querySelectorAll('[data-terms-section]');
+      let current = 0;
+      sectionEls.forEach((el, index) => {
+        const rect = el.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        if (rect.top <= containerRect.top + containerRect.height * 0.35) {
+          current = index;
+        }
+      });
+      setActiveSection(current);
+    }
   }, []);
 
   useEffect(() => {

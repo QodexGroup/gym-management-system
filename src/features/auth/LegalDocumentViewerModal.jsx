@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { FileText, Shield, X } from 'lucide-react';
 import LegalDocumentSections from './LegalDocumentSections';
 
+const SCROLL_THRESHOLD = 24;
+
 const LegalDocumentViewerModal = ({
   isOpen,
   onClose,
@@ -30,20 +32,26 @@ const LegalDocumentViewerModal = ({
     const { scrollTop, scrollHeight, clientHeight } = container;
     const maxScroll = scrollHeight - clientHeight;
     const progress = maxScroll <= 0 ? 100 : Math.min(100, (scrollTop / maxScroll) * 100);
+    const reachedBottom = maxScroll <= SCROLL_THRESHOLD || scrollTop + clientHeight >= scrollHeight - SCROLL_THRESHOLD;
 
     setScrollProgress(progress);
 
-    const sectionEls = container.querySelectorAll(`[${sectionAttr}]`);
-    let current = 0;
-    sectionEls.forEach((el, index) => {
-      const rect = el.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
-      if (rect.top <= containerRect.top + containerRect.height * 0.35) {
-        current = index;
-      }
-    });
-    setActiveSection(current);
-  }, [sectionAttr]);
+    // Force active indicator to the last index if scrolled completely to the bottom
+    if (reachedBottom && sections.length > 0) {
+      setActiveSection(sections.length - 1);
+    } else {
+      const sectionEls = container.querySelectorAll(`[${sectionAttr}]`);
+      let current = 0;
+      sectionEls.forEach((el, index) => {
+        const rect = el.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        if (rect.top <= containerRect.top + containerRect.height * 0.35) {
+          current = index;
+        }
+      });
+      setActiveSection(current);
+    }
+  }, [sectionAttr, sections.length]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -153,6 +161,7 @@ const LegalDocumentViewerModal = ({
               sections={sections}
               activeSection={activeSection}
               sectionAttr={sectionAttr}
+              variant={variant}
             />
           </div>
 
