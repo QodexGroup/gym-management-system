@@ -16,7 +16,6 @@ import {
   useDeactivateUser,
   useActivateUser,
 } from '../../shared/hooks/useUsers';
-import { useAccountLimit } from '../../shared/hooks/useAccountLimit';
 import { useAuth } from '../../shared/context/AuthContext';
 import UserForm from './UserForm';
 import ResetPasswordForm from './ResetPasswordForm';
@@ -34,7 +33,6 @@ const UserManagement = () => {
 
   const { fetchUserData } = useAuth();
   const { data: usersData = [], isLoading, error } = useUsers();
-  const { canCreate: canAddUser } = useAccountLimit('users');
   const deleteUserMutation = useDeleteUser();
   const deactivateUserMutation = useDeactivateUser();
   const activateUserMutation = useActivateUser();
@@ -179,7 +177,6 @@ const UserManagement = () => {
             onAddClick={handleAddUser}
             addButtonLabel="Add User"
             addButtonIcon={Plus}
-            addButtonDisabled={!canAddUser}
           />
         </div>
 

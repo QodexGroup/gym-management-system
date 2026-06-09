@@ -11,7 +11,7 @@ import { getInitialProgressFormData, mapProgressToFormData } from '../../../shar
 import { customerScanService } from '../../../shared/services/customerScanService';
 import { useFileUpload } from '../../../shared/hooks/useFileUpload';
 import ProgressViewModal from './ProgressViewModal';
-import { getFileUrl } from '../../../shared/services/firebaseUrlService';
+import { getFileUrl } from '../../../shared/services/storageService';
 
 const ProgressForm = ({
   member,

@@ -69,7 +69,7 @@ export const dashboardService = {
 
     /**
      * @param {number} [limit=10]
-     * @returns {Promise<{ sessions: Array }>}
+     * @returns {Promise<{ groupSessions: { sessions: Array }, ptSessions: { sessions: Array } }>}
      */
     async getUpcomingSessions(limit = 10) {
         try {

@@ -30,3 +30,4 @@ playwright-report
 
 # Generated files containing environment configuration
 src/firebaseConfig.js
+.claude/*

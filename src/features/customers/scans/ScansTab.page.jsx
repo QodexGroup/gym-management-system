@@ -6,7 +6,7 @@ import StatsCards from '../../../components/common/StatsCards';
 import { useCustomerScans, useDeleteCustomerScan } from '../../../shared/hooks/useCustomerScan';
 import { usePermissions } from '../../../shared/hooks/usePermissions';
 import { useConfirmAction } from '../../../shared/hooks/useConfirmAction';
-import { getFileUrl } from '../../../shared/services/firebaseUrlService';
+import { getFileUrl } from '../../../shared/services/storageService';
 import ScansForm from './ScansForm';
 import { scanTableColumns } from './scanTable.config';
 import { SCAN_TYPE } from '../../../shared/constants/scanTypeConstant';

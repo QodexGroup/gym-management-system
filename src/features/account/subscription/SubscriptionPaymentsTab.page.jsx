@@ -3,7 +3,7 @@ import DataTable from '../../../components/DataTable';
 import { Pagination } from '../../../components/common';
 import { useAuth } from '../../../shared/context/AuthContext';
 import { subscriptionPaymentColumns } from '../subscriptionPaymentTable.config.jsx';
-import { getFileUrl } from '../../../shared/services/firebaseUrlService';
+import { getFileUrl } from '../../../shared/services/storageService';
 import { Toast } from '../../../shared/utils/alert';
 import { useSubscriptionRequests } from '../../../shared/hooks/useSubscriptionRequests';
 import { formatCurrency, formatDate } from '../../../shared/utils/formatters';

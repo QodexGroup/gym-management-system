@@ -11,7 +11,6 @@ import {
   usePtPackages,
   useDeletePtPackage,
 } from '../../shared/hooks/usePtPackages';
-import { useAccountLimit } from '../../shared/hooks/useAccountLimit';
 import { useAuth } from '../../shared/context/AuthContext';
 import { usePtCategories } from '../../shared/hooks/usePtCategories';
 import { usePagination } from '../../shared/hooks/usePagination';
@@ -23,8 +22,6 @@ import PtPackageForm from './PtPackageForm';
 const PtPackageList = () => {
   const { fetchUserData } = useAuth();
   const { currentPage, setCurrentPage, goToPrev, goToNext } = usePagination(1);
-  const { canCreate: canAddPackage } = useAccountLimit('pt_packages');
-
   // Search & filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategoryId, setFilterCategoryId] = useState('all');
@@ -130,7 +127,6 @@ const PtPackageList = () => {
             onAddClick={() => handleOpenModal()}
             addButtonLabel="Add PT Package"
             addButtonIcon={Plus}
-            addButtonDisabled={!canAddPackage}
           />
         </div>
         <GridDesign

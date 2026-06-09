@@ -14,7 +14,6 @@ import CustomerForm from './CustomerForm';
 import { useCustomers, useDeleteCustomer } from '../../shared/hooks/useCustomers';
 import { useCustomerSearch } from '../../shared/hooks/useCustomerSearch';
 import { usePermissions } from '../../shared/hooks/usePermissions';
-import { useAccountLimit } from '../../shared/hooks/useAccountLimit';
 import { useAuth } from '../../shared/context/AuthContext';
 import { customerTableColumns } from './customerTable.config';
 import { usePagination } from '../../shared/hooks/usePagination';
@@ -26,7 +25,6 @@ const CustomerList = () => {
   const assignedPtCoachIdParam = searchParams.get('assignedPtCoachId');
   const { fetchUserData } = useAuth();
   const { hasPermission } = usePermissions();
-  const { canCreate: canAddMember, message: limitMessage } = useAccountLimit('customers');
 
   // Pagination state
   const { currentPage, setCurrentPage, goToPrev, goToNext } = usePagination(1);
@@ -193,12 +191,9 @@ const CustomerList = () => {
 
           {hasPermission('members_list_add') && (
             <div className="flex items-center justify-end gap-3">
-              {limitMessage && <span className="text-sm text-warning-500">{limitMessage}</span>}
               <button
                 onClick={() => handleOpenModal()}
-                disabled={!canAddMember}
-                title={!canAddMember ? limitMessage : ''}
-                className="shrink-0 whitespace-nowrap btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="shrink-0 whitespace-nowrap btn-primary flex items-center gap-2"
               >
                 <UserPlus className="w-4 h-4" />
                 Add Client

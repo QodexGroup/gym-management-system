@@ -2,6 +2,10 @@
  * Subscription / Account Subscription Constants
  */
 
+// Change this to update the trial length everywhere it appears in the UI.
+// Must stay in sync with AccountSubscriptionStatusConstant::TRIAL_DAYS in the backend.
+export const TRIAL_DAYS = 15;
+
 export const SUBSCRIPTION_STATUS = {
   TRIAL_EXPIRED: 'trial_expired',
   ACTIVE: 'active',

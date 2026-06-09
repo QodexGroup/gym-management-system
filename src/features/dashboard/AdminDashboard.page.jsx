@@ -11,6 +11,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { formatCurrency } from '../../shared/utils/formatters';
+import { useChartColors } from '../../shared/hooks/useChartColors';
 import { dashboardService } from '../../shared/services/dashboardService';
 import DashboardUpcomingSessions from '../../components/dashboard/DashboardUpcomingSessions';
 import { useAuth } from '../../shared/context/AuthContext';
@@ -25,6 +26,7 @@ import {
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user, isStaff } = useAuth();
+  const chartColors = useChartColors();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -57,7 +59,9 @@ const AdminDashboard = () => {
         setSessionsLoading(true);
         const data = await dashboardService.getUpcomingSessions(50);
         if (!cancelled) {
-          setSessions(data?.sessions || []);
+          const group = data?.groupSessions?.sessions || [];
+          const pt = data?.ptSessions?.sessions || [];
+          setSessions([...group, ...pt]);
           setSessionsError(null);
         }
       } catch (err) {
@@ -227,10 +231,10 @@ const AdminDashboard = () => {
                   innerRadius={60}
                   outerRadius={80}
                   paddingAngle={5}
-                  dataKey="value"
+                  dataKey="count"
                 >
                   {(stats.membershipDistribution || []).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -238,16 +242,16 @@ const AdminDashboard = () => {
             </ResponsiveContainer>
           </div>
           <div className="space-y-2 mt-4">
-            {(stats.membershipDistribution || []).map((item) => (
-              <div key={item.name} className="flex items-center justify-between text-sm">
+            {(stats.membershipDistribution || []).map((item, index) => (
+              <div key={item.membershipPlanId} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   <span
                     className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: item.color }}
+                    style={{ backgroundColor: chartColors[index % chartColors.length] }}
                   />
-                  <span className="text-dark-300">{item.name}</span>
+                  <span className="text-dark-300">{item.membershipPlan?.planName ?? 'Unknown'}</span>
                 </div>
-                <span className="font-medium text-dark-50">{item.value}</span>
+                <span className="font-medium text-dark-50">{item.count}</span>
               </div>
             ))}
           </div>

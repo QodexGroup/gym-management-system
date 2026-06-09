@@ -11,7 +11,6 @@ import {
 } from '../../shared/hooks/useClassSchedules';
 import { useCoaches } from '../../shared/hooks/useUsers';
 import { useAuth } from '../../shared/context/AuthContext';
-import { useAccountLimit } from '../../shared/hooks/useAccountLimit';
 import ClassScheduleForm from './ClassScheduleForm';
 import { classScheduleTableColumns } from './classScheduleTable.config';
 import { usePagination } from '../../shared/hooks/usePagination';
@@ -26,8 +25,6 @@ const ClassScheduleList = () => {
   const [selectedSchedule, setSelectedSchedule] = useState(null);
 
   const { user, isTrainer, fetchUserData } = useAuth();
-  const { canCreate: canAddSchedule } = useAccountLimit('class_schedules');
-
   // Build query options (only for non-coaches)
   const scheduleOptions = useMemo(() => {
     if (isTrainer) {
@@ -117,7 +114,7 @@ const ClassScheduleList = () => {
   }, [coaches, isTrainer]);
 
   return (
-    <Layout title="Class Schedules" subtitle="Manage group class schedules">
+    <Layout title="Class Schedules" subtitle="Manage upcoming group class and PT sessions">
       <div className="card">
         <div className="mb-6">
           <SearchAndFilter
@@ -131,7 +128,6 @@ const ClassScheduleList = () => {
             onAddClick={() => handleOpenModal()}
             addButtonLabel="Create Class"
             addButtonIcon={Plus}
-            addButtonDisabled={!canAddSchedule}
           />
         </div>
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Camera, X } from 'lucide-react';
-import { getFileUrl } from '../../shared/services/firebaseUrlService';
+import { getFileUrl } from '../../shared/services/storageService';
 
 const PhotoThumbnail = ({ 
   photo, 

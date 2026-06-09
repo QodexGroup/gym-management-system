@@ -82,7 +82,9 @@ const TrainerDashboard = () => {
         setSessionsLoading(true);
         const data = await dashboardService.getUpcomingSessions(50);
         if (!cancelled) {
-          setSessions(data?.sessions || []);
+          const group = data?.groupSessions?.sessions || [];
+          const pt = data?.ptSessions?.sessions || [];
+          setSessions([...group, ...pt]);
           setSessionsError(null);
         }
       } catch (e) {

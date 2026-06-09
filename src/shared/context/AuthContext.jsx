@@ -26,7 +26,6 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [account, setAccount] = useState(null);
-  const [usage, setUsage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(getStoredToken);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -38,7 +37,6 @@ export const AuthProvider = ({ children }) => {
   const clearSession = useCallback(() => {
     setUser(null);
     setAccount(null);
-    setUsage(null);
     setToken(null);
     clearSessionStorage();
   }, []);
@@ -77,7 +75,6 @@ export const AuthProvider = ({ children }) => {
 
     setUser(userData);
     setAccount(data.account ?? null);
-    setUsage(data.usage ?? null);
     return userData;
   }, []);
 
@@ -246,7 +243,6 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         account,
-        usage,
         token,
         loading,
         login,

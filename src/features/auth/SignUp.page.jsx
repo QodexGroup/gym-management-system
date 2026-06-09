@@ -7,6 +7,8 @@ import { useAuth } from '../../shared/context/AuthContext';
 import { Toast } from '../../shared/utils/alert';
 import { isValidEmail, normalizeEmail } from '../../shared/utils/validators/email';
 import TermsAndConditionsModal from './TermsAndConditionsModal';
+import { validatePhPhone, sanitizePhoneInput, toLocalPhFormat } from '../../shared/utils/validators/phone';
+import { TRIAL_DAYS } from '../../shared/constants/subscriptionConstants';
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -68,6 +70,10 @@ const SignUp = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'phone') {
+      setFormData((prev) => ({ ...prev, phone: sanitizePhoneInput(value) }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -96,6 +102,13 @@ const SignUp = () => {
     if (formData.password.length < 6) {
       Toast.error('Password must be at least 6 characters.');
       return;
+    }
+    if (formData.phone) {
+      const phoneError = validatePhPhone(formData.phone);
+      if (phoneError) {
+        Toast.error(phoneError);
+        return;
+      }
     }
     setStep(2);
   };
@@ -167,7 +180,7 @@ const SignUp = () => {
         firstname: formData.firstname,
         lastname: formData.lastname,
         email: normalizeEmail(formData.email),
-        phone: formData.phone || null,
+        phone: formData.phone ? toLocalPhFormat(formData.phone) : null,
         billingName: formData.billingName,
         billingEmail: normalizeEmail(formData.billingEmail),
         billingPhone: formData.billingPhone,
@@ -183,7 +196,7 @@ const SignUp = () => {
       );
 
       await login(idToken, userCredential.user.uid);
-      Toast.success('Account created! Check your email to verify your address. Your 7-day free trial has started.');
+      Toast.success(`Account created! Check your email to verify your address. Your ${TRIAL_DAYS}-day free trial has started.`);
       navigate('/dashboard', { replace: true });
     } catch (error) {
       if (import.meta.env.DEV) console.error('Sign-up error:', error);
@@ -229,7 +242,7 @@ const SignUp = () => {
           <img src="/img/gymhubph.png" alt="GymHubPH" className="w-40 h-20 object-cover" />
         </div>
         <h1 className="text-2xl font-bold text-dark-50 mb-2 text-center">Create Your Gym Account</h1>
-        <p className="text-dark-300 text-sm mb-2 text-center">Start your 7-day free trial</p>
+        <p className="text-dark-300 text-sm mb-2 text-center">Start your {TRIAL_DAYS}-day free trial</p>
         <p className="text-dark-400 text-xs mb-6 text-center">
           Step {step} of 2
         </p>
