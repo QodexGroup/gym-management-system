@@ -33,12 +33,12 @@ export const TERMS_SECTIONS = [
       'Some software features may be incomplete or act as placeholders.',
       'Minor technical bugs, interface glitches, or temporary system downtime may occur.',
       'System layouts, workflows, and database structures might change as we update the software.',
-      'The platform is provided entirely on an "as available" and "as is" testing basis.',
+      'The platform is provided entirely on an "as is" and "as available" testing basis.',
     ],
     footer: 'We highly recommend keeping your own independent backup logs of your critical business files outside of the platform during this testing phase.',
   },
   {
-    title: '4. Testing Accounts & Community Safety',
+    title: '4. Account Security & Community Safety',
     body: ['To help keep our test database secure, users agree to:'],
     list: [
       'Provide accurate information when setting up your gym profile.',
@@ -51,7 +51,7 @@ export const TERMS_SECTIONS = [
     title: '5. Responsible Gym Management',
     body: [
       'Gym owners and system administrators remain entirely responsible for the records they choose to upload.',
-      'You agree to manage your members’ profiles responsibly and ensure that any staff members or regular gym-goers you invite to use the platform are aware that they are participating in a software trial.',
+      'You agree to manage your members’ profiles responsibly and ensure that any staff members or members you invite to use the platform are informed that they are participating in a closed beta software trial.',
     ],
   },
   {
@@ -60,7 +60,7 @@ export const TERMS_SECTIONS = [
     list: [
       'Use the testing platform for fraudulent, deceptive, or malicious actions.',
       'Intentionally try to disrupt, crash, or overload our cloud servers.',
-      'Attempt to reverse engineer or extract the underlying software code.',
+      'Attempt to access systems beyond your authorized scope.',
       'Upload harmful materials, malicious files, or malware into the database fields.',
     ],
     footer: 'We reserve the right to pause or close any test account that creates security risks or disrupts the platform.',
@@ -75,7 +75,7 @@ export const TERMS_SECTIONS = [
   {
     title: '8. Technical Setup & Third-Party Hosts',
     body: [
-      'We run GymHub PH using reliable, standard technical providers to keep your software responsive:',
+      'We run GymHub PH using reliable, standard technical providers to keep the platform reliable and responsive:',
     ],
     list: [
       'Cloudflare for cloud architecture and infrastructure protection.',
@@ -88,13 +88,13 @@ export const TERMS_SECTIONS = [
     title: '9. Beta Pricing & Future Plans',
     body: [
       'GymHub PH is completely free to use for our invited beta testers during this closed testing cycle.',
-      'No subscription fees are being charged at this time. If we introduce paid service tiers, premium operational features, or pricing models in the future, we will give you ample advance notice before any changes happen.',
+      'No subscription fees are charged during the closed beta period. If we introduce paid service tiers, premium operational features, or pricing models in the future, we will provide ample advance notice before any charges apply.',
     ],
   },
   {
     title: '10. Leaving the Program',
     body: [
-      'You are free to stop testing the platform whenever you want. If you decide to end your participation, just let us know and we will delete your testing records and account data from our active development servers.',
+      'You are free to stop testing the platform whenever you want. If you decide to end your participation, just let us know and we will happily delete your testing records and account data from our active development servers.',
     ],
   },
   {
@@ -107,8 +107,8 @@ export const TERMS_SECTIONS = [
   {
     title: '12. Updating Our Testing Guidelines',
     body: [
-      'As GymHub PH evolves, we reserve the right to modify, update, or change these terms and testing guidelines at any time and without prior notice.',
-      'Any changes will become effective immediately once posted within the platform or on our dashboard.',
+      'As GymHub PH evolves, we reserve the right to modify, update, or change these terms and testing guidelines at any time, though we will make reasonable efforts to notify users of significant changes.',
+      'Any changes will become effective immediately once posted within the platform or on our developer logs.',
       'Your continued participation in the closed beta after updates are posted means you accept and agree to the revised guidelines.',
     ],
   },
@@ -117,7 +117,7 @@ export const TERMS_SECTIONS = [
     body: ['If you need assistance, want to submit a bug report, or have questions about our testing program, please get in touch:'],
     contact: {
       name: 'GymHub PH Team',
-      representative: 'Evangeline Podadera (GymHub PH Representative)',
+      representative: 'Evangeline Podadera',
       email: 'gymhubph@gmail.com',
       mobile: '0965 245 3741',
       projectStatus: 'Independent development project operating in a private closed beta phase.',

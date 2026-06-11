@@ -34,7 +34,7 @@ export const PRIVACY_SECTIONS = [
     body: [
       'All member data, attendance logs, and business records you enter stay completely yours. We do not claim ownership of your data.',
       'GymHub PH will never sell, trade, or distribute your gym or member data to third-party advertisers.',
-      'As a tester, you agree to enter information responsibly and ensure your staff and testing members are comfortable with you using a beta platform to manage their details.',
+      'As a tester, you agree to enter information responsibly and ensure your staff and members are informed that their data is being managed through a beta platform.',
     ],
   },
   {
@@ -66,7 +66,7 @@ export const PRIVACY_SECTIONS = [
   {
     title: '8. Changes to Our Testing Guidelines',
     body: [
-      'We may adjust, update, or completely change this privacy policy from time to time without prior notice to reflect changes in our software structure or development needs.',
+      'We may adjust, update, or completely change this privacy policy from time to time to reflect changes in our software structure or development needs, though we will make reasonable efforts to inform active testers of significant changes.',
       'We encourage you to review this policy periodically right here on the platform.',
       'Continued use of GymHub PH after changes are applied constitutes your acknowledgment and acceptance of the updated privacy practices.',
     ],
