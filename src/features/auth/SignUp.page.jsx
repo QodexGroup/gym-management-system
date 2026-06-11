@@ -33,14 +33,8 @@ const SignUp = () => {
   const [step, setStep] = useState(1);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const { login, isAuthenticated, authLoading } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [isAuthenticated, authLoading, navigate]);
 
   useEffect(() => {
     const initAuth = async () => {

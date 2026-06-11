@@ -56,10 +56,11 @@ const LegalDocumentViewerModal = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    setScrollProgress(0);
-    setActiveSection(0);
-
-    const frame = requestAnimationFrame(updateScrollState);
+    const frame = requestAnimationFrame(() => {
+      setScrollProgress(0);
+      setActiveSection(0);
+      updateScrollState();
+    });
     return () => cancelAnimationFrame(frame);
   }, [isOpen, updateScrollState]);
 

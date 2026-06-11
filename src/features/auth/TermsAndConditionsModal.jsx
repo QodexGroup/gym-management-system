@@ -43,11 +43,12 @@ const TermsAndConditionsModal = ({ isOpen, onAccept, onDecline }) => {
   useEffect(() => {
     if (!isOpen) return;
 
-    setScrollProgress(0);
-    setHasReadAll(false);
-    setActiveSection(0);
-
-    const frame = requestAnimationFrame(updateScrollState);
+    const frame = requestAnimationFrame(() => {
+      setScrollProgress(0);
+      setHasReadAll(false);
+      setActiveSection(0);
+      updateScrollState();
+    });
     return () => cancelAnimationFrame(frame);
   }, [isOpen, updateScrollState]);
 
