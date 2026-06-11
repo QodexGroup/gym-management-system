@@ -7,6 +7,8 @@ import { setLoggingIn } from '../../shared/services/authService';
 import { Toast } from '../../shared/utils/alert';
 import { ACCOUNT_STATE } from '../../shared/constants/accountState';
 import { isValidEmail, normalizeEmail } from '../../shared/utils/validators/email';
+import LegalDocumentViewerModal from './LegalDocumentViewerModal';
+import { PRIVACY_INTRO, PRIVACY_SECTIONS } from './privacyPolicy.content';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -15,6 +17,8 @@ const Login = () => {
   const [deactivatedMessage, setDeactivatedMessage] = useState('');
   const [trialExpiredMessage, setTrialExpiredMessage] = useState('');
   const [firebaseAuth, setFirebaseAuth] = useState(null);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const { login, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -59,6 +63,10 @@ const Login = () => {
     }
     if (!isValidEmail(normalizedEmail)) {
       Toast.error('Please enter a valid email address.');
+      return;
+    }
+    if (!privacyAccepted) {
+      Toast.error('You must agree to the Privacy Policy to sign in.');
       return;
     }
 
@@ -218,9 +226,30 @@ const Login = () => {
             />
           </div>
 
+          <div className="flex items-center gap-3">
+            <input
+              id="privacy-checkbox"
+              type="checkbox"
+              checked={privacyAccepted}
+              onChange={(e) => setPrivacyAccepted(e.target.checked)}
+              disabled={loading}
+              className="w-4 h-4 rounded border-dark-600 bg-dark-700 text-primary-500 focus:ring-primary-500 focus:ring-offset-dark-800 cursor-pointer"
+            />
+            <label htmlFor="privacy-checkbox" className="text-sm text-dark-300 leading-snug cursor-pointer">
+              I agree to the{' '}
+              <button
+                type="button"
+                onClick={() => setShowPrivacyModal(true)}
+                className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2 font-medium"
+              >
+                Privacy Policy
+              </button>
+            </label>
+          </div>
+
           <button
             type="submit"
-            disabled={loading || !firebaseAuth}
+            disabled={loading || !firebaseAuth || !privacyAccepted}
             className="w-full bg-primary-500 text-white py-3 rounded-lg font-semibold hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-dark-900 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {loading ? (
@@ -237,6 +266,16 @@ const Login = () => {
           </button>
         </form>
       </div>
+
+      <LegalDocumentViewerModal
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+        title="Privacy Policy"
+        subtitle="Learn how GymHub PH handles and protects your data."
+        intro={PRIVACY_INTRO}
+        sections={PRIVACY_SECTIONS}
+        variant="privacy"
+      />
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { authService } from '../../shared/services/authService';
 import { useAuth } from '../../shared/context/AuthContext';
 import { Toast } from '../../shared/utils/alert';
 import { isValidEmail, normalizeEmail } from '../../shared/utils/validators/email';
+import TermsAndConditionsModal from './TermsAndConditionsModal';
 import { validatePhPhone, sanitizePhoneInput, toLocalPhFormat } from '../../shared/utils/validators/phone';
 import { TRIAL_DAYS } from '../../shared/constants/subscriptionConstants';
 
@@ -30,14 +31,10 @@ const SignUp = () => {
   const [loading, setLoading] = useState(false);
   const [firebaseAuth, setFirebaseAuth] = useState(null);
   const [step, setStep] = useState(1);
-  const { login, isAuthenticated, authLoading } = useAuth();
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [isAuthenticated, authLoading, navigate]);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -154,6 +151,11 @@ const SignUp = () => {
       Toast.error('Billing country must be a 2-letter country code (e.g. PH, US).');
       return;
     }
+    if (!termsAccepted) {
+      Toast.error('You must accept the Terms and Conditions to create an account.');
+      setShowTermsModal(true);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -200,6 +202,31 @@ const SignUp = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTermsCheckboxChange = (e) => {
+    if (e.target.checked) {
+      e.preventDefault();
+      setShowTermsModal(true);
+      return;
+    }
+    setTermsAccepted(false);
+  };
+
+  const handleTermsLinkClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowTermsModal(true);
+  };
+
+  const handleTermsAccept = () => {
+    setTermsAccepted(true);
+    setShowTermsModal(false);
+  };
+
+  const handleTermsDecline = () => {
+    setTermsAccepted(false);
+    setShowTermsModal(false);
   };
 
   return (
@@ -426,6 +453,27 @@ const SignUp = () => {
                 />
               </div>
 
+              <div className="flex items-start gap-3 mt-2">
+                <input
+                  id="terms-checkbox"
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={handleTermsCheckboxChange}
+                  disabled={loading}
+                  className="mt-1 w-4 h-4 rounded border-dark-600 bg-dark-700 text-primary-500 focus:ring-primary-500 focus:ring-offset-dark-800 cursor-pointer"
+                />
+                <label htmlFor="terms-checkbox" className="text-sm text-dark-300 leading-snug cursor-pointer">
+                  I agree to the{' '}
+                  <button
+                    type="button"
+                    onClick={handleTermsLinkClick}
+                    className="text-primary-400 hover:text-primary-300 underline underline-offset-2 font-medium"
+                  >
+                    Terms and Conditions
+                  </button>
+                </label>
+              </div>
+
               <div className="flex items-center justify-between mt-4 gap-3">
                 <button
                   type="button"
@@ -437,7 +485,7 @@ const SignUp = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={loading || !firebaseAuth}
+                  disabled={loading || !firebaseAuth || !termsAccepted}
                   className="w-2/3 bg-primary-500 text-white py-3 rounded-lg font-semibold hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
                 >
                   {loading ? 'Creating account...' : 'Create Account'}
@@ -447,6 +495,12 @@ const SignUp = () => {
           )}
         </form>
       </div>
+
+      <TermsAndConditionsModal
+        isOpen={showTermsModal}
+        onAccept={handleTermsAccept}
+        onDecline={handleTermsDecline}
+      />
     </div>
   );
 };
