@@ -9,6 +9,7 @@ import {
   LogOut,
   QrCode,
   Palette,
+  ClipboardList,
 } from 'lucide-react';
 
 const Header = ({ title, subtitle }) => {
@@ -118,6 +119,16 @@ const Header = ({ title, subtitle }) => {
                     <Palette className="w-4 h-4" />
                     Themes & Appearance
                   </button>
+                  <a
+                    href="https://docs.google.com/forms/d/e/1FAIpQLScB0qnY6EdOTsvf1YSEkqSt4bv1CCzhQlKcUgRyZKVauRDwzw/viewform?usp=publish-editor"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setShowUserMenu(false)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-dark-200 hover:bg-dark-700 transition-colors"
+                  >
+                    <ClipboardList className="w-4 h-4" />
+                    Give Feedback
+                  </a>
                 </div>
                 <div className="border-t border-dark-700 py-2">
                   <button
