@@ -3,12 +3,13 @@
  */
 export const MAX_REPORT_ROWS = 200;
 
-/** Chart hover and tooltip: bar hover transparent, tooltip opaque so text is readable */
+/** Chart hover and tooltip: themed via surface tokens so it matches light/dark mode (white card + dark text in light, dark card + light text in dark) */
 export const CHART_TOOLTIP_STYLE = {
-  background: 'rgba(30, 41, 59, 0.98)',
-  border: '1px solid rgba(255,255,255,0.12)',
+  background: 'rgb(var(--c-surface-800))',
+  border: '1px solid rgb(var(--c-surface-600))',
   borderRadius: '8px',
-  color: '#f1f5f9',
+  color: 'rgb(var(--c-surface-50))',
+  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
 };
 export const CHART_CURSOR = { fill: 'transparent' };
 export const CHART_PIE_ACTIVE = { opacity: 0.85 };

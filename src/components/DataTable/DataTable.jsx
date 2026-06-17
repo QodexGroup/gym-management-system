@@ -34,7 +34,7 @@ const DataTable = ({
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-dark-50">
+              <tr className="bg-dark-800">
                 {columns.map((col) => (
                   <th
                     key={col.key}

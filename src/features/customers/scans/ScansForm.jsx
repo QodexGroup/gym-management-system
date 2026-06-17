@@ -1,8 +1,8 @@
 ﻿import { useState, useEffect, useCallback, useRef } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { FileText, Upload, X } from 'lucide-react';
-import { Modal } from '../../../components/common';
+import { Upload } from 'lucide-react';
+import { Modal, PhotoThumbnail } from '../../../components/common';
 import { useCreateCustomerScan, useUpdateCustomerScan, customerScanKeys } from '../../../shared/hooks/useCustomerScan';
 import { formatDateForInput } from '../../../shared/utils/formatters';
 import { Alert, Toast } from '../../../shared/utils/alert';
@@ -267,32 +267,15 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
             </label>
           </div>
           {uploadedFiles.length > 0 && (
-            <div className="mt-3 space-y-3">
-              {uploadedFiles.map((file) => (
-                <div key={file.id} className="p-3 bg-dark-50 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <FileText className="w-5 h-5 text-primary-600 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-dark-50 truncate">{file.fileName}</p>
-                        {file.fileSize && <p className="text-xs text-dark-500">{file.fileSize} KB</p>}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveFile(file)}
-                      className="p-1 text-danger-500 hover:bg-danger-50 rounded transition-colors ml-2"
-                      title="Remove file"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  {file.url && file.mimeType?.startsWith('image/') && (
-                    <div className="mt-2 rounded-lg overflow-hidden border border-dark-200">
-                      <img src={file.url} alt={file.fileName} className="w-full h-48 object-contain bg-dark-100" />
-                    </div>
-                  )}
-                </div>
+            <div className="flex flex-wrap gap-3 mt-3">
+              {uploadedFiles.map((file, idx) => (
+                <PhotoThumbnail
+                  key={file.id || idx}
+                  photo={file}
+                  index={idx}
+                  onRemove={handleRemoveFile}
+                  wrapperClassName="relative group w-24 h-24 overflow-hidden"
+                />
               ))}
             </div>
           )}

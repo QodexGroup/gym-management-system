@@ -62,7 +62,7 @@ const AppointmentsTab = ({ member, appointments }) => {
         {upcomingAppointments.length > 0 ? (
           <div className="space-y-3">
             {upcomingAppointments.map((apt) => (
-              <div key={apt.id} className="flex items-center justify-between p-4 bg-dark-50 rounded-xl">
+              <div key={apt.id} className="flex items-center justify-between p-4 bg-dark-700 border border-dark-600 rounded-xl">
                 <div className="flex items-center gap-4">
                   <div className="text-center px-4 py-2 bg-primary-100 rounded-lg min-w-[80px]">
                     <p className="text-lg font-bold text-primary-600">{apt.time}</p>
@@ -93,10 +93,10 @@ const AppointmentsTab = ({ member, appointments }) => {
           <h3 className="text-lg font-semibold text-dark-50 mb-4">Past Appointments</h3>
           <div className="space-y-3">
             {pastAppointments.map((apt) => (
-              <div key={apt.id} className="flex items-center justify-between p-4 bg-dark-50 rounded-xl opacity-75">
+              <div key={apt.id} className="flex items-center justify-between p-4 bg-dark-700 border border-dark-600 rounded-xl opacity-75">
                 <div className="flex items-center gap-4">
-                  <div className="text-center px-4 py-2 bg-dark-200 rounded-lg min-w-[80px]">
-                    <p className="text-lg font-bold text-dark-200">{apt.time}</p>
+                  <div className="text-center px-4 py-2 bg-dark-700 rounded-lg min-w-[80px]">
+                    <p className="text-lg font-bold text-dark-400">{apt.time}</p>
                     <p className="text-xs text-dark-400">{apt.duration} min</p>
                   </div>
                   <div>
@@ -119,7 +119,7 @@ const AppointmentsTab = ({ member, appointments }) => {
         size="lg"
       >
         <form className="space-y-4">
-          <div className="p-4 bg-dark-50 rounded-xl flex items-center gap-4">
+          <div className="p-4 bg-dark-700 border border-dark-600 rounded-xl flex items-center gap-4">
             <Avatar src={member.avatar} name={member.name} size="md" />
             <div>
               <p className="font-semibold text-dark-50">{member.name}</p>

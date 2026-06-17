@@ -16,6 +16,7 @@ export { default as Pagination } from './Pagination';
 export { default as SearchAndFilter } from './SearchAndFilter';
 export { default as SearchInput } from './SearchInput';
 export { default as SectionCard } from './SectionCard';
+export { default as InfoField } from './InfoField';
 export { default as TableCard } from './TableCard';
 export { default as DateRangeExportBar } from './DateRangeExportBar';
 export { default as PrintArea } from './PrintArea';

@@ -57,9 +57,9 @@ const ProgressViewModal = ({
     >
       <div className="space-y-6">
         {/* Header Info */}
-        <div className="flex items-center justify-between p-4 bg-dark-50 rounded-xl">
+        <div className="flex items-center justify-between p-4 bg-dark-700 border border-dark-600 rounded-xl">
           <div>
-            <p className="text-sm text-dark-500">Recorded By</p>
+            <p className="text-sm text-dark-200">Recorded By</p>
             <p className="font-medium text-dark-50">{viewLog.recordedByUser?.firstname} {viewLog.recordedByUser?.lastname || 'N/A'}</p>
           </div>
           <span className={`px-3 py-1 text-sm font-medium rounded-full uppercase ${getDataSourceBadge(viewLog.dataSource)}`}>
@@ -140,7 +140,7 @@ const ProgressViewModal = ({
         {viewLog.notes && (
           <div>
             <h4 className="font-semibold text-dark-50 mb-2">Notes</h4>
-            <div className="p-4 bg-dark-50 rounded-xl">
+            <div className="p-4 bg-dark-700 border border-dark-600 rounded-xl">
               <p className="text-dark-200">{viewLog.notes}</p>
             </div>
           </div>

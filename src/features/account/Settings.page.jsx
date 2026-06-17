@@ -67,7 +67,7 @@ const Settings = () => {
   };
 
   const SettingToggle = ({ label, description, settingKey, icon: Icon }) => (
-    <div className="flex items-center justify-between p-4 bg-dark-50 rounded-xl">
+    <div className="flex items-center justify-between p-4 bg-dark-700 border border-dark-600 rounded-xl">
       <div className="flex items-center gap-4">
         {Icon && (
           <div className="p-2 bg-primary-500/10 rounded-lg">
@@ -339,7 +339,7 @@ const Settings = () => {
             <div className="space-y-3">
               <a
                 href="#"
-                className="flex items-center gap-3 p-3 bg-dark-50 rounded-xl hover:bg-dark-100 transition-colors"
+                className="flex items-center gap-3 p-3 bg-dark-700 border border-dark-600 rounded-xl hover:bg-dark-600 transition-colors"
               >
                 <HelpCircle className="w-5 h-5 text-primary-500" />
                 <div>
@@ -349,7 +349,7 @@ const Settings = () => {
               </a>
               <a
                 href="#"
-                className="flex items-center gap-3 p-3 bg-dark-50 rounded-xl hover:bg-dark-100 transition-colors"
+                className="flex items-center gap-3 p-3 bg-dark-700 border border-dark-600 rounded-xl hover:bg-dark-600 transition-colors"
               >
                 <FileText className="w-5 h-5 text-primary-500" />
                 <div>
@@ -361,7 +361,7 @@ const Settings = () => {
           </div>
 
           {/* App Info */}
-          <div className="card bg-dark-50">
+          <div className="card bg-dark-700">
             <p className="text-sm text-dark-500 text-center">
               GymHubPH
               <br />
@@ -420,19 +420,19 @@ const Settings = () => {
             Select the data you want to export. The export will be downloaded as a CSV file.
           </p>
           <div className="space-y-3">
-            <label className="flex items-center gap-3 p-3 bg-dark-50 rounded-xl cursor-pointer hover:bg-dark-100">
+            <label className="flex items-center gap-3 p-3 bg-dark-700 border border-dark-600 rounded-xl cursor-pointer hover:bg-dark-600">
               <input type="checkbox" className="w-4 h-4 rounded text-primary-500" defaultChecked />
               <span className="font-medium text-dark-50">Members</span>
             </label>
-            <label className="flex items-center gap-3 p-3 bg-dark-50 rounded-xl cursor-pointer hover:bg-dark-100">
+            <label className="flex items-center gap-3 p-3 bg-dark-700 border border-dark-600 rounded-xl cursor-pointer hover:bg-dark-600">
               <input type="checkbox" className="w-4 h-4 rounded text-primary-500" defaultChecked />
               <span className="font-medium text-dark-50">Payments</span>
             </label>
-            <label className="flex items-center gap-3 p-3 bg-dark-50 rounded-xl cursor-pointer hover:bg-dark-100">
+            <label className="flex items-center gap-3 p-3 bg-dark-700 border border-dark-600 rounded-xl cursor-pointer hover:bg-dark-600">
               <input type="checkbox" className="w-4 h-4 rounded text-primary-500" defaultChecked />
               <span className="font-medium text-dark-50">Appointments</span>
             </label>
-            <label className="flex items-center gap-3 p-3 bg-dark-50 rounded-xl cursor-pointer hover:bg-dark-100">
+            <label className="flex items-center gap-3 p-3 bg-dark-700 border border-dark-600 rounded-xl cursor-pointer hover:bg-dark-600">
               <input type="checkbox" className="w-4 h-4 rounded text-primary-500" />
               <span className="font-medium text-dark-50">Expenses</span>
             </label>

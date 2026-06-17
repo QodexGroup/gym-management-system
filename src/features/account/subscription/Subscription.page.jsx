@@ -29,7 +29,7 @@ export const SubscriptionSection = ({ defaultTab = 'my-plan' }) => {
             type="button"
             onClick={() => setSearchParams({ tab: tab.key })}
             className={`px-4 py-2 rounded-t-lg font-medium whitespace-nowrap transition-colors ${
-              activeTab === tab.key ? 'bg-primary-500 text-white' : 'text-dark-500 hover:bg-dark-100'
+              activeTab === tab.key ? 'bg-primary-500 text-white' : 'text-dark-500 hover:bg-dark-700'
             }`}
           >
             {tab.label}
