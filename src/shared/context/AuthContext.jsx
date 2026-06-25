@@ -14,6 +14,7 @@ import {
 } from '../utils/sessionStorage';
 import { useTokenRefresh } from '../hooks/useTokenRefresh';
 import { useAccountStatus } from '../hooks/useAccountStatus';
+import { queryClient } from '../lib/queryClient';
 
 const AuthContext = createContext();
 
@@ -39,6 +40,9 @@ export const AuthProvider = ({ children }) => {
     setAccount(null);
     setToken(null);
     clearSessionStorage();
+    // Wipe all cached React Query data so the next account doesn't see the
+    // previous account's data (e.g. user management list, notifications).
+    queryClient.clear();
   }, []);
 
   // ─── Fetch user data from backend ──────────────────────────────────────────
@@ -83,6 +87,10 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoggingIn(true);
       setLoggingIn(true);
+
+      // Drop any cached data from a previously logged-in account before
+      // loading the new one.
+      queryClient.clear();
 
       setSessionStart();
       setStoredToken(idToken);
