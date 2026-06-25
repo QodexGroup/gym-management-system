@@ -34,3 +34,14 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_GYMHUBTECH_67E6F }}
           channelId: live
           projectId: gymhubtech-67e6f
+
+      # Post deploy status (success or failure) to Slack #platform-builds.
+      # Reuses the same incoming-webhook URL as the Railway notifications.
+      - name: Notify Slack
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          if [ "$STATUS" = "success" ]; then EMOJI=":white_check_mark:"; else EMOJI=":x:"; fi
+          curl -sf -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"${EMOJI} *Frontend* deploy *${STATUS}* — \`${GITHUB_REF_NAME}\` @ \`${GITHUB_SHA:0:7}\` by ${GITHUB_ACTOR}\n<${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}|View workflow run>\"}" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}"
