@@ -49,7 +49,7 @@ const PhotoThumbnail = ({
   return (
     <div className={wrapperClassName}>
       {loading ? (
-        <div className={`${className} bg-dark-200 flex items-center justify-center w-full h-full`}>
+        <div className={`${className} bg-dark-700 flex items-center justify-center w-full h-full`}>
           <Camera className="w-4 h-4 text-dark-400 animate-pulse" />
         </div>
       ) : imageUrl && !imageError ? (
@@ -61,7 +61,7 @@ const PhotoThumbnail = ({
           onError={() => setImageError(true)}
         />
       ) : (
-        <div className={`${className} bg-dark-100 flex items-center justify-center cursor-pointer w-full h-full`} onClick={() => onView?.(photo, index)}>
+        <div className={`${className} bg-dark-700 flex items-center justify-center cursor-pointer w-full h-full`} onClick={() => onView?.(photo, index)}>
           <Camera className="w-8 h-8 text-dark-300" />
         </div>
       )}

@@ -210,9 +210,9 @@ const ProgressForm = ({
               <div>
                 <label className="label">Associate Scan</label>
                 {loadingScans ? (
-                  <div className="input bg-dark-50 text-dark-400">Loading scans...</div>
+                  <div className="input bg-dark-700 text-dark-400">Loading scans...</div>
                 ) : availableScans.length === 0 ? (
-                  <div className="input bg-dark-50 text-dark-400">No scans found</div>
+                  <div className="input bg-dark-700 text-dark-400">No scans found</div>
                 ) : (
                   <select className="input" value={formData.customerScanId || ''} onChange={e => setFormData(prev => ({ ...prev, customerScanId: e.target.value ? parseInt(e.target.value) : null }))}>
                     <option value="">Select a scan (optional)</option>
@@ -311,9 +311,9 @@ const ProgressForm = ({
               </label>
             </div>
             {uploadedFiles.length > 0 && (
-              <div className="grid grid-cols-4 gap-3 mt-3">
+              <div className="flex flex-wrap gap-3 mt-3">
                 {uploadedFiles.map((file, idx) => (
-                  <PhotoThumbnail key={file.id || idx} photo={file} index={idx} uploadProgress={uploadProgress[idx]} onRemove={handleRemoveFile} onView={handleImageClick} />
+                  <PhotoThumbnail key={file.id || idx} photo={file} index={idx} uploadProgress={uploadProgress[idx]} onRemove={handleRemoveFile} onView={handleImageClick} wrapperClassName="relative group w-24 h-24 overflow-hidden" />
                 ))}
               </div>
             )}

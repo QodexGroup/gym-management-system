@@ -153,13 +153,13 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="label">Membership Plan</label>
-            <input type="text" className="input bg-dark-50 cursor-not-allowed" value={activeMembershipPlan.planName} disabled />
+            <input type="text" className="input bg-dark-700 cursor-not-allowed" value={activeMembershipPlan.planName} disabled />
           </div>
           <div>
             <label className="label">Price</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-400">₱</span>
-              <input type="number" className="input pl-8 bg-dark-50 cursor-not-allowed" value={formData.grossAmount} readOnly disabled />
+              <input type="number" className="input pl-8 bg-dark-700 cursor-not-allowed" value={formData.grossAmount} readOnly disabled />
             </div>
           </div>
         </div>

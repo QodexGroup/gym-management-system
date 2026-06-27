@@ -59,7 +59,7 @@ const FilesTab = ({ member }) => {
     if (type === 'photo') return 'bg-success-100 text-success-700';
     if (type === 'inbody_scan') return 'bg-primary-100 text-primary-700';
     if (type === 'styku_scan') return 'bg-accent-100 text-accent-700';
-    return 'bg-dark-100 text-dark-100';
+    return 'bg-dark-700 text-dark-200';
   };
 
   const getFileTypeLabel = (type) => {
@@ -154,7 +154,7 @@ const FilesTab = ({ member }) => {
         </div>
 
         {/* Table Header */}
-        <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-dark-50 rounded-lg text-sm font-medium text-dark-200 mb-2">
+        <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-dark-700 rounded-lg text-sm font-medium text-dark-200 mb-2">
           <div className="col-span-2">Date</div>
           <div className="col-span-2">Type</div>
           <div className="col-span-3">File Name</div>
@@ -169,7 +169,7 @@ const FilesTab = ({ member }) => {
             {paginatedFiles.map((file) => (
               <div
                 key={file.id}
-                className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 bg-dark-50 rounded-xl hover:bg-dark-100 transition-colors items-center"
+                className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 bg-dark-700 border border-dark-600 rounded-xl hover:bg-dark-600 transition-colors items-center"
               >
                 {/* Date */}
                 <div className="col-span-2">
@@ -253,7 +253,7 @@ const FilesTab = ({ member }) => {
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="p-2 rounded-lg border border-dark-200 hover:bg-dark-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-lg border border-dark-200 hover:bg-dark-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -264,7 +264,7 @@ const FilesTab = ({ member }) => {
                   className={`w-8 h-8 rounded-lg font-medium transition-colors ${
                     currentPage === idx + 1
                       ? 'bg-primary-500 text-white'
-                      : 'border border-dark-200 hover:bg-dark-50'
+                      : 'border border-dark-200 hover:bg-dark-700'
                   }`}
                 >
                   {idx + 1}
@@ -273,7 +273,7 @@ const FilesTab = ({ member }) => {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="p-2 rounded-lg border border-dark-200 hover:bg-dark-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-lg border border-dark-200 hover:bg-dark-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -291,7 +291,7 @@ const FilesTab = ({ member }) => {
       >
         {selectedFile && (
           <div className="space-y-4">
-            <div className="aspect-video bg-dark-100 rounded-xl overflow-hidden border-2 border-dark-200 flex items-center justify-center">
+            <div className="aspect-video bg-dark-700 rounded-xl overflow-hidden border-2 border-dark-200 flex items-center justify-center">
               {selectedFile.fileType === 'photo' ? (
                 <Image className="w-24 h-24 text-dark-300" />
               ) : (

@@ -1,14 +1,15 @@
 ﻿import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../layout/Layout';
-import { Avatar, Badge } from '../../components/common';
-import { ArrowLeft, Activity, FileText, CreditCard, CalendarDays, UserCheck, ClipboardClock, QrCode } from 'lucide-react';
+import { Avatar, Badge, InfoField } from '../../components/common';
+import { ArrowLeft, User, Activity, FileText, CreditCard, CalendarDays, UserCheck, ClipboardClock, QrCode } from 'lucide-react';
 import { MemberQRCard } from './qr-card';
 import CustomerForm from './CustomerForm';
 import { useCustomer } from '../../shared/hooks/useCustomers';
 import { mapCustomerToUI } from '../../shared/models/customerModel';
 import { formatCurrency } from '../../shared/utils/formatters';
 import { CUSTOMER_MEMBERSHIP_STATUS } from '../../shared/constants/customerMembership';
+import { ProfileTab } from './profile';
 import { ProgressTab } from './progress';
 import { BillsTab } from './billing';
 import { ScansTab } from './scans';
@@ -19,6 +20,7 @@ import { usePermissions } from '../../shared/hooks/usePermissions';
 
 /* --------------------------- Tab Config --------------------------- */
 const customerTabs = [
+  { key: 'profile', label: 'Profile', icon: User, component: ProfileTab },
   { key: 'progress', label: 'Progress Tracking', icon: Activity, component: ProgressTab },
   { key: 'scans', label: 'Scans', icon: FileText, component: ScansTab },
   { key: 'bills', label: 'Plans, PT Packages & Billing', icon: CreditCard, component: BillsTab },
@@ -88,30 +90,11 @@ const ProfileHeader = ({ member, onEdit, onViewCard, canEdit }) => (
 const ProfileStats = ({ member }) => (
   <div className="card mb-6">
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-      <div>
-        <p className="text-xs text-dark-400 mb-0.5">Email</p>
-        <p className="text-sm text-dark-200">{member.email}</p>
-      </div>
-      <div>
-        <p className="text-xs text-dark-400 mb-0.5">Phone</p>
-        <p className="text-sm text-dark-100">{member.phone}</p>
-      </div>
-      {member.birthDate && (
-        <div>
-          <p className="text-xs text-dark-400 mb-0.5">Birthday</p>
-          <p className="text-sm text-dark-100">{member.birthDate}</p>
-        </div>
-      )}
-      <div>
-        <p className="text-xs text-dark-400 mb-0.5">Membership Expires</p>
-        <p className="text-sm text-dark-100">{member.membershipExpiry}</p>
-      </div>
-      {member.address && (
-        <div>
-          <p className="text-xs text-dark-400 mb-0.5">Address</p>
-          <p className="text-sm text-dark-100 truncate">{member.address}</p>
-        </div>
-      )}
+      <InfoField label="Email" value={member.email} valueClassName="text-dark-200" />
+      <InfoField label="Phone" value={member.phone} />
+      {member.birthDate && <InfoField label="Birthday" value={member.birthDate} />}
+      <InfoField label="Membership Expires" value={member.membershipExpiry} />
+      {member.address && <InfoField label="Address" value={member.address} valueClassName="text-dark-100 truncate" />}
     </div>
   </div>
 );
@@ -121,7 +104,7 @@ const CustomerProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'progress';
+  const activeTab = searchParams.get('tab') || 'profile';
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [showQRCard, setShowQRCard] = useState(false);
@@ -182,7 +165,7 @@ const CustomerProfile = () => {
               className={`flex items-center gap-2 px-4 py-3 rounded-t-lg font-medium transition-colors ${
                 activeTab === tab.key
                   ? 'bg-primary-500 text-white'
-                  : 'text-dark-500 hover:bg-dark-100'
+                  : 'text-dark-500 hover:bg-dark-700'
               }`}
             >
               <Icon className="w-5 h-5" /> {tab.label}
