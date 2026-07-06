@@ -143,6 +143,7 @@ const AdminDashboard = () => {
       value: formatCurrency(stats.todayRevenue),
       icon: DollarSign,
       color: 'success',
+      subtitle: `${formatCurrency(stats.todayCollection)} collected`,
     },
     {
       title: 'Expiring Soon',

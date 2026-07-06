@@ -4,14 +4,14 @@ import { getReportDateRange } from '../constants/reportConstants';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 /**
- * My Collection Service – coach payment-based report (date-range filtered).
+ * My Revenue Service – coach bill-based report (date-range filtered).
  */
-export const myCollectionService = {
-  async getMyCollectionStats(options = {}) {
+export const myRevenueService = {
+  async getMyRevenueStats(options = {}) {
     const { dateRange = 'this_month', customDateFrom, customDateTo } = options;
     const { start: dateFrom, end: dateTo } = getReportDateRange(dateRange, customDateFrom, customDateTo);
     const response = await authenticatedFetch(
-      `${API_BASE_URL}/dashboard/my-collection?${new URLSearchParams({ startDate: dateFrom, endDate: dateTo })}`,
+      `${API_BASE_URL}/dashboard/my-revenue?${new URLSearchParams({ startDate: dateFrom, endDate: dateTo })}`,
       { method: 'GET' }
     );
 
@@ -21,7 +21,7 @@ export const myCollectionService = {
     }
 
     const data = await response.json();
-    if (!data.success) throw new Error(data.message || 'Failed to fetch My Collection stats');
+    if (!data.success) throw new Error(data.message || 'Failed to fetch My Revenue stats');
     return data.data;
   },
 };

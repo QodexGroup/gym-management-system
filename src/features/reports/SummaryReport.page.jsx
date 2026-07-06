@@ -101,8 +101,10 @@ const SummaryReportPage = () => {
 
   const totalExpenses = transformedExpenses.reduce((sum, e) => sum + e.amount, 0);
   const todayRevenue = dashboardStats?.todayRevenue ?? 0;
-  const totalCollectedFromBills = dashboardStats?.totalCollectedFromBills ?? 0;
-  const totalRevenue = totalCollectedFromBills;
+  const todayCollection = dashboardStats?.todayCollection ?? 0;
+  // Revenue (accrual): amount billed. Collection (cash): payments received.
+  const totalRevenue = dashboardStats?.totalRevenue ?? 0;
+  const totalCollection = dashboardStats?.totalCollection ?? 0;
   const netProfit = totalRevenue - totalExpenses;
   const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0';
 
@@ -137,11 +139,11 @@ const SummaryReportPage = () => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return months.slice(-6).map((month) => ({
       month,
-      revenue: totalCollectedFromBills / 6,
+      revenue: totalRevenue / 6,
       expenses: byMonth[month] || 0,
-      profit: (totalCollectedFromBills / 6) - (byMonth[month] || 0),
+      profit: (totalRevenue / 6) - (byMonth[month] || 0),
     }));
-  }, [transformedExpenses, totalCollectedFromBills]);
+  }, [transformedExpenses, totalRevenue]);
 
   const periodLabel = `${appliedFrom} – ${appliedTo}`;
 
@@ -160,11 +162,13 @@ const SummaryReportPage = () => {
   };
   const generatedAt = new Date().toLocaleString();
   const summaryRows = [
-    ['Total Revenue', formatCurrency(totalRevenue)],
+    ['Total Revenue (Billed)', formatCurrency(totalRevenue)],
+    ['Total Collected (Payments)', formatCurrency(totalCollection)],
     ['Total Expenses', formatCurrency(totalExpenses)],
     ['Net Profit', formatCurrency(netProfit)],
     ['Profit Margin', `${profitMargin}%`],
-    ["Today's Revenue", formatCurrency(todayRevenue)],
+    ["Today's Revenue (Billed)", formatCurrency(todayRevenue)],
+    ["Today's Collection", formatCurrency(todayCollection)],
   ];
 
   const handlePrint = useReactToPrint({
@@ -232,10 +236,10 @@ const SummaryReportPage = () => {
   };
 
   const summaryStats = [
-    { label: 'Total Revenue', value: formatCurrency(totalRevenue), icon: DollarSign, gradient: 'from-success-500 to-success-600', textBg: 'text-success-100', iconBg: 'text-success-200' },
+    { label: 'Total Revenue (Billed)', value: formatCurrency(totalRevenue), icon: DollarSign, gradient: 'from-success-500 to-success-600', textBg: 'text-success-100', iconBg: 'text-success-200' },
+    { label: 'Total Collected (Payments)', value: formatCurrency(totalCollection), icon: PieChartIcon, gradient: 'from-warning-500 to-warning-600', textBg: 'text-warning-100', iconBg: 'text-warning-200' },
     { label: 'Total Expenses', value: formatCurrency(totalExpenses), icon: TrendingUp, gradient: 'from-danger-500 to-danger-600', textBg: 'text-danger-100', iconBg: 'text-danger-200' },
     { label: 'Net Profit', value: `${formatCurrency(netProfit)} (${profitMargin}% margin)`, icon: BarChart3, gradient: 'from-primary-500 to-primary-600', textBg: 'text-primary-100', iconBg: 'text-primary-200' },
-    { label: "Today's Revenue", value: formatCurrency(todayRevenue), icon: PieChartIcon, gradient: 'from-warning-500 to-warning-600', textBg: 'text-warning-100', iconBg: 'text-warning-200' },
   ];
 
   const expenseByCategoryColumns = useMemo(() => [

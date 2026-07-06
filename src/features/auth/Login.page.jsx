@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut as firebaseSignOut } from 'firebase/auth';
 import { initializeFirebaseServices } from '../../shared/services/firebaseService';
 import { useAuth } from '../../shared/context/AuthContext';
 import { setLoggingIn } from '../../shared/services/authService';
@@ -119,8 +119,18 @@ const Login = () => {
       let errorMessage = 'Login failed. Please try again.';
 
       if (error?.message?.toLowerCase().includes('deactivated')) {
+        // Deactivated non-owners are blocked server-side. Clear any partial
+        // session so they stay on the login page with the notice.
+        localStorage.removeItem('firebase_token');
+        localStorage.removeItem('firebase_uid');
+        try {
+          if (firebaseAuth) await firebaseSignOut(firebaseAuth);
+        } catch (signOutError) {
+          if (import.meta.env.DEV) console.error('Sign out after deactivation failed:', signOutError);
+        }
         setDeactivatedMessage(error.message);
         setTrialExpiredMessage('');
+        setLoggingIn(false);
         setLoading(false);
         return;
       }

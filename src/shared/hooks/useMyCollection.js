@@ -3,13 +3,13 @@ import { myCollectionService } from '../services/myCollectionService';
 
 export const myCollectionKeys = {
   all: ['myCollection'],
-  stats: () => [...myCollectionKeys.all, 'stats'],
+  stats: (options) => [...myCollectionKeys.all, 'stats', options],
 };
 
-export const useMyCollection = () => {
+export const useMyCollection = (options = {}) => {
   return useQuery({
-    queryKey: myCollectionKeys.stats(),
-    queryFn: () => myCollectionService.getMyCollectionStats(),
+    queryKey: myCollectionKeys.stats(options),
+    queryFn: () => myCollectionService.getMyCollectionStats(options),
     staleTime: 60 * 1000,
   });
 };

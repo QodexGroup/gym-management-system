@@ -100,8 +100,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile = false }) => {
           children: [
             { path: '/reports/summary', label: 'Summary Report', adminOnly: true },
             { path: '/reports/collection', label: 'Collection Report', adminOnly: true },
+            { path: '/reports/revenue', label: 'Revenue Report', adminOnly: true },
             { path: '/reports/expense', label: 'Expense Report', adminOnly: true },
             { path: '/reports/my-collection', label: 'My Collection', coachOnly: true },
+            { path: '/reports/my-revenue', label: 'My Revenue', coachOnly: true },
           ],
         },
         { path: '/users', icon: UserCog, label: 'User Management', adminOnly: true },

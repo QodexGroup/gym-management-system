@@ -1,5 +1,4 @@
 ﻿import { useRef, useState, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
 import Layout from '../../layout/Layout';
 import { DateRangeExportBar, PrintArea, MessageCard, StatsCards } from '../../components/common';
@@ -34,7 +33,6 @@ import { Alert, Toast } from '../../shared/utils/alert';
 const PAYMENT_METHOD_OPTIONS = ['all', 'cash', 'card', 'transfer'];
 
 const CollectionReportPage = () => {
-  const navigate = useNavigate();
   const printRef = useRef(null);
   const [dateFrom, setDateFrom] = useState(DEFAULT_REPORT_DATE_FROM);
   const [dateTo, setDateTo] = useState(DEFAULT_REPORT_DATE_TO);
@@ -54,13 +52,14 @@ const CollectionReportPage = () => {
   }, [dateFrom, dateTo]);
 
   const todayRevenue = reportData?.todayRevenue ?? 0;
+  const todayCollection = reportData?.todayCollection ?? 0;
   const membershipDistribution = reportData?.membershipDistribution ?? [];
   const recentTransactions = reportData?.recentTransactions ?? [];
-  const totalCollectedFromBills = reportData?.totalCollectedFromBills ?? 0;
+  const totalRevenue = reportData?.totalRevenue ?? 0;
   const reportTooLarge = reportData?.reportTooLarge ?? false;
   const totalRows = reportData?.totalRows ?? 0;
 
-  const totalCollected = totalCollectedFromBills;
+  const totalCollected = reportData?.totalCollection ?? 0;
   const filteredTransactions = useMemo(() => {
     let list = recentTransactions;
     if (paymentMethod !== 'all') {
@@ -94,6 +93,7 @@ const CollectionReportPage = () => {
   });
 
   const periodLabel = `${appliedFrom} – ${appliedTo}`;
+  const rangeLabel = `${appliedFrom}_${appliedTo}`;
 
   const handleEmailReport = async () => {
     try {
@@ -105,10 +105,12 @@ const CollectionReportPage = () => {
   };
   const generatedAt = new Date().toLocaleString();
   const summaryRows = [
-    ['Total Collected', formatCurrency(totalCollected)],
+    ['Total Revenue (Billed)', formatCurrency(totalRevenue)],
+    ['Total Collected (Payments)', formatCurrency(totalCollected)],
     ['Transactions', String(totalTransactions)],
     ['Average Transaction', formatCurrency(averageTransaction)],
-    ["Today's Revenue", formatCurrency(todayRevenue)],
+    ["Today's Revenue (Billed)", formatCurrency(todayRevenue)],
+    ["Today's Collection", formatCurrency(todayCollection)],
   ];
 
   const doExportPdf = () => {
@@ -127,7 +129,7 @@ const CollectionReportPage = () => {
       summaryRows,
       headers,
       rows,
-      filename: `collection-report-${appliedDateRange}.pdf`,
+      filename: `collection-report-${rangeLabel}.pdf`,
     });
   };
 
@@ -148,7 +150,7 @@ const CollectionReportPage = () => {
       summaryRows,
       headers,
       rows,
-      filename: `collection-report-${appliedDateRange}.xlsx`,
+      filename: `collection-report-${rangeLabel}.xlsx`,
     });
   };
 
@@ -217,10 +219,10 @@ const CollectionReportPage = () => {
   );
 
   const stats = [
-    { label: 'Total Collected', value: formatCurrency(totalCollected), icon: DollarSign, gradient: 'from-success-500 to-success-600', textBg: 'text-success-100', iconBg: 'text-success-200' },
+    { label: 'Total Revenue (Billed)', value: formatCurrency(totalRevenue), icon: TrendingUp, gradient: 'from-accent-500 to-accent-600', textBg: 'text-accent-100', iconBg: 'text-accent-200' },
+    { label: 'Total Collected (Payments)', value: formatCurrency(totalCollected), icon: DollarSign, gradient: 'from-success-500 to-success-600', textBg: 'text-success-100', iconBg: 'text-success-200' },
     { label: 'Transactions', value: totalTransactions, icon: CreditCard, gradient: 'from-primary-500 to-primary-600', textBg: 'text-primary-100', iconBg: 'text-primary-200' },
-    { label: 'Average Transaction', value: formatCurrency(averageTransaction), icon: TrendingUp, gradient: 'from-accent-500 to-accent-600', textBg: 'text-accent-100', iconBg: 'text-accent-200' },
-    { label: "Today's Revenue", value: formatCurrency(todayRevenue), icon: Banknote, gradient: 'from-warning-500 to-warning-600', textBg: 'text-warning-100', iconBg: 'text-warning-200' },
+    { label: "Today's Collection", value: formatCurrency(todayCollection), icon: Banknote, gradient: 'from-warning-500 to-warning-600', textBg: 'text-warning-100', iconBg: 'text-warning-200' },
   ];
 
   const collectionColumns = [
@@ -331,15 +333,6 @@ const CollectionReportPage = () => {
           data={filteredTransactions}
           keyField="id"
           title="Transactions"
-          actionButton={
-            <button
-              type="button"
-              onClick={() => navigate('/members')}
-              className="text-primary-600 text-sm font-medium cursor-pointer"
-            >
-              View All →
-            </button>
-          }
           wrapperClassName="card no-print"
           emptyMessage="No transactions in selected period"
         />

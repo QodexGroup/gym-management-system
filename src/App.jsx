@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './shared/context/AuthContext';
 import { ThemeProvider } from './shared/context/ThemeContext';
@@ -32,8 +32,10 @@ import { Expenses } from './features/expenses';
 import {
   SummaryReport as SummaryReportPage,
   CollectionReport as CollectionReportPage,
+  RevenueReport as RevenueReportPage,
   ExpenseReport as ExpenseReportPage,
   MyCollection as MyCollectionPage,
+  MyRevenue as MyRevenuePage,
 } from './features/reports';
 
 // Admin Management
@@ -47,6 +49,7 @@ import {
   Settings,
   AdminSubscriptionPage as Subscription,
   ReactivationModal,
+  LockedAccountNoticeModal,
 } from './features/account';
 
 // Appearance
@@ -122,19 +125,43 @@ const KioskLockGuard = ({ children }) => {
   return children;
 };
 
+// Locked staff/coach experience: confined to the dashboard with a dismissible
+// notice. Any attempt to visit another route bounces them back to the dashboard
+// and re-shows the notice.
+const LockedNonOwnerExperience = ({ children }) => {
+  const location = useLocation();
+  const [showNotice, setShowNotice] = useState(true);
+
+  // Re-show the notice each time the user lands on (or is bounced back to) a route.
+  useEffect(() => {
+    setShowNotice(true);
+  }, [location.pathname]);
+
+  if (location.pathname !== '/dashboard') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return (
+    <>
+      {children}
+      <LockedAccountNoticeModal isOpen={showNotice} onClose={() => setShowNotice(false)} />
+    </>
+  );
+};
+
 // Global guard for account-level subscription state (lock + trial)
 const AccountStateGuard = ({ children }) => {
   const { isLocked, isTrialExpired, isAccountOwner } = useAuth();
   const location = useLocation();
 
-  // Locked owners must stay on /my-account — block all other routes
-  if (isLocked && isAccountOwner && !location.pathname.startsWith('/my-account')) {
+  // Locked or trial-expired owners must stay on /my-account to settle payment
+  if (isAccountOwner && (isLocked || isTrialExpired) && !location.pathname.startsWith('/my-account')) {
     return <Navigate to="/my-account?tab=my-plan" replace />;
   }
 
-  // Trial-expired owners must go to My Account plan tab
-  if (isTrialExpired && isAccountOwner && !location.pathname.startsWith('/my-account')) {
-    return <Navigate to="/my-account?tab=my-plan" replace />;
+  // Locked staff/coach (non-owners) are confined to the dashboard with a notice
+  if (!isAccountOwner && isLocked) {
+    return <LockedNonOwnerExperience>{children}</LockedNonOwnerExperience>;
   }
 
   return (
@@ -195,8 +222,10 @@ function App() {
                 {/* Reports */}
                 <Route path="/reports/summary" element={<ProtectedRoute><SummaryReportPage /></ProtectedRoute>} />
                 <Route path="/reports/collection" element={<ProtectedRoute><CollectionReportPage /></ProtectedRoute>} />
+                <Route path="/reports/revenue" element={<ProtectedRoute><RevenueReportPage /></ProtectedRoute>} />
                 <Route path="/reports/expense" element={<ProtectedRoute><ExpenseReportPage /></ProtectedRoute>} />
                 <Route path="/reports/my-collection" element={<ProtectedRoute><MyCollectionPage /></ProtectedRoute>} />
+                <Route path="/reports/my-revenue" element={<ProtectedRoute><MyRevenuePage /></ProtectedRoute>} />
 
                 {/* User Management (Admin Only) */}
                 <Route path="/users" element={<AdminProtectedRoute><UserManagement /></AdminProtectedRoute>} />

@@ -67,8 +67,39 @@ export const reportService = {
     return {
       ...stats,
       recentTransactions: payload.recentTransactions ?? [],
-      totalCollectedFromBills: payload.totalCollectedFromPayments ?? 0,
+      // Collection (cash basis): payments actually received.
+      totalCollection: payload.totalCollectedFromPayments ?? 0,
+      todayCollection: payload.todayCollection ?? stats?.todayCollection ?? 0,
+      // Revenue (accrual basis): amount billed, whether paid or not.
+      totalRevenue: payload.totalRevenueBilled ?? 0,
       todayRevenue: payload.todayRevenue ?? stats?.todayRevenue ?? 0,
+      reportTooLarge: payload.reportTooLarge ?? false,
+      totalRows: payload.totalRows ?? 0,
+    };
+  },
+
+  /**
+   * Get revenue report data (bill-based) from API.
+   */
+  async getRevenueData(options = {}) {
+    const { dateRange = 'this_month', customDateFrom, customDateTo } = options;
+    const { start: dateFrom, end: dateTo } = getReportDateRange(dateRange, customDateFrom, customDateTo);
+    const response = await authenticatedFetch(
+      `${API_BASE_URL}/reports/revenue-data?${new URLSearchParams({ startDate: dateFrom, endDate: dateTo })}`
+    );
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to load report data');
+    }
+    const json = await response.json();
+    const payload = json.data ?? json;
+    return {
+      recentBills: payload.recentBills ?? [],
+      // Revenue (accrual): amount billed. Collected: amount paid against those bills.
+      totalRevenue: payload.totalRevenue ?? 0,
+      totalCollected: payload.totalCollected ?? 0,
+      totalOutstanding: payload.totalOutstanding ?? 0,
+      todayRevenue: payload.todayRevenue ?? 0,
       reportTooLarge: payload.reportTooLarge ?? false,
       totalRows: payload.totalRows ?? 0,
     };

@@ -4,3 +4,4 @@ export { default as Settings } from './Settings.page';
 export { default as AdminSubscriptionPage } from './subscription/Subscription.page';
 export { SubscriptionSection } from './subscription/Subscription.page';
 export { default as ReactivationModal } from './ReactivationModal';
+export { default as LockedAccountNoticeModal } from './LockedAccountNoticeModal';
