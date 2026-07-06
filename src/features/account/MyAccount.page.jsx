@@ -5,6 +5,7 @@ import { SubscriptionSection } from './subscription/Subscription.page';
 import { Mail, Phone, Edit, Key } from 'lucide-react';
 import MyAccountProfileForm from './MyAccountProfileForm';
 import MyAccountChangePasswordForm from './MyAccountChangePasswordForm';
+import ReferralCard from './ReferralCard';
 import { useAuth } from '../../shared/context/AuthContext';
 import { userService } from '../../shared/services/userService';
 import { Toast } from '../../shared/utils/alert';
@@ -254,30 +255,35 @@ const MyAccount = () => {
 
 
 
-          {/* Security Section */}
-          <div className="card">
-            <h3 className="text-lg font-semibold text-dark-50 mb-6">Security</h3>
+          {/* Security + Invite & Earn side by side, equal height */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+            {/* Security Section */}
+            <div className="card">
+              <h3 className="text-lg font-semibold text-dark-50 mb-6">Security</h3>
 
-            <div className="space-y-4">
-              {/* Password */}
-              <div className="flex items-center justify-between p-4 rounded-xl">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-primary-100 rounded-xl">
-                    <Key className="w-6 h-6 text-primary-600" />
+              <div className="space-y-4">
+                {/* Password */}
+                <div className="flex items-center justify-between p-4 rounded-xl">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-primary-100 rounded-xl">
+                      <Key className="w-6 h-6 text-primary-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-dark-50">Password</h4>
+                      <p className="text-sm text-dark-500">{formatRelativeTime(passwordUpdatedAt, { prefix: 'Last changed', fallback: 'Password change date not available' })}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-dark-50">Password</h4>
-                    <p className="text-sm text-dark-500">{formatRelativeTime(passwordUpdatedAt, { prefix: 'Last changed', fallback: 'Password change date not available' })}</p>
-                  </div>
+                  <button
+                    onClick={handleOpenPasswordModal}
+                    className="btn-secondary"
+                  >
+                    Change Password
+                  </button>
                 </div>
-                <button
-                  onClick={handleOpenPasswordModal}
-                  className="btn-secondary"
-                >
-                  Change Password
-                </button>
               </div>
             </div>
+
+            {isAccountOwner && <ReferralCard />}
           </div>
 
         {isAccountOwner && <SubscriptionSection defaultTab="billing" />}

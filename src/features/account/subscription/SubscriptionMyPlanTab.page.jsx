@@ -7,6 +7,7 @@ import { formatCurrency } from '../../../shared/utils/formatters';
 import { formatDate } from '../../../shared/utils/formatters';
 import { ACCOUNT_STATE } from '../../../shared/constants/accountState';
 import { SUBSCRIPTION_PAYMENT_TYPE, TRIAL_DAYS } from '../../../shared/constants/subscriptionConstants';
+import { getPlanFeatures } from '../../../shared/constants/planFeatures';
 import { useCreateSubscriptionRequest } from '../../../shared/hooks/useSubscriptionRequests';
 import { Alert } from '../../../shared/utils/alert';
 import { uploadReceipt } from '../../../shared/services/storageService';
@@ -198,8 +199,9 @@ const SubscriptionMyPlanTab = () => {
             renderCard={(plan) => ({
               title: plan.name,
               subtitle: `${formatCurrency(plan.price)} / ${plan.interval || 'month'}`,
-              // No features / list / footer for subscription plans (not implemented yet)
-              list: [],
+              // Static, display-only feature list (see shared/constants/planFeatures.js)
+              list: getPlanFeatures(plan),
+              listLimit: 20,
               highlightBadge: getSavingsBadge(plan),
               actions: {
                 onPrimary: () => handleSelectPlan(plan),

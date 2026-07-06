@@ -33,6 +33,10 @@ const SignUp = () => {
   const [step, setStep] = useState(1);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  // Capture the referral code from the invite link (?ref=CODE) once on mount.
+  const [referralCode] = useState(
+    () => new URLSearchParams(window.location.search).get('ref') || ''
+  );
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -183,6 +187,7 @@ const SignUp = () => {
         billingProvince: formData.billingProvince,
         billingZip: formData.billingZip,
         billingCountry: formData.billingCountry.toUpperCase(),
+        referralCode: referralCode || null,
       });
 
       authService.sendVerificationEmail(idToken).catch((err) =>

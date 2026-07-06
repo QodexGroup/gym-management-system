@@ -9,7 +9,7 @@ import { SUBSCRIPTION_PAYMENT_TYPE } from '../../shared/constants/subscriptionCo
 import { Toast } from '../../shared/utils/alert';
 import { formatCurrency } from '../../shared/utils/formatters';
 
-const REACTIVATION_FEE_PHP = 1200;
+const REACTIVATION_FEE_PHP = 1000;
 
 // True when close beta mode is active — hides payment reactivation regardless of environment.
 // Set VITE_CLOSE_BETA=true in CI/env to enable; set to false (or remove) to show full payment flow.
