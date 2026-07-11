@@ -16,6 +16,7 @@ import { BILL_STATUS, BILL_TYPE } from '../../../shared/constants/billConstants'
 import { CUSTOMER_MEMBERSHIP_STATUS } from '../../../shared/constants/customerMembership';
 import { CUSTOMER_PT_PACKAGE_STATUS, CUSTOMER_PT_PACKAGE_STATUS_LABELS, CUSTOMER_PT_PACKAGE_STATUS_VARIANTS } from '../../../shared/constants/ptConstants';
 import { usePermissions } from '../../../shared/hooks/usePermissions';
+import { useAccountSystemSettings } from '../../../shared/hooks/useAccountSystemSettings';
 import { Alert, Toast } from '../../../shared/utils/alert';
 import { formatCurrency, formatDate, formatPlanIntervalLabel } from '../../../shared/utils/formatters';
 import { billsTableColumns } from './billsTable.config';
@@ -62,6 +63,10 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
   const assignPtPackageMutation = useAssignPtPackage();
   const cancelPtPackageMutation = useCancelPtPackage();
 
+  const { data: membershipSettings } = useAccountSystemSettings();
+  const allowPayPreviousCycle = membershipSettings?.allowPayPreviousCycleBills ?? true;
+  const allowEditPreviousCycle = membershipSettings?.allowEditPreviousCycleBills ?? false;
+
   const bills = data?.data || [];
   const pagination = data?.pagination;
 
@@ -74,7 +79,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
 
   /* ---------------- Handlers ---------------- */
   const handleEdit = useCallback((bill) => {
-    if (bill.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && member?.currentMembership?.membershipStartDate) {
+    if (!allowEditPreviousCycle && bill.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && member?.currentMembership?.membershipStartDate) {
       const billDate = new Date(bill.billDate);
       const membershipStartDate = new Date(member.currentMembership.membershipStartDate);
       if (billDate < membershipStartDate) {
@@ -88,7 +93,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
     }
     setSelectedBill(bill);
     setShowBillModal(true);
-  }, [member]);
+  }, [member, allowEditPreviousCycle]);
 
   const handleDelete = useCallback(async (id) => {
     const result = await Alert.confirmDelete();
@@ -104,7 +109,11 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
   }, [deleteBillMutation, member?.id, onCustomerUpdate]);
 
   const handleOpenPayment = useCallback((bill) => {
-    if (bill.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && member?.currentMembership?.membershipStartDate) {
+    if (bill.billStatus === BILL_STATUS.VOIDED) {
+      Alert.warning('Bill Voided', 'This bill has been voided and cannot receive payments.');
+      return;
+    }
+    if (!allowPayPreviousCycle && bill.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && member?.currentMembership?.membershipStartDate) {
       const billDate = new Date(bill.billDate);
       const membershipStartDate = new Date(member.currentMembership.membershipStartDate);
       if (billDate < membershipStartDate) {
@@ -112,13 +121,9 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
         return;
       }
     }
-    if (bill.billStatus === BILL_STATUS.VOIDED) {
-      Alert.warning('Bill Voided', 'This bill has been voided and cannot receive payments.');
-      return;
-    }
     setPaymentBill(bill);
     setShowPaymentModal(true);
-  }, [member]);
+  }, [member, allowPayPreviousCycle]);
 
   const handlePaymentSubmit = useCallback(async (paymentData) => {
     if (!paymentBill) return;

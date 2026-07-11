@@ -2,11 +2,16 @@
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Avatar } from '../../../components/common';
-import { formatCurrency, formatDate } from '../../../shared/utils/formatters';
+import { formatCurrency, formatDate, normalizeDate } from '../../../shared/utils/formatters';
 import { Banknote, CreditCard, Smartphone } from 'lucide-react';
 import { PAYMENT_METHOD, PAYMENT_METHOD_LABELS } from '../../../shared/constants/paymentConstants';
+import { useAccountSystemSettings } from '../../../shared/hooks/useAccountSystemSettings';
+import { ACCOUNT_SYSTEM_SETTING_DEFAULTS } from '../../../shared/constants/accountSystemSettings';
 
 const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false }) => {
+  const { data: settings } = useAccountSystemSettings();
+  const allowPartialPayments = settings?.allowPartialPayments ?? ACCOUNT_SYSTEM_SETTING_DEFAULTS.allowPartialPayments;
+
   const remainingAmount = useMemo(() => {
     const net = parseFloat(bill.netAmount) || 0;
     const paid = parseFloat(bill.paidAmount) || 0;
@@ -22,14 +27,16 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false })
 
   const parsedAmount = parseFloat(amount);
   const isAmountInvalid = !amount || isNaN(parsedAmount) || parsedAmount <= 0 || parsedAmount > remainingAmount;
+  // When partial payments are disabled, the payment must settle the full remaining balance.
+  const requiresFullPayment = !allowPartialPayments && (remainingAmount - (parsedAmount || 0)) > 0.001;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (isAmountInvalid) return;
+    if (isAmountInvalid || requiresFullPayment) return;
 
     const payload = {
       amount: parseFloat(amount),
-      paymentDate: paymentDate.toISOString().split('T')[0],
+      paymentDate: normalizeDate(paymentDate),
       referenceNumber: referenceNumber || null,
       remarks: remarks || null,
       paymentMethod: method,
@@ -80,12 +87,13 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false })
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-400">₱</span>
           <input
             type="number"
-            className="input pl-8"
+            className={`input pl-8 ${!allowPartialPayments ? 'bg-dark-700 cursor-not-allowed' : ''}`}
             placeholder="0.00"
             value={amount}
             min={0}
             max={remainingAmount}
             step="0.01"
+            readOnly={!allowPartialPayments}
             onChange={(e) => {
               const raw = e.target.value;
               if (raw === '') { setAmount(''); return; }
@@ -99,6 +107,16 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false })
         {isAmountInvalid && (
           <p className="text-xs text-danger-600 mt-1">
             Amount must be greater than 0 and not more than {formatCurrency(remainingAmount)}.
+          </p>
+        )}
+        {!isAmountInvalid && requiresFullPayment && (
+          <p className="text-xs text-danger-600 mt-1">
+            Partial payments are disabled — pay the full remaining balance of {formatCurrency(remainingAmount)}.
+          </p>
+        )}
+        {!allowPartialPayments && !requiresFullPayment && (
+          <p className="text-xs text-dark-400 mt-1">
+            Partial payments are disabled; the full remaining balance is required.
           </p>
         )}
       </div>
@@ -157,7 +175,7 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false })
         <button type="button" onClick={onCancel} className="flex-1 btn-secondary" disabled={isSubmitting}>
           Cancel
         </button>
-        <button type="submit" className="flex-1 btn-success" disabled={isSubmitting || isAmountInvalid}>
+        <button type="submit" className="flex-1 btn-success" disabled={isSubmitting || isAmountInvalid || requiresFullPayment}>
           {isSubmitting ? 'Recording...' : 'Record Payment'}
         </button>
       </div>

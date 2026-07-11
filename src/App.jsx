@@ -45,6 +45,7 @@ import { UserManagement } from './features/users';
 // Account
 import {
   MyAccount,
+  SystemSettings,
   Notifications,
   Settings,
   AdminSubscriptionPage as Subscription,
@@ -235,6 +236,7 @@ function App() {
 
                 {/* My Account */}
                 <Route path="/my-account" element={<ProtectedRoute><MyAccount /></ProtectedRoute>} />
+                <Route path="/system-settings" element={<AdminProtectedRoute><SystemSettings /></AdminProtectedRoute>} />
 
                 {/* Themes & Appearance */}
                 <Route path="/appearance" element={<ProtectedRoute><Appearance /></ProtectedRoute>} />

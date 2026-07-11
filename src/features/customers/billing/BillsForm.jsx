@@ -1,18 +1,23 @@
-﻿import { useState, useMemo } from 'react';
+﻿import { useState, useMemo, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useMembershipPlans } from '../../../shared/hooks/useMembershipPlans';
+import { useAccountSystemSettings } from '../../../shared/hooks/useAccountSystemSettings';
 import { useCustomerPaymentsByBill, useDeleteCustomerPayment } from '../../../shared/hooks/useCustomerPayments';
 import { BILL_TYPE, BILL_TYPE_OPTIONS, BILL_STATUS } from '../../../shared/constants/billConstants';
 import { Alert } from '../../../shared/utils/alert';
+import { normalizeDate } from '../../../shared/utils/formatters';
 import { Info, Lock } from 'lucide-react';
 import DataTable from '../../../components/DataTable';
 import { paymentHistoryTableColumns } from './paymentHistoryTable.config';
 
 const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustomerUpdate, initialData = null, isSubmitting = false }) => {
   const { data: membershipPlans = [] } = useMembershipPlans();
+  const { data: membershipSettings } = useAccountSystemSettings();
+  const requireReactivationFee = membershipSettings?.requireReactivationFee ?? true;
+  const reactivationFeeAmount = membershipSettings?.reactivationFeeAmount ?? 0;
   const isEditMode = !!initialData;
-  const isPaidBill = isEditMode && initialData?.billStatus === 'paid';
+  const isPaidBill = isEditMode && initialData?.billStatus === BILL_STATUS.PAID;
 
   const activeMembershipPlan = currentMembership?.membershipPlan || null;
 
@@ -20,9 +25,10 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
     if (isEditMode) return BILL_TYPE_OPTIONS;
     return BILL_TYPE_OPTIONS.filter(
       opt => opt.value !== BILL_TYPE.MEMBERSHIP_SUBSCRIPTION &&
-             opt.value !== BILL_TYPE.PT_PACKAGE_SUBSCRIPTION
+             opt.value !== BILL_TYPE.PT_PACKAGE_SUBSCRIPTION &&
+             (requireReactivationFee || opt.value !== BILL_TYPE.REACTIVATION_FEE)
     );
-  }, [isEditMode]);
+  }, [isEditMode, requireReactivationFee]);
 
   const [formData, setFormData] = useState({
     billDate: initialData?.billDate ? new Date(initialData.billDate) : new Date(),
@@ -32,8 +38,15 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
     grossAmount: initialData?.grossAmount || 0,
     discountPercentage: initialData?.discountPercentage || 0,
     paidAmount: initialData?.paidAmount || 0,
-    billStatus: initialData?.billStatus || 'active',
+    billStatus: initialData?.billStatus || BILL_STATUS.ACTIVE,
   });
+
+  // The reactivation fee is fixed by settings - always lock the amount to the configured value.
+  useEffect(() => {
+    if (!isEditMode && formData.billType === BILL_TYPE.REACTIVATION_FEE) {
+      setFormData((prev) => (Number(prev.grossAmount) === Number(reactivationFeeAmount) ? prev : { ...prev, grossAmount: reactivationFeeAmount }));
+    }
+  }, [formData.billType, isEditMode, reactivationFeeAmount]);
 
   const billId = initialData?.id || null;
   const { data: payments = [], isLoading: isLoadingPayments } = useCustomerPaymentsByBill(billId);
@@ -59,6 +72,10 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
     return gross - discount;
   }, [formData.grossAmount, formData.discountPercentage]);
 
+  // A bill's net can never drop below what has already been paid on it.
+  const alreadyPaid = Number(initialData?.paidAmount ?? 0);
+  const netBelowPaid = isEditMode && netAmount < alreadyPaid;
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -68,8 +85,13 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
     e.preventDefault();
     if (isEditMode && formData.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && !activeMembershipPlan) return;
 
+    if (netBelowPaid) {
+      Alert.error(`Net amount (₱${netAmount.toFixed(2)}) cannot be less than the amount already paid (₱${alreadyPaid.toFixed(2)}). Delete or adjust the payments first.`);
+      return;
+    }
+
     const formattedDate = formData.billDate instanceof Date
-      ? formData.billDate.toISOString().split('T')[0]
+      ? normalizeDate(formData.billDate)
       : formData.billDate;
 
     const payload = {
@@ -188,8 +210,9 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
             <label className="label">Reactivation Fee Amount</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-400">₱</span>
-              <input type="number" name="grossAmount" value={formData.grossAmount} onChange={handleChange} className="input pl-8" required step="0.01" />
+              <input type="number" name="grossAmount" value={formData.grossAmount} className="input pl-8 bg-dark-700 cursor-not-allowed" readOnly disabled />
             </div>
+            <p className="text-xs text-primary-500 mt-1 flex items-center gap-1"><Lock className="w-3 h-3" /> Set in System Settings › Membership Settings</p>
           </div>
         </div>
       )}
@@ -206,8 +229,13 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
           <label className="label mt-2">Net Amount</label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-400">₱</span>
-            <input type="number" className="input pl-8" value={netAmount} readOnly />
+            <input type="number" className={`input pl-8 ${netBelowPaid ? 'border-danger-500 focus:border-danger-500' : ''}`} value={netAmount} readOnly />
           </div>
+          {netBelowPaid && (
+            <p className="text-xs text-danger-500 mt-1">
+              Net amount can’t be less than the ₱{alreadyPaid.toFixed(2)} already paid. Delete or adjust the payments first.
+            </p>
+          )}
         </div>
       </div>
 
@@ -239,6 +267,7 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
             isSubmitting ||
             isBillLocked ||
             isPaidBill ||
+            netBelowPaid ||
             initialData?.billStatus === BILL_STATUS.VOIDED ||
             (isEditMode && formData.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && !activeMembershipPlan)
           }
