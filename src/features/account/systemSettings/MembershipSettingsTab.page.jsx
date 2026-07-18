@@ -11,6 +11,8 @@ import {
   PLAN_CHANGE_MODE_OPTIONS,
   DOWNGRADE_CREDIT_MODE_OPTIONS,
   BILLING_ANCHOR_OPTIONS,
+  NOTIFICATION_SETTING_KEYS,
+  EMAIL_NOTIFICATION_SETTING_KEYS,
 } from '../../../shared/constants/accountSystemSettings';
 
 const Toggle = ({ label, hint, checked, onChange }) => (
@@ -59,13 +61,17 @@ const MembershipSettingsTab = () => {
   const set = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
 
   const handleSave = () => {
-    updateMutation.mutate({
+    const payload = {
       ...form,
       gracePeriodDays: Number(form.gracePeriodDays) || 0,
       reactivationFeeAmount: Number(form.reactivationFeeAmount) || 0,
       reactivationPromoLength: Number(form.reactivationPromoLength) || 1,
       fixedBillingDay: form.billingAnchor === BILLING_ANCHOR.FIXED_DAY ? (Number(form.fixedBillingDay) || 1) : null,
-    });
+    };
+    // This tab saves only membership settings; the notification/email groups
+    // are owned by their own tabs (avoids overwriting them with stale values).
+    [...NOTIFICATION_SETTING_KEYS, ...EMAIL_NOTIFICATION_SETTING_KEYS].forEach((key) => delete payload[key]);
+    updateMutation.mutate(payload);
   };
 
   if (isLoading) {

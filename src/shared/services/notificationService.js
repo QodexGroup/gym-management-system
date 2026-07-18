@@ -64,28 +64,5 @@ export const notificationService = {
     }
     const data = await response.json();
     return data.success ? (data.data.marked_count ?? 0) : 0;
-  },
-
-  async getPreferences() {
-    const response = await authenticatedFetch(`${API_BASE_URL}/notification-preferences`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    return data.data || {};
-  },
-
-  async updatePreferences(preferences) {
-    const response = await postWithIdempotency(`${API_BASE_URL}/notification-preferences`, preferences);
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    return data.data || {};
-  },
+  }
 };
