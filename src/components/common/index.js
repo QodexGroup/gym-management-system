@@ -22,3 +22,4 @@ export { default as DateRangeExportBar } from './DateRangeExportBar';
 export { default as PrintArea } from './PrintArea';
 export { default as MessageCard } from './MessageCard';
 export { default as ReloadButton } from './ReloadButton';
+export { default as StorageUsageCard } from './StorageUsageCard';

@@ -9,6 +9,38 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
  */
 export const customerService = {
   /**
+   * Upload/replace a customer's photo (records the R2 path + size on the backend).
+   * @param {number|string} id - Customer ID
+   * @param {{ path: string, sizeKb: number }} payload
+   * @returns {Promise<Object>} Updated customer.
+   */
+  async uploadPhoto(id, payload) {
+    const response = await postWithIdempotency(`${API_BASE_URL}/customers/${id}/photo`, payload);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Failed to upload photo');
+    }
+    return data.data;
+  },
+
+  /**
+   * Remove a customer's photo.
+   * @param {number|string} id - Customer ID
+   * @returns {Promise<Object>} Updated customer.
+   */
+  async removePhoto(id) {
+    const response = await authenticatedFetch(`${API_BASE_URL}/customers/${id}/photo`, {
+      method: 'DELETE',
+      headers: { 'Idempotency-Key': crypto.randomUUID() },
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Failed to remove photo');
+    }
+    return data.data;
+  },
+
+  /**
    * Get a customer by ID
    * @param {number|string} id - Customer ID
    * @returns {Promise<Object>}

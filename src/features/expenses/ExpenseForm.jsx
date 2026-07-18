@@ -6,6 +6,9 @@ import { useCreateExpense, useUpdateExpense } from '../../shared/hooks/useExpens
 import { getInitialExpenseFormData, mapExpenseToFormData } from '../../shared/models/expenseModel';
 import { EXPENSE_STATUS } from '../../shared/constants/expenseConstants';
 import { Toast } from '../../shared/utils/alert';
+import { useAuth } from '../../shared/context/AuthContext';
+import { uploadExpenseReceipt, getFileUrl } from '../../shared/services/storageService';
+import { useInvalidateStorageUsage } from '../../shared/hooks/useStorage';
 
 const ExpenseForm = ({
   selectedExpense,
@@ -16,6 +19,13 @@ const ExpenseForm = ({
 }) => {
   const [formData, setFormData] = useState(getInitialExpenseFormData());
 
+  const { account, user } = useAuth();
+  const accountId = account?.id ?? user?.accountId;
+  const [receiptFile, setReceiptFile] = useState(null);
+  const [existingReceiptUrl, setExistingReceiptUrl] = useState(null);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
+  const invalidateStorageUsage = useInvalidateStorageUsage();
+
   const createMutation = useCreateExpense();
   const updateMutation = useUpdateExpense();
 
@@ -24,8 +34,12 @@ const ExpenseForm = ({
     if (selectedExpense && isOpen) {
       const mappedData = mapExpenseToFormData(selectedExpense);
       setFormData(mappedData);
+      setExistingReceiptUrl(selectedExpense.receiptUrl || null);
+      setReceiptFile(null);
     } else if (!selectedExpense && isOpen) {
       setFormData(getInitialExpenseFormData());
+      setExistingReceiptUrl(null);
+      setReceiptFile(null);
     }
   }, [selectedExpense, isOpen]);
 
@@ -50,9 +64,32 @@ const ExpenseForm = ({
         })
       );
 
+      // Upload a newly selected receipt first (blocks on storage quota at presign).
+      let receiptUrl = existingReceiptUrl;
+      let receiptSizeKb = 0;
+      if (receiptFile) {
+        if (!accountId) {
+          Toast.error('Account not loaded — cannot upload receipt.');
+          return;
+        }
+        setUploadingReceipt(true);
+        try {
+          const res = await uploadExpenseReceipt(receiptFile, accountId);
+          receiptUrl = res.fileUrl;
+          receiptSizeKb = res.fileSize;
+        } catch (uploadErr) {
+          Toast.error(uploadErr.message || 'Failed to upload receipt');
+          return;
+        } finally {
+          setUploadingReceipt(false);
+        }
+      }
+
       const expenseData = {
         ...normalizedExpenseData,
         status: EXPENSE_STATUS.UNPOSTED, // Always create as UNPOSTED
+        receiptUrl: receiptUrl ?? null,
+        receiptSizeKb,
       };
 
       if (isEdit) {
@@ -61,6 +98,7 @@ const ExpenseForm = ({
         await createMutation.mutateAsync(expenseData);
       }
 
+      invalidateStorageUsage();
       onSuccess?.();
       onClose?.();
     } catch (error) {
@@ -146,21 +184,54 @@ const ExpenseForm = ({
           </div>
         </div>
 
+        <div>
+          <label className="label">Receipt (optional)</label>
+          {existingReceiptUrl && !receiptFile && (
+            <div className="flex items-center justify-between mb-2 text-sm">
+              <a
+                href={getFileUrl(existingReceiptUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary-400 underline"
+              >
+                View current receipt
+              </a>
+              <button
+                type="button"
+                className="text-red-400 hover:text-red-300"
+                onClick={() => setExistingReceiptUrl(null)}
+              >
+                Remove
+              </button>
+            </div>
+          )}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            className="input"
+            onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
+            disabled={uploadingReceipt || isSubmitting}
+          />
+          {receiptFile && <p className="text-xs text-dark-400 mt-1">{receiptFile.name}</p>}
+        </div>
+
         <div className="flex gap-3 pt-4">
           <button
             type="button"
             onClick={onClose}
             className="flex-1 btn-secondary"
-            disabled={isSubmitting}
+            disabled={isSubmitting || uploadingReceipt}
           >
             Cancel
           </button>
           <button
             type="submit"
             className="flex-1 btn-primary"
-            disabled={isSubmitting}
+            disabled={isSubmitting || uploadingReceipt}
           >
-            {isSubmitting
+            {uploadingReceipt
+              ? 'Uploading receipt...'
+              : isSubmitting
               ? 'Saving...'
               : selectedExpense
               ? 'Save Changes'

@@ -8,6 +8,38 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
  */
 export const userService = {
   /**
+   * Upload/replace a user's avatar (records the R2 path + size on the backend).
+   * @param {number|string} id - User ID
+   * @param {{ path: string, sizeKb: number }} payload
+   * @returns {Promise<Object>} Updated user.
+   */
+  async uploadAvatar(id, payload) {
+    const response = await postWithIdempotency(`${API_BASE_URL}/users/${id}/avatar`, payload);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Failed to upload avatar');
+    }
+    return data.data;
+  },
+
+  /**
+   * Remove a user's avatar.
+   * @param {number|string} id - User ID
+   * @returns {Promise<Object>} Updated user.
+   */
+  async removeAvatar(id) {
+    const response = await authenticatedFetch(`${API_BASE_URL}/users/${id}/avatar`, {
+      method: 'DELETE',
+      headers: { 'Idempotency-Key': crypto.randomUUID() },
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Failed to remove avatar');
+    }
+    return data.data;
+  },
+
+  /**
    * Get all users
    * @returns {Promise<Array>}
    */

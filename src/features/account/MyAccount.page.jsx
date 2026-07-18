@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Layout from '../../layout/Layout';
-import { Avatar, Badge, Modal } from '../../components/common';
+import { Avatar, Badge, Modal, StorageUsageCard } from '../../components/common';
 import { SubscriptionSection } from './subscription/Subscription.page';
 import { Mail, Phone, Edit, Key } from 'lucide-react';
 import MyAccountProfileForm from './MyAccountProfileForm';
@@ -257,6 +257,8 @@ const MyAccount = () => {
 
           {/* Security + Invite & Earn side by side, equal height */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+            {/* Left column: Security + Storage stacked, aligned to the Invite card */}
+            <div className="flex flex-col gap-6">
             {/* Security Section */}
             <div className="card">
               <h3 className="text-lg font-semibold text-dark-50 mb-6">Security</h3>
@@ -281,6 +283,9 @@ const MyAccount = () => {
                   </button>
                 </div>
               </div>
+            </div>
+
+              {isAccountOwner && <StorageUsageCard className="mt-auto" />}
             </div>
 
             {isAccountOwner && <ReferralCard />}
