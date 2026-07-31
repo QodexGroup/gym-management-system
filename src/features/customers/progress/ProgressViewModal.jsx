@@ -71,21 +71,21 @@ const ProgressViewModal = ({
         <div>
           <h4 className="font-semibold text-dark-50 mb-3">Basic Measurements</h4>
           <div className="grid grid-cols-4 gap-4">
-            <div className="p-3 bg-primary-50 rounded-xl text-center">
-              <p className="text-2xl font-bold text-primary-800">{viewLog.weight || '--'}</p>
-              <p className="text-xs text-dark-200">Weight (kg)</p>
+            <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-xl text-center">
+              <p className="text-2xl font-bold text-primary-300">{viewLog.weight || '--'}</p>
+              <p className="text-xs text-dark-300">Weight (kg)</p>
             </div>
-            <div className="p-3 bg-accent-50 rounded-xl text-center">
-              <p className="text-2xl font-bold text-accent-800">{viewLog.bodyFatPercentage || '--'}%</p>
-              <p className="text-xs text-dark-200">Body Fat</p>
+            <div className="p-3 bg-accent-500/10 border border-accent-500/20 rounded-xl text-center">
+              <p className="text-2xl font-bold text-accent-300">{viewLog.bodyFatPercentage || '--'}%</p>
+              <p className="text-xs text-dark-300">Body Fat</p>
             </div>
-            <div className="p-3 bg-success-50 rounded-xl text-center">
-              <p className="text-2xl font-bold text-success-800">{viewLog.skeletalMuscleMass || '--'}</p>
-              <p className="text-xs text-dark-200">Muscle (kg)</p>
+            <div className="p-3 bg-success-500/10 border border-success-500/20 rounded-xl text-center">
+              <p className="text-2xl font-bold text-success-300">{viewLog.skeletalMuscleMass || '--'}</p>
+              <p className="text-xs text-dark-300">Muscle (kg)</p>
             </div>
-            <div className="p-3 bg-warning-50 rounded-xl text-center">
-              <p className="text-2xl font-bold text-warning-800">{viewLog.bmi || '--'}</p>
-              <p className="text-xs text-dark-200">BMI</p>
+            <div className="p-3 bg-warning-500/10 border border-warning-500/20 rounded-xl text-center">
+              <p className="text-2xl font-bold text-warning-300">{viewLog.bmi || '--'}</p>
+              <p className="text-xs text-dark-300">BMI</p>
             </div>
           </div>
         </div>
@@ -94,17 +94,17 @@ const ProgressViewModal = ({
         <div>
           <h4 className="font-semibold text-dark-50 mb-3">Body Composition</h4>
           <div className="grid grid-cols-3 gap-4">
-            <div className="p-3 bg-danger-50 rounded-xl">
-              <p className="text-lg font-bold text-danger-800">{viewLog.visceralFatLevel || '--'}</p>
-              <p className="text-xs text-dark-200">Visceral Fat Level</p>
+            <div className="p-3 bg-danger-500/10 border border-danger-500/20 rounded-xl">
+              <p className="text-lg font-bold text-danger-300">{viewLog.visceralFatLevel || '--'}</p>
+              <p className="text-xs text-dark-300">Visceral Fat Level</p>
             </div>
-            <div className="p-3 bg-primary-50 rounded-xl">
-              <p className="text-lg font-bold text-primary-800">{viewLog.totalBodyWater ? `${viewLog.totalBodyWater} L` : '--'}</p>
-              <p className="text-xs text-dark-200">Body Water</p>
+            <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-xl">
+              <p className="text-lg font-bold text-primary-300">{viewLog.totalBodyWater ? `${viewLog.totalBodyWater} L` : '--'}</p>
+              <p className="text-xs text-dark-300">Body Water</p>
             </div>
-            <div className="p-3 bg-warning-50 rounded-xl">
-              <p className="text-lg font-bold text-warning-800">{viewLog.basalMetabolicRate ? `${viewLog.basalMetabolicRate} kcal` : '--'}</p>
-              <p className="text-xs text-dark-200">BMR</p>
+            <div className="p-3 bg-warning-500/10 border border-warning-500/20 rounded-xl">
+              <p className="text-lg font-bold text-warning-300">{viewLog.basalMetabolicRate ? `${viewLog.basalMetabolicRate} kcal` : '--'}</p>
+              <p className="text-xs text-dark-300">BMR</p>
             </div>
           </div>
         </div>

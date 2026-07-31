@@ -31,7 +31,9 @@ const ProgressTab = ({ member }) => {
   const { data, isLoading, refetch, isRefetching } = useCustomerProgress(member?.id, {
     page: currentPage,
     pagelimit: 50,
-    relations: 'recordedByUser,files'
+    // Include the associated scan's files so the Photos column can show the
+    // tagged scan images (InBody/Styku), not just directly-uploaded progress photos.
+    relations: 'recordedByUser,files,scan.files'
   });
 
   const deleteMutation = useDeleteCustomerProgress();

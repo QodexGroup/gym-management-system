@@ -1,8 +1,16 @@
 import { createActionColumn } from '../../../components/DataTable';
 import { Banknote, CreditCard, Smartphone, Trash2 } from 'lucide-react';
+import { FilePreview } from '../../../components/common';
 import { formatCurrency, formatDate } from '../../../shared/utils/formatters';
 import { PAYMENT_METHOD } from '../../../shared/constants/paymentConstants';
 
+/**
+ * Build the action-menu items for a payment history row.
+ *
+ * @param {Object} row
+ * @param {(row: Object) => void} handleDeletePayment
+ * @returns {Array<Object>}
+ */
 export const getPaymentHistoryActionMenuItems = (row, handleDeletePayment) => [
   {
     key: 'delete',
@@ -13,8 +21,19 @@ export const getPaymentHistoryActionMenuItems = (row, handleDeletePayment) => [
   },
 ];
 
-export const paymentHistoryTableColumns = (handleDeletePayment) => [
-  createActionColumn((row) => getPaymentHistoryActionMenuItems(row, handleDeletePayment)),
+/**
+ * Column config for the payment history table shown in the bill modal.
+ * Includes a Receipt column (image → lightbox, PDF → new tab) via FilePreview.
+ *
+ * @param {(row: Object) => void} handleDeletePayment
+ * @param {{ readOnly?: boolean }} [options] When readOnly, the delete action
+ *   column is omitted (used by the View Bill modal).
+ * @returns {Array<Object>}
+ */
+export const paymentHistoryTableColumns = (handleDeletePayment, { readOnly = false } = {}) => [
+  ...(readOnly
+    ? []
+    : [createActionColumn((row) => getPaymentHistoryActionMenuItems(row, handleDeletePayment))]),
   {
     key: 'paymentDate',
     label: 'Date',
@@ -37,5 +56,10 @@ export const paymentHistoryTableColumns = (handleDeletePayment) => [
         {row.referenceNumber && <span className="text-xs text-dark-400">({row.referenceNumber})</span>}
       </div>
     ),
+  },
+  {
+    key: 'receipt',
+    label: 'Receipt',
+    render: (row) => <FilePreview path={row.receiptUrl} alt="Payment receipt" />,
   },
 ];

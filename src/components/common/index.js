@@ -7,6 +7,7 @@ export { default as PaymentTypeInfo } from './PaymentTypeInfo';
 export { default as Badge } from './Badge';
 export { default as Avatar } from './Avatar';
 export { default as ImageLightbox } from './ImageLightbox';
+export { default as FilePreview } from './FilePreview';
 export { default as PhotoThumbnail } from './PhotoThumbnail';
 export { default as FileIcon } from './FileIcon';
 export { default as CalendarView } from '../Calendar/CalendarView';

@@ -11,6 +11,7 @@ import { userService } from '../../shared/services/userService';
 import { Toast } from '../../shared/utils/alert';
 import { formatRelativeTime } from '../../shared/utils/formatters';
 import { initializeFirebaseServices } from '../../shared/services/firebaseService';
+import { getFileUrl } from '../../shared/services/storageService';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 
 const MyAccount = () => {
@@ -220,7 +221,7 @@ const MyAccount = () => {
               </button>
             </div>
             <div className="flex items-center gap-6">
-              <Avatar src={user.avatar} name={user.fullname} size="xl" />
+              <Avatar src={getFileUrl(user.avatar)} name={user.fullname} size="xl" />
               <div className="flex-1">
                 <h4 className="text-xl font-bold text-dark-50">{user.fullname}</h4>
                 <p className="text-dark-500">{user.email}</p>

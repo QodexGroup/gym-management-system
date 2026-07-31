@@ -1,5 +1,5 @@
 import { createActionColumn } from '../../../components/DataTable';
-import { Edit, Trash2, Plus } from 'lucide-react';
+import { Edit, Trash2, Plus, Eye } from 'lucide-react';
 import { Badge } from '../../../components/common';
 import { formatCurrency, formatDate } from '../../../shared/utils/formatters';
 import { BILL_TYPE } from '../../../shared/constants/billConstants';
@@ -10,6 +10,7 @@ export const getBillActionMenuItems = ({
   canEdit,
   canDelete,
   canAddPayment,
+  onView,
   onEdit,
   onDelete,
   onAddPayment,
@@ -35,6 +36,13 @@ export const getBillActionMenuItems = ({
     });
   }
 
+  items.push({
+    key: 'view',
+    label: 'View Bill',
+    icon: Eye,
+    onClick: () => onView?.(row),
+  });
+
   if (canDelete && row.billStatus !== BILL_STATUS.PAID && row.billStatus !== BILL_STATUS.VOIDED) {
     items.push({
       key: 'delete',
@@ -48,13 +56,14 @@ export const getBillActionMenuItems = ({
   return items;
 };
 
-export const billsTableColumns = ({ canEdit, canDelete, canAddPayment, onEdit, onDelete, onAddPayment }) => [
+export const billsTableColumns = ({ canEdit, canDelete, canAddPayment, onView, onEdit, onDelete, onAddPayment }) => [
   createActionColumn((row) =>
     getBillActionMenuItems({
       row,
       canEdit,
       canDelete,
       canAddPayment,
+      onView,
       onEdit,
       onDelete,
       onAddPayment,

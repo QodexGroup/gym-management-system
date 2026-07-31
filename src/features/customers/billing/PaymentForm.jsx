@@ -7,9 +7,16 @@ import { Banknote, CreditCard, Smartphone } from 'lucide-react';
 import { PAYMENT_METHOD, PAYMENT_METHOD_LABELS } from '../../../shared/constants/paymentConstants';
 import { useAccountSystemSettings } from '../../../shared/hooks/useAccountSystemSettings';
 import { ACCOUNT_SYSTEM_SETTING_DEFAULTS } from '../../../shared/constants/accountSystemSettings';
+import { useAuth } from '../../../shared/context/AuthContext';
+import { uploadFile, getFileUrl } from '../../../shared/services/storageService';
+import { useInvalidateStorageUsage } from '../../../shared/hooks/useStorage';
+import { Toast } from '../../../shared/utils/alert';
 
 const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false }) => {
   const { data: settings } = useAccountSystemSettings();
+  const { account, user } = useAuth();
+  const accountId = account?.id ?? user?.accountId;
+  const invalidateStorageUsage = useInvalidateStorageUsage();
   const allowPartialPayments = settings?.allowPartialPayments ?? ACCOUNT_SYSTEM_SETTING_DEFAULTS.allowPartialPayments;
 
   const remainingAmount = useMemo(() => {
@@ -24,15 +31,46 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false })
   const [referenceNumber, setReferenceNumber] = useState('');
   const [remarks, setRemarks] = useState('');
   const [method, setMethod] = useState(PAYMENT_METHOD.CASH);
+  const [receiptFile, setReceiptFile] = useState(null);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
 
   const parsedAmount = parseFloat(amount);
   const isAmountInvalid = !amount || isNaN(parsedAmount) || parsedAmount <= 0 || parsedAmount > remainingAmount;
   // When partial payments are disabled, the payment must settle the full remaining balance.
   const requiresFullPayment = !allowPartialPayments && (remainingAmount - (parsedAmount || 0)) > 0.001;
 
-  const handleSubmit = (e) => {
+  /**
+   * Validate, upload an attached receipt to R2 (quota-checked at presign), then
+   * hand the payment payload — including the receipt path — to the parent.
+   *
+   * @param {React.FormEvent<HTMLFormElement>} e
+   * @returns {Promise<void>}
+   */
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (isAmountInvalid || requiresFullPayment) return;
+
+    let receiptUrl = null;
+    let receiptSizeKb = 0;
+
+    if (receiptFile) {
+      if (!accountId) {
+        Toast.error('Account not loaded — cannot upload receipt.');
+        return;
+      }
+      setUploadingReceipt(true);
+      try {
+        const res = await uploadFile(receiptFile, accountId, member.id);
+        receiptUrl = res.fileUrl;
+        receiptSizeKb = res.fileSize;
+      } catch (err) {
+        if (import.meta.env.DEV) console.error('Receipt upload failed:', err);
+        Toast.error(err.message || 'Failed to upload receipt');
+        return;
+      } finally {
+        setUploadingReceipt(false);
+      }
+    }
 
     const payload = {
       amount: parseFloat(amount),
@@ -40,15 +78,18 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false })
       referenceNumber: referenceNumber || null,
       remarks: remarks || null,
       paymentMethod: method,
+      receiptUrl,
+      receiptSizeKb,
     };
 
+    invalidateStorageUsage();
     onSubmit(payload);
   };
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="p-4 bg-dark-700 border border-dark-600 rounded-xl flex items-center gap-4">
-        <Avatar src={member.avatar} name={member.name} size="md" />
+        <Avatar src={getFileUrl(member.avatar)} name={member.name} size="md" />
         <div className="space-y-1">
           <p className="font-semibold text-dark-50">{member.name}</p>
           <p className="text-sm text-dark-400">
@@ -145,6 +186,19 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false })
         />
       </div>
 
+      {/* Receipt (optional) */}
+      <div>
+        <label className="label">Receipt (optional)</label>
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp,application/pdf"
+          className="input"
+          onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
+          disabled={uploadingReceipt || isSubmitting}
+        />
+        {receiptFile && <p className="text-xs text-dark-400 mt-1">{receiptFile.name}</p>}
+      </div>
+
       {/* Payment Method */}
       <div>
         <label className="label">Payment Method</label>
@@ -172,11 +226,11 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false })
       </div>
 
       <div className="flex gap-3 pt-4">
-        <button type="button" onClick={onCancel} className="flex-1 btn-secondary" disabled={isSubmitting}>
+        <button type="button" onClick={onCancel} className="flex-1 btn-secondary" disabled={isSubmitting || uploadingReceipt}>
           Cancel
         </button>
-        <button type="submit" className="flex-1 btn-success" disabled={isSubmitting || isAmountInvalid || requiresFullPayment}>
-          {isSubmitting ? 'Recording...' : 'Record Payment'}
+        <button type="submit" className="flex-1 btn-success" disabled={isSubmitting || uploadingReceipt || isAmountInvalid || requiresFullPayment}>
+          {uploadingReceipt ? 'Uploading receipt...' : isSubmitting ? 'Recording...' : 'Record Payment'}
         </button>
       </div>
     </form>

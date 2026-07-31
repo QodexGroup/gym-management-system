@@ -66,7 +66,15 @@ const ProfileHeader = ({ member, onEdit, onViewCard, canEdit }) => {
       const res = await uploadFile(file, accountId, member.id);
       await customerService.uploadPhoto(member.id, { path: res.fileUrl, sizeKb: res.fileSize });
       invalidateStorageUsage();
-      queryClient.invalidateQueries({ queryKey: customerKeys.detail(member.id) });
+      // Invalidate by the partial `details` key rather than detail(member.id):
+      // the active detail query is keyed by the route param `id` (a string),
+      // while member.id is a number from the API — an exact key would type-
+      // mismatch and never refetch, forcing a manual browser refresh. The
+      // partial key matches the mounted detail query regardless of id type.
+      queryClient.invalidateQueries({ queryKey: customerKeys.details() });
+      // Keep the client list thumbnail in sync too.
+      queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: customerKeys.allCustomers() });
       Toast.success('Photo updated');
     } catch (err) {
       if (import.meta.env.DEV) console.error('Customer photo upload failed:', err);
