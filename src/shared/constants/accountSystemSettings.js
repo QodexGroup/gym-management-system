@@ -76,4 +76,35 @@ export const ACCOUNT_SYSTEM_SETTING_DEFAULTS = {
   allowEditPreviousCycleBills: false,
   billingAnchor: BILLING_ANCHOR.ANNIVERSARY,
   fixedBillingDay: 1,
+
+  // In-app notification settings (NotificationSettingConstant)
+  notifyMembershipExpiry: true,
+  notifyPaymentReceived: true,
+  notifyNewRegistration: true,
+
+  // Member/client email notification settings (EmailNotificationSettingConstant)
+  emailNotificationsEnabled: true,
+  emailMembershipExpiring: true,
+  emailPaymentConfirmation: true,
+  emailCustomerRegistration: true,
 };
+
+/**
+ * Keys belonging to the in-app Notification Settings tab. Used so the tab
+ * saves only its own subset of the account settings.
+ */
+export const NOTIFICATION_SETTING_KEYS = [
+  'notifyMembershipExpiry',
+  'notifyPaymentReceived',
+  'notifyNewRegistration',
+];
+
+/**
+ * Keys belonging to the Email Notifications tab (member/client emails).
+ */
+export const EMAIL_NOTIFICATION_SETTING_KEYS = [
+  'emailNotificationsEnabled',
+  'emailMembershipExpiring',
+  'emailPaymentConfirmation',
+  'emailCustomerRegistration',
+];

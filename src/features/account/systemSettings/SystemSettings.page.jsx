@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import Layout from '../../../layout/Layout';
 import MembershipSettingsTab from './MembershipSettingsTab.page';
+import NotificationSettingsTab from './NotificationSettingsTab.page';
+import EmailNotificationSettingsTab from './EmailNotificationSettingsTab.page';
 
 const TABS = [
   { key: 'membership', label: 'Membership Settings' },
+  { key: 'notifications', label: 'Notification Settings' },
+  { key: 'email', label: 'Email Notifications' },
 ];
 
 const SystemSettingsPage = () => {
@@ -31,6 +35,8 @@ const SystemSettingsPage = () => {
       </div>
 
       {activeTab === 'membership' && <MembershipSettingsTab />}
+      {activeTab === 'notifications' && <NotificationSettingsTab />}
+      {activeTab === 'email' && <EmailNotificationSettingsTab />}
     </Layout>
   );
 };
