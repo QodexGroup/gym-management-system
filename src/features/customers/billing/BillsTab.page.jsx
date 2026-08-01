@@ -5,6 +5,7 @@ import DataTable from '../../../components/DataTable';
 import { Pagination, Modal, Badge, ReloadButton } from '../../../components/common';
 import StatsCards from '../../../components/common/StatsCards';
 import BillsForm from './BillsForm';
+import BillView from './BillView';
 import PaymentForm from './PaymentForm';
 import MembershipPlanForm from './MembershipPlanForm';
 import PtPackageAssignmentForm from './PtPackageAssignmentForm';
@@ -46,6 +47,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedBill, setSelectedBill] = useState(null);
   const [showBillModal, setShowBillModal] = useState(false);
+  const [isBillView, setIsBillView] = useState(false);
   const [paymentBill, setPaymentBill] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showMembershipModal, setShowMembershipModal] = useState(false);
@@ -91,9 +93,16 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
       Alert.warning('Bill Voided', 'This bill has been voided and cannot be edited.');
       return;
     }
+    setIsBillView(false);
     setSelectedBill(bill);
     setShowBillModal(true);
   }, [member, allowEditPreviousCycle]);
+
+  const handleView = useCallback((bill) => {
+    setIsBillView(true);
+    setSelectedBill(bill);
+    setShowBillModal(true);
+  }, []);
 
   const handleDelete = useCallback(async (id) => {
     const result = await Alert.confirmDelete();
@@ -201,10 +210,11 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
     canEdit: hasPermission('bill_update'),
     canDelete: hasPermission('bill_delete'),
     canAddPayment: hasPermission('payment_create'),
+    onView: handleView,
     onEdit: handleEdit,
     onDelete: handleDelete,
     onAddPayment: handleOpenPayment
-  }), [hasPermission, handleEdit, handleDelete, handleOpenPayment]);
+  }), [hasPermission, handleView, handleEdit, handleDelete, handleOpenPayment]);
 
   return (
     <div className="space-y-6">
@@ -337,7 +347,7 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
         <ReloadButton onReload={refetch} isReloading={isRefetching} />
         {hasPermission('bill_create') && (
           <button
-            onClick={() => { setSelectedBill(null); setShowBillModal(true); }}
+            onClick={() => { setIsBillView(false); setSelectedBill(null); setShowBillModal(true); }}
             className="btn-primary flex items-center gap-2"
           >
             <Receipt className="w-4 h-4" />
@@ -367,19 +377,27 @@ const BillsTab = ({ member, onCustomerUpdate }) => {
       {/* Modals */}
       <Modal
         isOpen={showBillModal}
-        onClose={() => { setShowBillModal(false); setSelectedBill(null); }}
-        title={selectedBill ? 'Edit Bill' : 'Create Bill'}
+        onClose={() => { setShowBillModal(false); setSelectedBill(null); setIsBillView(false); }}
+        title={isBillView ? 'View Bill' : selectedBill ? 'Edit Bill' : 'Create Bill'}
         size="lg"
       >
-        <BillsForm
-          customerId={member.id}
-          initialData={selectedBill}
-          currentMembership={currentMembership}
-          onSubmit={handleBillSubmit}
-          onCancel={() => { setShowBillModal(false); setSelectedBill(null); }}
-          onCustomerUpdate={onCustomerUpdate}
-          isSubmitting={createBillMutation.isPending || updateBillMutation.isPending}
-        />
+        {isBillView ? (
+          <BillView
+            bill={selectedBill}
+            currentMembership={currentMembership}
+            onClose={() => { setShowBillModal(false); setSelectedBill(null); setIsBillView(false); }}
+          />
+        ) : (
+          <BillsForm
+            customerId={member.id}
+            initialData={selectedBill}
+            currentMembership={currentMembership}
+            onSubmit={handleBillSubmit}
+            onCancel={() => { setShowBillModal(false); setSelectedBill(null); setIsBillView(false); }}
+            onCustomerUpdate={onCustomerUpdate}
+            isSubmitting={createBillMutation.isPending || updateBillMutation.isPending}
+          />
+        )}
       </Modal>
 
       <Modal

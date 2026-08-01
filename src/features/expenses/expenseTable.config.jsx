@@ -1,4 +1,4 @@
-import { Badge } from '../../components/common';
+import { Badge, FilePreview } from '../../components/common';
 import { createActionColumn } from '../../components/DataTable';
 import { Edit, Trash, CheckCircle, XCircle } from 'lucide-react';
 import { EXPENSE_STATUS, EXPENSE_STATUS_LABELS, EXPENSE_STATUS_VARIANTS } from '../../shared/constants/expenseConstants';
@@ -108,6 +108,13 @@ export const expenseTableColumns = ({
       <span className="font-semibold text-dark-50">
         {formatCurrency(expense.amount)}
       </span>
+    ),
+  },
+  {
+    key: 'receipt',
+    label: 'Receipt',
+    render: (expense) => (
+      <FilePreview path={expense.receiptUrl} alt="Receipt" />
     ),
   },
   {

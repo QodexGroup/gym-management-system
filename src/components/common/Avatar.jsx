@@ -1,4 +1,14 @@
+import { useState, useEffect } from 'react';
+
 const Avatar = ({ src, name, size = 'md', status }) => {
+  // Fall back to initials if the image fails to load (e.g. a stale row still
+  // pointing at a photo that was replaced/deleted on the server). Reset the
+  // error whenever the src changes so a new, valid image gets a fresh attempt.
+  const [imgError, setImgError] = useState(false);
+  useEffect(() => {
+    setImgError(false);
+  }, [src]);
+
   const sizeClasses = {
     xs: 'w-7 h-7',
     sm: 'w-8 h-8',
@@ -26,12 +36,13 @@ const Avatar = ({ src, name, size = 'md', status }) => {
 
   return (
     <div className="relative inline-block shrink-0">
-      {src ? (
+      {src && !imgError ? (
         <div className={`${sizeClasses[size]} rounded-full overflow-hidden shrink-0`}>
           <img
             src={src}
             alt={name}
             className="w-full h-full object-cover"
+            onError={() => setImgError(true)}
           />
         </div>
       ) : (

@@ -1,5 +1,12 @@
+import { useRef, useState } from 'react';
+import { Edit } from 'lucide-react';
 import { Avatar } from '../../components/common';
 import { sanitizePhoneInput, validatePhPhone, PH_PHONE_INPUT_MAX } from '../../shared/utils/validators/phone';
+import { useAuth } from '../../shared/context/AuthContext';
+import { uploadUserAvatar, getFileUrl } from '../../shared/services/storageService';
+import { userService } from '../../shared/services/userService';
+import { useInvalidateStorageUsage } from '../../shared/hooks/useStorage';
+import { Toast } from '../../shared/utils/alert';
 
 const MyAccountProfileForm = ({
   user,
@@ -9,27 +16,72 @@ const MyAccountProfileForm = ({
   isSubmitting,
   onCancel,
 }) => {
+  const { account, fetchUserData } = useAuth();
+  const invalidateStorageUsage = useInvalidateStorageUsage();
+  const fileInputRef = useRef(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
   if (!user) return null;
 
+  const accountId = account?.id ?? user.accountId;
   const phoneError = validatePhPhone(formData.phone);
 
   const handlePhoneChange = (e) => {
     onChange({ target: { name: 'phone', value: sanitizePhoneInput(e.target.value) } });
   };
 
+  /**
+   * Upload a newly picked avatar to R2, save it on the user, then refresh
+   * auth state + storage usage.
+   *
+   * @param {React.ChangeEvent<HTMLInputElement>} e
+   * @returns {Promise<void>}
+   */
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!accountId) {
+      Toast.error('Account not loaded — cannot upload avatar.');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const res = await uploadUserAvatar(file, accountId);
+      await userService.uploadAvatar(user.id, { path: res.fileUrl, sizeKb: res.fileSize });
+      invalidateStorageUsage();
+      await fetchUserData();
+      Toast.success('Avatar updated');
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('Avatar upload failed:', err);
+      Toast.error(err.message || 'Failed to update avatar');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="flex justify-center mb-4">
         <div className="relative">
-          <Avatar src={user.avatar} name={user.fullname} size="xl" />
-          {/* Avatar upload not implemented yet — re-enable once backend support is added.
+          <Avatar src={user.avatar ? getFileUrl(user.avatar) : null} name={user.fullname} size="xl" />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={handleAvatarChange}
+          />
           <button
             type="button"
-            className="absolute bottom-0 right-0 p-2 bg-primary-500 text-white rounded-full hover:bg-primary-600 transition-colors"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingAvatar}
+            title="Change avatar"
+            className="absolute bottom-0 right-0 p-2 bg-primary-500 text-white rounded-full hover:bg-primary-600 transition-colors disabled:opacity-60"
           >
             <Edit className="w-4 h-4" />
           </button>
-          */}
         </div>
       </div>
 

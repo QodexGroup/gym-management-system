@@ -31,7 +31,17 @@ function normalizeUploadedFileName(originalName, mimeType) {
   return finalExt ? `${safeBase}.${finalExt}` : safeBase;
 }
 
-async function fetchPresignedUrl(path, contentType) {
+/**
+ * Request a short-lived presigned R2 upload URL from the backend. Sends the
+ * file size so the backend can enforce the account storage quota (403 if over).
+ *
+ * @param {string} path R2 object key ({accountId}/{customerId}/filename).
+ * @param {string} contentType MIME type of the file.
+ * @param {number} contentLength File size in bytes.
+ * @returns {Promise<{ url: string, path: string }>}
+ * @throws {Error} With the backend message when the request is rejected.
+ */
+async function fetchPresignedUrl(path, contentType, contentLength) {
   const token = localStorage.getItem('firebase_token');
   const response = await fetch(`${API_BASE_URL}/storage/presigned-url`, {
     method: 'POST',
@@ -39,7 +49,9 @@ async function fetchPresignedUrl(path, contentType) {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ path, content_type: contentType }),
+    // content_length lets the backend enforce the account storage quota
+    // before the upload starts (returns 403 when it would exceed the cap).
+    body: JSON.stringify({ path, content_type: contentType, content_length: contentLength }),
   });
 
   const json = await response.json().catch(() => ({}));
@@ -123,7 +135,7 @@ export async function uploadFile(file, accountId, customerId, onProgress = null)
   const sanitizedFileName = normalizeUploadedFileName(file.name, file.type);
   const storagePath = `${accountId}/${customerId}/${timestamp}_${sanitizedFileName}`;
 
-  const { url: presignedUrl } = await fetchPresignedUrl(storagePath, file.type);
+  const { url: presignedUrl } = await fetchPresignedUrl(storagePath, file.type, file.size);
   await putToR2(presignedUrl, file, onProgress);
 
   return {
@@ -163,11 +175,96 @@ export async function uploadReceipt(file, accountId) {
   const safeName = normalizeUploadedFileName(file.name, file.type);
   const storagePath = `${accountId}/subscription-receipts/receipt_${timestamp}_${safeName}`;
 
-  const { url: presignedUrl } = await fetchPresignedUrl(storagePath, file.type);
+  const { url: presignedUrl } = await fetchPresignedUrl(storagePath, file.type, file.size);
   await putToR2(presignedUrl, file);
 
   return {
     receiptUrl: `${R2_PUBLIC_URL}/${storagePath}`,
     receiptFileName: safeName,
   };
+}
+
+/**
+ * Upload an expense receipt to R2 under {accountId}/receipt/{filename}.
+ *
+ * @param {File} file
+ * @param {number} accountId
+ * @returns {Promise<{ fileUrl: string, fileName: string, fileSize: number, mimeType: string }>}
+ * @throws {Error} On invalid type/size or when the upload/quota check fails.
+ */
+export async function uploadExpenseReceipt(file, accountId) {
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error(`Receipt must be under 5MB. Current: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+  }
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    throw new Error('Allowed types: JPEG, PNG, WebP, PDF');
+  }
+
+  const timestamp = Date.now();
+  const safeName = normalizeUploadedFileName(file.name, file.type);
+  const storagePath = `${accountId}/receipt/${timestamp}_${safeName}`;
+
+  const { url: presignedUrl } = await fetchPresignedUrl(storagePath, file.type, file.size);
+  await putToR2(presignedUrl, file);
+
+  return {
+    fileUrl: storagePath,
+    fileName: file.name,
+    fileSize: parseFloat((file.size / 1024).toFixed(2)),
+    mimeType: file.type,
+  };
+}
+
+/**
+ * Upload a user avatar to R2 under {accountId}/userprofile/{filename}.
+ *
+ * @param {File} file
+ * @param {number} accountId
+ * @returns {Promise<{ fileUrl: string, fileName: string, fileSize: number, mimeType: string }>}
+ * @throws {Error} On invalid type/size or when the upload/quota check fails.
+ */
+export async function uploadUserAvatar(file, accountId) {
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error(`Avatar must be under 5MB. Current: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+  }
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    throw new Error('Allowed types: JPEG, PNG, WebP, PDF');
+  }
+
+  const timestamp = Date.now();
+  const safeName = normalizeUploadedFileName(file.name, file.type);
+  const storagePath = `${accountId}/userprofile/${timestamp}_${safeName}`;
+
+  const { url: presignedUrl } = await fetchPresignedUrl(storagePath, file.type, file.size);
+  await putToR2(presignedUrl, file);
+
+  return {
+    fileUrl: storagePath,
+    fileName: file.name,
+    fileSize: parseFloat((file.size / 1024).toFixed(2)),
+    mimeType: file.type,
+  };
+}
+
+/**
+ * Fetch the authenticated account's storage usage/limit snapshot.
+ * Shape: { usedKb, limitKb, remainingKb, usedPercent, isFull, isNearLimit,
+ *          usedLabel, limitLabel, remainingLabel }
+ *
+ * @returns {Promise<StorageUsage>}
+ * @throws {Error} With the backend message when the request fails.
+ */
+export async function getStorageUsage() {
+  const token = localStorage.getItem('firebase_token');
+  const response = await fetch(`${API_BASE_URL}/storage/usage`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+
+  const json = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(json.message || 'Failed to load storage usage');
+  }
+
+  return json.data;
 }

@@ -2,6 +2,7 @@ import { Avatar, Badge } from '../../components/common';
 import { createActionColumn } from '../../components/DataTable';
 import { Phone, Mail, Calendar, Edit, Trash, ChevronRight } from 'lucide-react';
 import { formatDate, formatCurrency } from '../../shared/utils/formatters';
+import { getFileUrl } from '../../shared/services/storageService';
 
 export const getCustomerActionMenuItems = ({
   customer,
@@ -60,7 +61,7 @@ export const customerTableColumns = ({ canEdit, canDelete, onEdit, onDelete, onV
       const fullName = `${c.firstName || ''} ${c.lastName || ''}`.trim();
       return (
         <div className="flex items-center gap-3">
-          <Avatar src={c.photo} name={fullName} size="md" />
+          <Avatar src={getFileUrl(c.photo)} name={fullName} size="md" />
           <div>
             <p className="font-semibold text-dark-50">{fullName || 'N/A'}</p>
             {c.email && <p className="text-xs text-dark-400">{c.email}</p>}

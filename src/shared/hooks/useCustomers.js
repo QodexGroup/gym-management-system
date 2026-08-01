@@ -32,7 +32,11 @@ export const useCustomers = (page = 1, options = {}) => {
     placeholderData: keepPreviousData, // Keep previous page data while loading new page
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes - data is considered fresh
     refetchOnWindowFocus: false, // Don't refetch on window focus
-    refetchOnMount: false, // Don't refetch on mount if data is fresh
+    // Refetch on mount when the cache is stale. After a mutation elsewhere
+    // (e.g. a customer photo update on the profile page) invalidates the list,
+    // this ensures returning to the list shows fresh data — including the new
+    // avatar path — instead of a stale row pointing at an already-deleted photo.
+    refetchOnMount: true,
   });
 };
 

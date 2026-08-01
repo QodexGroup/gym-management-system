@@ -4,6 +4,7 @@ import { customerFileService } from '../services/customerFileService';
 import { Toast, Alert } from '../utils/alert';
 import { useQueryClient } from '@tanstack/react-query';
 import { customerProgressKeys } from './useCustomerProgress';
+import { useInvalidateStorageUsage } from './useStorage';
 
 /**
  * Custom hook for handling file uploads and management
@@ -18,6 +19,7 @@ export const useFileUpload = ({ customerId, accountId = 1, onInvalidate }) => {
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({});
   const queryClient = useQueryClient();
+  const invalidateStorageUsage = useInvalidateStorageUsage();
 
   /**
    * Handle file removal with confirmation
@@ -55,6 +57,9 @@ export const useFileUpload = ({ customerId, accountId = 1, onInvalidate }) => {
 
         // Show success message
         Toast.success('File removed successfully');
+
+        // Storage freed — refresh the account usage indicator
+        invalidateStorageUsage();
 
         // Invalidate queries
         if (onInvalidate) {
@@ -164,6 +169,10 @@ export const useFileUpload = ({ customerId, accountId = 1, onInvalidate }) => {
       );
       
       await Promise.all(filePromises);
+
+      // Files recorded — refresh the account storage usage indicator
+      invalidateStorageUsage();
+
       return filesToSave;
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error saving files:', error);

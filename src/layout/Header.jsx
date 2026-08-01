@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../shared/context/AuthContext';
+import { getFileUrl } from '../shared/services/storageService';
 import NotificationBell from '../components/NotificationBell';
 import SearchableClientInput from '../components/common/SearchableClientInput';
 import {
@@ -16,6 +17,16 @@ const Header = ({ title, subtitle }) => {
   const navigate = useNavigate();
   const { user, logout, isAdmin } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+
+  // Only treat a real uploaded photo as an avatar image; the ui-avatars
+  // fallback keeps the theme-colored initials badge below. Reset the error
+  // whenever the source changes so a freshly uploaded avatar gets retried.
+  const hasCustomAvatar = !!user?.avatar && !user.avatar.includes('ui-avatars.com');
+  const avatarUrl = hasCustomAvatar ? getFileUrl(user.avatar) : null;
+  useEffect(() => {
+    setAvatarError(false);
+  }, [avatarUrl]);
 
   const handleMyProfile = () => {
     setShowUserMenu(false);
@@ -86,15 +97,25 @@ const Header = ({ title, subtitle }) => {
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-2 p-1.5 pr-3 hover:bg-dark-700 rounded-xl transition-colors"
             >
-              {/* Theme-aware initials avatar — always follows the active primary color */}
-              <span className="w-9 h-9 rounded-lg bg-primary-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 select-none">
-                {(user?.fullname || user?.firstname || 'U')
-                  .split(' ')
-                  .slice(0, 2)
-                  .map((n) => n[0])
-                  .join('')
-                  .toUpperCase()}
-              </span>
+              {/* Uploaded avatar when present; otherwise a theme-aware initials
+                  badge that follows the active primary color. */}
+              {avatarUrl && !avatarError ? (
+                <img
+                  src={avatarUrl}
+                  alt={user?.fullname || 'User'}
+                  onError={() => setAvatarError(true)}
+                  className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
+                />
+              ) : (
+                <span className="w-9 h-9 rounded-lg bg-primary-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0 select-none">
+                  {(user?.fullname || user?.firstname || 'U')
+                    .split(' ')
+                    .slice(0, 2)
+                    .map((n) => n[0])
+                    .join('')
+                    .toUpperCase()}
+                </span>
+              )}
               <ChevronDown className="w-4 h-4 text-dark-400" />
             </button>
 

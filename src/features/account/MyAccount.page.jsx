@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Layout from '../../layout/Layout';
-import { Avatar, Badge, Modal } from '../../components/common';
+import { Avatar, Badge, Modal, StorageUsageCard } from '../../components/common';
 import { SubscriptionSection } from './subscription/Subscription.page';
 import { Mail, Phone, Edit, Key } from 'lucide-react';
 import MyAccountProfileForm from './MyAccountProfileForm';
@@ -11,6 +11,7 @@ import { userService } from '../../shared/services/userService';
 import { Toast } from '../../shared/utils/alert';
 import { formatRelativeTime } from '../../shared/utils/formatters';
 import { initializeFirebaseServices } from '../../shared/services/firebaseService';
+import { getFileUrl } from '../../shared/services/storageService';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 
 const MyAccount = () => {
@@ -220,7 +221,7 @@ const MyAccount = () => {
               </button>
             </div>
             <div className="flex items-center gap-6">
-              <Avatar src={user.avatar} name={user.fullname} size="xl" />
+              <Avatar src={getFileUrl(user.avatar)} name={user.fullname} size="xl" />
               <div className="flex-1">
                 <h4 className="text-xl font-bold text-dark-50">{user.fullname}</h4>
                 <p className="text-dark-500">{user.email}</p>
@@ -257,6 +258,8 @@ const MyAccount = () => {
 
           {/* Security + Invite & Earn side by side, equal height */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+            {/* Left column: Security + Storage stacked, aligned to the Invite card */}
+            <div className="flex flex-col gap-6">
             {/* Security Section */}
             <div className="card">
               <h3 className="text-lg font-semibold text-dark-50 mb-6">Security</h3>
@@ -281,6 +284,9 @@ const MyAccount = () => {
                   </button>
                 </div>
               </div>
+            </div>
+
+              {isAccountOwner && <StorageUsageCard className="mt-auto" />}
             </div>
 
             {isAccountOwner && <ReferralCard />}

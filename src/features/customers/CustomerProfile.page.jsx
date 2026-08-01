@@ -1,8 +1,15 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import Layout from '../../layout/Layout';
 import { Avatar, Badge, InfoField } from '../../components/common';
-import { ArrowLeft, User, Activity, FileText, CreditCard, CalendarDays, UserCheck, ClipboardClock, QrCode } from 'lucide-react';
+import { ArrowLeft, User, Activity, FileText, CreditCard, CalendarDays, UserCheck, ClipboardClock, QrCode, Edit } from 'lucide-react';
+import { uploadFile, getFileUrl } from '../../shared/services/storageService';
+import { customerService } from '../../shared/services/customerService';
+import { useInvalidateStorageUsage } from '../../shared/hooks/useStorage';
+import { customerKeys } from '../../shared/hooks/useCustomers';
+import { useAuth } from '../../shared/context/AuthContext';
+import { Toast } from '../../shared/utils/alert';
 import { MemberQRCard } from './qr-card';
 import CustomerForm from './CustomerForm';
 import { useCustomer } from '../../shared/hooks/useCustomers';
@@ -30,11 +37,78 @@ const customerTabs = [
 ];
 
 /* --------------------------- Profile Header --------------------------- */
-const ProfileHeader = ({ member, onEdit, onViewCard, canEdit }) => (
+const ProfileHeader = ({ member, onEdit, onViewCard, canEdit }) => {
+  const { account, user } = useAuth();
+  const accountId = account?.id ?? user?.accountId;
+  const queryClient = useQueryClient();
+  const invalidateStorageUsage = useInvalidateStorageUsage();
+  const fileInputRef = useRef(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  /**
+   * Upload a newly picked customer photo to R2 (existing {accountId}/{customerId}
+   * path), save it, then refresh the customer + storage usage.
+   *
+   * @param {React.ChangeEvent<HTMLInputElement>} e
+   * @returns {Promise<void>}
+   */
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!accountId) {
+      Toast.error('Account not loaded — cannot upload photo.');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const res = await uploadFile(file, accountId, member.id);
+      await customerService.uploadPhoto(member.id, { path: res.fileUrl, sizeKb: res.fileSize });
+      invalidateStorageUsage();
+      // Invalidate by the partial `details` key rather than detail(member.id):
+      // the active detail query is keyed by the route param `id` (a string),
+      // while member.id is a number from the API — an exact key would type-
+      // mismatch and never refetch, forcing a manual browser refresh. The
+      // partial key matches the mounted detail query regardless of id type.
+      queryClient.invalidateQueries({ queryKey: customerKeys.details() });
+      // Keep the client list thumbnail in sync too.
+      queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: customerKeys.allCustomers() });
+      Toast.success('Photo updated');
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('Customer photo upload failed:', err);
+      Toast.error(err.message || 'Failed to update photo');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  return (
   <div className="card mb-4">
     <div className="flex items-center justify-between gap-6">
       <div className="flex items-center gap-4 flex-1">
-        <Avatar src={member.avatar} name={member.name} size="lg" />
+        <div className="relative shrink-0">
+          <Avatar src={member.avatar ? getFileUrl(member.avatar) : null} name={member.name} size="lg" />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={handlePhotoChange}
+          />
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingPhoto}
+              title="Change photo"
+              className="absolute -bottom-1 -right-1 p-1.5 bg-primary-500 text-white rounded-full hover:bg-primary-600 transition-colors disabled:opacity-60"
+            >
+              <Edit className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h2 className="text-xl font-bold text-dark-50">{member.name}</h2>
@@ -84,7 +158,8 @@ const ProfileHeader = ({ member, onEdit, onViewCard, canEdit }) => (
       </div>
     </div>
   </div>
-);
+  );
+};
 
 /* --------------------------- Profile Stats --------------------------- */
 const ProfileStats = ({ member }) => (

@@ -60,7 +60,7 @@ export const mapExpensesData = (expensesData = [], categories = []) => {
       date: apiExpense.expenseDate,
       formattedDate: formatDate(apiExpense.expenseDate),
       status: apiExpense.status, // POSTED or UNPOSTED
-      receipt: false, // Receipt functionality not implemented yet
+      receiptUrl: apiExpense.receiptUrl || null, // R2 path (or full URL) of the uploaded receipt, if any
     };
   });
 };
