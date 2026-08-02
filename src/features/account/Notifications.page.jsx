@@ -10,7 +10,9 @@ import {
   DollarSign,
   User,
   Check,
+  Upload,
 } from 'lucide-react';
+import { NOTIFICATION_TYPE } from '../../shared/constants/notificationConstants';
 import {
   useNotificationsInfinite,
   useUnreadCount,
@@ -46,19 +48,23 @@ const Notifications = () => {
 
   const handleNotificationClick = (notification) => {
     if (!notification.isRead) handleMarkAsRead(notification.id);
-    if (notification.data?.customer_id) {
+    if (notification.type === NOTIFICATION_TYPE.IMPORT_COMPLETED) {
+      navigate('/imports');
+    } else if (notification.data?.customer_id) {
       navigate(`/members/${notification.data.customer_id}`);
     }
   };
 
   const getIcon = (type) => {
     switch (type) {
-      case 'membership_expiring':
+      case NOTIFICATION_TYPE.MEMBERSHIP_EXPIRING:
         return <AlertTriangle className="w-5 h-5 text-warning-500" />;
-      case 'payment_received':
+      case NOTIFICATION_TYPE.PAYMENT_RECEIVED:
         return <DollarSign className="w-5 h-5 text-success-500" />;
-      case 'customer_registered':
+      case NOTIFICATION_TYPE.CUSTOMER_REGISTERED:
         return <User className="w-5 h-5 text-primary-500" />;
+      case NOTIFICATION_TYPE.IMPORT_COMPLETED:
+        return <Upload className="w-5 h-5 text-primary-500" />;
       default:
         return <Info className="w-5 h-5 text-primary-500" />;
     }
@@ -66,11 +72,13 @@ const Notifications = () => {
 
   const getIconBg = (type) => {
     switch (type) {
-      case 'membership_expiring':
+      case NOTIFICATION_TYPE.MEMBERSHIP_EXPIRING:
         return 'bg-warning-100';
-      case 'payment_received':
+      case NOTIFICATION_TYPE.PAYMENT_RECEIVED:
         return 'bg-success-100';
-      case 'customer_registered':
+      case NOTIFICATION_TYPE.CUSTOMER_REGISTERED:
+        return 'bg-primary-100';
+      case NOTIFICATION_TYPE.IMPORT_COMPLETED:
         return 'bg-primary-100';
       default:
         return 'bg-primary-100';
@@ -79,12 +87,14 @@ const Notifications = () => {
 
   const getTypeLabel = (type) => {
     switch (type) {
-      case 'membership_expiring':
+      case NOTIFICATION_TYPE.MEMBERSHIP_EXPIRING:
         return 'Membership Alert';
-      case 'payment_received':
+      case NOTIFICATION_TYPE.PAYMENT_RECEIVED:
         return 'Payment';
-      case 'customer_registered':
+      case NOTIFICATION_TYPE.CUSTOMER_REGISTERED:
         return 'New Customer';
+      case NOTIFICATION_TYPE.IMPORT_COMPLETED:
+        return 'Data Import';
       default:
         return 'Notification';
     }
@@ -120,7 +130,7 @@ const Notifications = () => {
             <div>
               <p className="text-warning-100 text-sm">Alerts</p>
               <p className="text-3xl font-bold mt-1">
-                {notifications.filter((n) => n.type === 'membership_expiring').length}
+                {notifications.filter((n) => n.type === NOTIFICATION_TYPE.MEMBERSHIP_EXPIRING).length}
               </p>
             </div>
             <AlertTriangle className="w-10 h-10 text-warning-200" />
@@ -142,9 +152,10 @@ const Notifications = () => {
             >
               <option value="all">All</option>
               <option value="unread">Unread</option>
-              <option value="membership_expiring">Membership Alerts</option>
-              <option value="payment_received">Payments</option>
-              <option value="customer_registered">New Customers</option>
+              <option value={NOTIFICATION_TYPE.MEMBERSHIP_EXPIRING}>Membership Alerts</option>
+              <option value={NOTIFICATION_TYPE.PAYMENT_RECEIVED}>Payments</option>
+              <option value={NOTIFICATION_TYPE.CUSTOMER_REGISTERED}>New Customers</option>
+              <option value={NOTIFICATION_TYPE.IMPORT_COMPLETED}>Imports</option>
             </select>
             {unreadCount > 0 && (
               <button
