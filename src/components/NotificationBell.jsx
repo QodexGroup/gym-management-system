@@ -7,6 +7,7 @@ import {
   useMarkNotificationAsRead,
   useMarkAllNotificationsAsRead,
 } from '../shared/hooks/useNotifications';
+import { NOTIFICATION_TYPE } from '../shared/constants/notificationConstants';
 
 const BELL_LIST_LIMIT = 5;
 
@@ -38,9 +39,11 @@ const NotificationBell = () => {
     if (!notification.isRead) {
       try {
         await markAsRead.mutateAsync(notification.id);
-      } catch (_) {}
+      } catch { /* non-blocking: ignore failure */ }
     }
-    if (notification.data?.customer_id) {
+    if (notification.type === NOTIFICATION_TYPE.IMPORT_COMPLETED) {
+      navigate('/imports');
+    } else if (notification.data?.customer_id) {
       navigate(`/members/${notification.data.customer_id}`);
     }
     setShowDropdown(false);
@@ -49,7 +52,7 @@ const NotificationBell = () => {
   const handleMarkAllAsRead = async () => {
     try {
       await markAllAsRead.mutateAsync();
-    } catch (_) {}
+    } catch { /* non-blocking: ignore failure */ }
   };
 
   const handleViewAll = () => {
@@ -59,9 +62,10 @@ const NotificationBell = () => {
 
   const getNotificationIcon = (type) => {
     switch (type) {
-      case 'membership_expiring': return '⏰';
-      case 'payment_received':    return '💰';
-      case 'customer_registered': return '👤';
+      case NOTIFICATION_TYPE.MEMBERSHIP_EXPIRING: return '⏰';
+      case NOTIFICATION_TYPE.PAYMENT_RECEIVED:    return '💰';
+      case NOTIFICATION_TYPE.CUSTOMER_REGISTERED: return '👤';
+      case NOTIFICATION_TYPE.IMPORT_COMPLETED:    return '📥';
       default:                    return '🔔';
     }
   };

@@ -41,6 +41,7 @@ import {
 // Admin Management
 import { MembershipPlans } from './features/membership-plans';
 import { UserManagement } from './features/users';
+import { ImportData } from './features/imports';
 
 // Account
 import {
@@ -237,6 +238,7 @@ function App() {
                 {/* My Account */}
                 <Route path="/my-account" element={<ProtectedRoute><MyAccount /></ProtectedRoute>} />
                 <Route path="/system-settings" element={<AdminProtectedRoute><SystemSettings /></AdminProtectedRoute>} />
+                <Route path="/imports" element={<AdminProtectedRoute><ImportData /></AdminProtectedRoute>} />
 
                 {/* Themes & Appearance */}
                 <Route path="/appearance" element={<ProtectedRoute><Appearance /></ProtectedRoute>} />

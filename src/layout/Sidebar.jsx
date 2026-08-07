@@ -16,6 +16,7 @@ import {
   ClipboardClock,
   FileBarChart,
   SlidersHorizontal,
+  Upload,
 } from 'lucide-react';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile = false }) => {
@@ -109,6 +110,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile = false }) => {
         },
         { path: '/users', icon: UserCog, label: 'User Management', adminOnly: true },
         { path: '/system-settings', icon: SlidersHorizontal, label: 'System Settings', adminOnly: true },
+        { path: '/imports', icon: Upload, label: 'Import Data', adminOnly: true },
       ],
     },
   ];
