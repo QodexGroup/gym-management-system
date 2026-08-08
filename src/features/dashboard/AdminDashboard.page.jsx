@@ -250,7 +250,7 @@ const AdminDashboard = () => {
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: chartColors[index % chartColors.length] }}
                   />
-                  <span className="text-dark-300">{item.membershipPlan?.planName ?? 'Unknown'}</span>
+                  <span className="text-dark-300">{item.planName}</span>
                 </div>
                 <span className="font-medium text-dark-50">{item.count}</span>
               </div>
