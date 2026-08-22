@@ -57,6 +57,43 @@ export const usePtBookingsByCoach = (coachId, startDate = null, endDate = null, 
 };
 
 /**
+ * Fetch PT bookings for the calendar, optionally scoped to one coach.
+ *
+ * Replaces the previous `isTrainer ? usePtBookingsByCoach(...) : usePtBookings(...)`
+ * call site. That was a conditional hook call: `isTrainer` flips from false to true
+ * once auth resolves, which changes hook order between renders and breaks the Rules of
+ * Hooks. This is a single hook that is always called; only the query key and the
+ * service method it reaches for change with `coachId`.
+ *
+ * @param {number|null} coachId - Scope to this coach; null/undefined fetches all coaches
+ * @param {string} startDate - Start date (YYYY-MM-DD)
+ * @param {string} endDate - End date (YYYY-MM-DD)
+ * @param {Object} options - Query options (relations, filters, etc.)
+ * @param {Object} queryOptions - React Query options
+ * @returns {Object} React Query result
+ */
+export const useCalendarPtBookings = (
+  coachId = null,
+  startDate = null,
+  endDate = null,
+  options = {},
+  queryOptions = {}
+) => {
+  return useQuery({
+    queryKey: coachId
+      ? ptBookingKeys.byCoachId(coachId, startDate, endDate, options)
+      : ptBookingKeys.byDateRange(startDate, endDate, options),
+    queryFn: async () =>
+      coachId
+        ? await ptBookingService.getByCoachId(coachId, startDate, endDate, options)
+        : await ptBookingService.getAll(startDate, endDate, options),
+    enabled: !!startDate && !!endDate && queryOptions.enabled !== false,
+    placeholderData: keepPreviousData,
+    ...queryOptions,
+  });
+};
+
+/**
  * Hook to create a PT booking
  */
 export const useCreatePtBooking = () => {

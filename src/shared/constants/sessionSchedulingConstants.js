@@ -168,3 +168,57 @@ export const getSessionTypeColors = (sessionType) => {
       };
   }
 };
+/* ------------------------------------------------------------------ *
+ * Calendar page — perspective, kinds and permissions
+ * ------------------------------------------------------------------ */
+
+/**
+ * Calendar Permission Keys
+ * Used with usePermissions().hasPermission() for frontend guards.
+ * Admins always pass regardless of these keys.
+ *
+ * VIEW_MEMBER_BOOKINGS — gates the "Member Bookings" perspective switch. Viewing is
+ *   deliberately separate from editing: edit/cancel stay gated on the
+ *   PT_SESSION_PERMISSIONS / GROUP_CLASS_SESSION_PERMISSIONS keys, so a coach can be
+ *   granted read-only visibility of who booked without being able to change it.
+ * VIEW_ALL_COACHES — gates the coach picker. Without it a coach is locked to their own
+ *   schedule and the API must scope by their coach id regardless of what is sent.
+ */
+export const CALENDAR_PERMISSIONS = {
+  VIEW_MEMBER_BOOKINGS: 'calendar_view_member_bookings',
+  VIEW_ALL_COACHES: 'calendar_view_all_coaches',
+};
+
+/**
+ * Which lens the calendar is showing. Drives the queries, the filter row, the month
+ * cells and the list columns — the two perspectives are never rendered together.
+ */
+export const CALENDAR_PERSPECTIVE = {
+  COACH: 'coach',   // one row per session the gym is running
+  MEMBER: 'member', // one row per person who booked
+};
+
+export const CALENDAR_PERSPECTIVE_LABELS = {
+  [CALENDAR_PERSPECTIVE.COACH]: 'Coach Schedule',
+  [CALENDAR_PERSPECTIVE.MEMBER]: 'Member Bookings',
+};
+
+/**
+ * The two things a calendar row can be about, independent of perspective.
+ * This is what reaches the presentational components as `tone` — they never see
+ * SESSION_TYPES.
+ */
+export const CALENDAR_KIND = {
+  CLASS: 'class',
+  PT: 'pt',
+};
+
+/**
+ * Map a SESSION_TYPES value to the presentational kind.
+ * @param {string} sessionType
+ * @returns {string} CALENDAR_KIND value
+ */
+export const getCalendarKind = (sessionType) =>
+  sessionType === SESSION_TYPES.COACH_PT || sessionType === SESSION_TYPES.MEMBER_PT
+    ? CALENDAR_KIND.PT
+    : CALENDAR_KIND.CLASS;

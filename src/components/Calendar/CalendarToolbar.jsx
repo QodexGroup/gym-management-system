@@ -1,155 +1,166 @@
-import { Filter, Calendar, List, Zap } from 'lucide-react';
+import { Filter, Calendar, List, Lock } from 'lucide-react';
+import { KIND_TOKENS } from './calendarTokens';
 
 /**
- * CalendarToolbar - Reusable toolbar component for calendar views
+ * Toolbar for the calendar page.
  *
- * @param {Array}    typeFilters        - [{ key, label, shortLabel, isActive, getColorClass }]
- * @param {Function} onTypeFilterToggle - (key) => void
- * @param {string}   typeFilterLabel    - Label for the filter section (default: "Types:")
- * @param {string}   viewMode           - 'calendar' | 'list'
- * @param {Function} onViewModeToggle   - () => void
- * @param {Array}    actionButtons      - [{ key, label, icon, onClick, variant }]
- * @param {Object}   additionalFilters  - { label, icon, items: [{ id, label, isActive, onClick }] }
- * @param {boolean}  showViewToggle     - Whether to show the view-mode toggle (default: true)
+ * Everything here is driven by props — it holds no domain knowledge. The perspective
+ * switch is the primary control: the feature layer decides whether to pass it at all
+ * (permission-gated) and swaps the filter props to match the active perspective.
+ *
+ * @param {{
+ *   perspective?: { value: string, options: Array<{key,label,icon}>, onChange: Function }|null,
+ *   typeFilterLabel?: string,
+ *   typeFilters?: Array<{key,label,shortLabel,kind,isActive}>,
+ *   onTypeFilterToggle?: (key: string) => void,
+ *   statusFilterLabel?: string,
+ *   statusFilters?: Array<{key,label,isActive}>,
+ *   onStatusFilterToggle?: (key: string) => void,
+ *   scope?: { locked: boolean, lockedLabel?: string, value?: string, options?: Array<{value,label}>, onChange?: Function }|null,
+ *   viewMode?: string,
+ *   onViewModeToggle?: () => void,
+ *   actionButtons?: Array<{key,label,icon,onClick,variant}>,
+ * }} props
+ * @returns {JSX.Element}
  */
 const CalendarToolbar = ({
+  perspective = null,
+  typeFilterLabel = 'Type',
   typeFilters = [],
   onTypeFilterToggle,
-  typeFilterLabel = 'Types:',
+  statusFilterLabel = 'Status',
+  statusFilters = [],
+  onStatusFilterToggle,
+  scope = null,
   viewMode,
   onViewModeToggle,
   actionButtons = [],
-  additionalFilters,
-  showViewToggle = true,
-}) => {
-  const hasActions = (showViewToggle && viewMode && onViewModeToggle) || actionButtons.length > 0;
-
-  return (
-    <div className="card space-y-3">
-
-      {/* ── Row 1 ──
-          Mobile : filters row + actions row stacked
-          sm+    : filters (left) and actions (right) on one line */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-
-        {/* Type filter pills */}
-        {typeFilters.length > 0 && onTypeFilterToggle && (
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            {/* sm+: label text */}
-            <span className="hidden sm:flex items-center gap-2 text-sm font-medium text-dark-400 whitespace-nowrap flex-shrink-0">
-              <Filter className="w-4 h-4" />
-              {typeFilterLabel}
-            </span>
-            {/* mobile: icon only */}
-            <Filter className="sm:hidden w-4 h-4 text-dark-400 flex-shrink-0" />
-
-            {/* mobile: horizontal scroll  /  sm+: wrap */}
-            <div className="flex gap-1.5 overflow-x-auto sm:flex-wrap scrollbar-hide pb-0.5 sm:pb-0">
-              {typeFilters.map((filter) => {
-                const colorClass = filter.getColorClass
-                  ? filter.getColorClass(filter.key, filter.isActive)
-                  : filter.isActive
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-dark-700 text-dark-400 hover:bg-dark-600';
-
-                return (
-                  <button
-                    key={filter.key}
-                    onClick={() => onTypeFilterToggle(filter.key)}
-                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${colorClass}`}
-                  >
-                    <span className="sm:hidden">{filter.shortLabel || filter.label}</span>
-                    <span className="hidden sm:inline">{filter.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Action buttons */}
-        {hasActions && (
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {/* mobile: leading icon to match filter/coaches row pattern */}
-            <Zap className="sm:hidden w-4 h-4 text-dark-400 flex-shrink-0" />
-            {/* View toggle */}
-            {showViewToggle && viewMode && onViewModeToggle && (
-              <div className="relative group">
-                <button
-                  onClick={onViewModeToggle}
-                  className="btn-secondary flex items-center gap-2"
-                >
-                  {viewMode === 'calendar' ? (
-                    <><List className="w-4 h-4" /><span className="hidden sm:inline">List View</span></>
-                  ) : (
-                    <><Calendar className="w-4 h-4" /><span className="hidden sm:inline">Calendar View</span></>
-                  )}
-                </button>
-                <span className="sm:hidden absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-dark-600 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
-                  {viewMode === 'calendar' ? 'List View' : 'Calendar View'}
-                </span>
-              </div>
-            )}
-
-            {/* Custom action buttons */}
-            {actionButtons.map((button, index) => {
-              const Icon = button.icon;
-              const buttonClass =
-                button.variant === 'primary' ? 'btn-primary' :
-                button.variant === 'danger'  ? 'btn-danger'  : 'btn-secondary';
-              return (
-                <div key={button.key || index} className="relative group">
-                  <button
-                    onClick={button.onClick}
-                    className={`${buttonClass} flex items-center gap-2`}
-                  >
-                    {Icon && <Icon className="w-4 h-4" />}
-                    <span className="hidden sm:inline">{button.label}</span>
-                  </button>
-                  {/* Tooltip visible only on mobile where label text is hidden */}
-                  <span className="sm:hidden absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-dark-600 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
-                    {button.label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* ── Row 2: Additional filters (e.g. Coaches) ── */}
-      {additionalFilters && (
-        <div className="flex items-center gap-2 pt-3 border-t border-dark-700">
-          {/* sm+: label text  /  mobile: icon only */}
-          <span className="hidden sm:flex items-center gap-2 text-sm font-medium text-dark-400 whitespace-nowrap flex-shrink-0">
-            {additionalFilters.icon && <additionalFilters.icon className="w-4 h-4" />}
-            {additionalFilters.label}:
-          </span>
-          {additionalFilters.icon && (
-            <additionalFilters.icon className="sm:hidden w-4 h-4 text-dark-400 flex-shrink-0" />
-          )}
-
-          <div className="flex gap-1.5 overflow-x-auto sm:flex-wrap scrollbar-hide pb-0.5 sm:pb-0 flex-1">
-            {additionalFilters.items?.map((item) => {
-              const isActive = item.isActive !== false;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => item.onClick?.(item.id)}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${
-                    isActive ? 'bg-primary-500 text-white' : 'bg-dark-700 text-dark-400 hover:bg-dark-600'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
+}) => (
+  <div className="card space-y-3">
+    {/* ── Row 1: perspective switch, view toggle, primary actions ── */}
+    <div className="flex flex-wrap items-center gap-2">
+      {perspective && (
+        <div className="flex w-full gap-0.5 rounded-xl border border-dark-700 bg-dark-900 p-1 xl:inline-flex xl:w-auto">
+          {perspective.options.map((option) => {
+            const Icon = option.icon;
+            const isActive = perspective.value === option.key;
+            return (
+              <button
+                key={option.key}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => perspective.onChange(option.key)}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors xl:flex-none xl:justify-start ${
+                  isActive ? 'bg-primary-500 text-white shadow' : 'text-dark-400 hover:text-dark-200'
+                }`}
+              >
+                {Icon && <Icon className="h-4 w-4" />}
+                <span className="hidden sm:inline">{option.label}</span>
+                <span className="sm:hidden">{option.shortLabel || option.label}</span>
+              </button>
+            );
+          })}
         </div>
       )}
 
+      <div className="flex w-full items-center justify-center gap-2 xl:ml-auto xl:w-auto xl:justify-start">
+        {viewMode && onViewModeToggle && (
+          <button type="button" onClick={onViewModeToggle} className="btn-secondary flex items-center justify-center gap-2 sm:flex-1 xl:flex-none">
+            {viewMode === 'calendar' ? (
+              <><List className="h-4 w-4" /><span className="hidden sm:inline">List View</span></>
+            ) : (
+              <><Calendar className="h-4 w-4" /><span className="hidden sm:inline">Calendar View</span></>
+            )}
+          </button>
+        )}
+        {actionButtons.map((button) => {
+          const Icon = button.icon;
+          const cls =
+            button.variant === 'primary' ? 'btn-primary'
+            : button.variant === 'danger' ? 'btn-danger'
+            : 'btn-secondary';
+          return (
+            <button key={button.key} type="button" onClick={button.onClick} className={`${cls} flex items-center justify-center gap-2 sm:flex-1 xl:flex-none`} title={button.label}>
+              {Icon && <Icon className="h-4 w-4" />}
+              <span className="hidden sm:inline">{button.label}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
-  );
-};
+
+    {/* ── Row 2: contextual filters for the active perspective ── */}
+    <div className="flex flex-wrap items-center gap-2 border-t border-dark-700 pt-3">
+      {typeFilters.length > 0 && (
+        <>
+          <span className="hidden items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-dark-400 sm:flex">
+            <Filter className="h-3.5 w-3.5" />
+            {typeFilterLabel}
+          </span>
+          {typeFilters.map((filter) => {
+            const tokens = KIND_TOKENS[filter.kind] || KIND_TOKENS.class;
+            return (
+              <button
+                key={filter.key}
+                type="button"
+                aria-pressed={filter.isActive}
+                onClick={() => onTypeFilterToggle?.(filter.key)}
+                className={`rounded-full border px-3 py-1 text-xs font-semibold transition-all ${
+                  filter.isActive ? tokens.filterOn : tokens.filterOff
+                }`}
+              >
+                <span className="sm:hidden">{filter.shortLabel || filter.label}</span>
+                <span className="hidden sm:inline">{filter.label}</span>
+              </button>
+            );
+          })}
+        </>
+      )}
+
+      {statusFilters.length > 0 && (
+        <>
+          <span className="ml-1 hidden text-xs font-semibold uppercase tracking-wide text-dark-400 sm:inline">
+            {statusFilterLabel}
+          </span>
+          {statusFilters.map((filter) => (
+            <button
+              key={filter.key}
+              type="button"
+              aria-pressed={filter.isActive}
+              onClick={() => onStatusFilterToggle?.(filter.key)}
+              className={`rounded-full border px-3 py-1 text-xs font-semibold transition-all ${
+                filter.isActive
+                  ? 'border-primary-500 bg-primary-500 text-white'
+                  : 'border-dark-700 bg-dark-800 text-dark-400 hover:bg-dark-700'
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </>
+      )}
+
+      {scope && (
+        scope.locked ? (
+          <span className="flex items-center gap-1.5 rounded-full border border-dark-700 bg-dark-800 px-3 py-1 text-xs font-semibold text-dark-300">
+            <Lock className="h-3 w-3 opacity-60" />
+            {scope.lockedLabel}
+          </span>
+        ) : (
+          <select
+            value={scope.value}
+            onChange={(e) => scope.onChange?.(e.target.value)}
+            className="min-w-0 flex-1 rounded-lg border border-dark-700 bg-dark-800 px-2.5 py-1.5 text-xs font-semibold text-dark-200 sm:flex-none"
+          >
+            {scope.options.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        )
+      )}
+
+    </div>
+  </div>
+);
 
 export default CalendarToolbar;

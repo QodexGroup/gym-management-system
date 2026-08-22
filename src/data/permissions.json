@@ -141,6 +141,18 @@
         "label": "Cancel Group Class Session"
       }
     ]
+  },
+  "calendar": {
+    "label": "Calendar",
+    "permissions": [
+      {
+        "key": "calendar_view_member_bookings",
+        "label": "View Member Bookings"
+      },
+      {
+        "key": "calendar_view_all_coaches",
+        "label": "View All Coaches' Schedules"
+      }
+    ]
   }
 }
-

@@ -10,8 +10,6 @@ export { default as ImageLightbox } from './ImageLightbox';
 export { default as FilePreview } from './FilePreview';
 export { default as PhotoThumbnail } from './PhotoThumbnail';
 export { default as FileIcon } from './FileIcon';
-export { default as CalendarView } from '../Calendar/CalendarView';
-export { default as CalendarListView } from '../Calendar/CalendarListView';
 export { default as SearchableClientInput } from './SearchableClientInput';
 export { default as Pagination } from './Pagination';
 export { default as SearchAndFilter } from './SearchAndFilter';

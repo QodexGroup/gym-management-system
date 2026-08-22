@@ -50,11 +50,14 @@ const Header = ({ title, subtitle }) => {
 
   return (
     <header className="sticky top-0 z-[41] bg-dark-800/80 backdrop-blur-md border-b border-dark-700">
-      <div className="flex items-center gap-3 px-6 py-4">
-        {/* Title — desktop only; mr-auto pushes the right section to the far right */}
-        <div className="hidden lg:block shrink-0 mr-auto">
-          <h1 className="text-2xl font-bold text-dark-50">{title}</h1>
-          {subtitle && <p className="text-sm text-dark-400 mt-0.5">{subtitle}</p>}
+      <div className="flex min-w-0 items-center gap-3 px-4 py-4 sm:px-6">
+        {/* Title — desktop only; mr-auto pushes the right section to the far right.
+            min-w-0 (not shrink-0) so the row can reclaim space at 1024px, where an
+            expanded sidebar leaves only ~720px for the whole header. The subtitle is
+            the long part, so it waits for xl. */}
+        <div className="hidden min-w-0 lg:block mr-auto">
+          <h1 className="truncate text-2xl font-bold text-dark-50">{title}</h1>
+          {subtitle && <p className="mt-0.5 hidden truncate text-sm text-dark-400 xl:block">{subtitle}</p>}
         </div>
 
         {/* Search — mobile/tablet: fills the empty left space; hidden on desktop where the
@@ -73,7 +76,7 @@ const Header = ({ title, subtitle }) => {
           <div className="hidden lg:block">
             <SearchableClientInput
               placeholder="Search client by name"
-              className="w-64"
+              className="w-48 xl:w-64"
               onSelect={handleCustomerSelect}
               label=""
             />
@@ -85,7 +88,7 @@ const Header = ({ title, subtitle }) => {
             className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-dark-700 text-dark-100 hover:bg-dark-600 transition-colors"
           >
             <QrCode className="w-4 h-4" />
-            <span className="hidden lg:inline text-sm font-medium">QR Scanner</span>
+            <span className="hidden xl:inline text-sm font-medium">QR Scanner</span>
           </button>
 
           {/* Notifications — always visible */}

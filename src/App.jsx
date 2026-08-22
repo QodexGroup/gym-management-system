@@ -22,7 +22,8 @@ import { CheckIn } from './features/walkin';
 import { QrScannerKiosk } from './features/kiosk';
 
 // PT & Class Management
-import { PtPackageList, SessionScheduling } from './features/personal-training';
+import { PtPackageList } from './features/personal-training';
+import { CalendarPage } from './features/calendar';
 import { ClassScheduleList } from './features/class-schedule';
 
 // Expenses
@@ -208,7 +209,7 @@ function App() {
 
                 {/* PT & Class Management */}
                 <Route path="/pt-packages" element={<ProtectedRoute><PtPackageList /></ProtectedRoute>} />
-                <Route path="/sessions" element={<ProtectedRoute><SessionScheduling /></ProtectedRoute>} />
+                <Route path="/sessions" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
                 <Route path="/classes" element={<ProtectedRoute><ClassScheduleList /></ProtectedRoute>} />
 
                 {/* Trainer Routes */}
