@@ -193,6 +193,19 @@ const buildActions = (session, start, ctx) => {
 };
 
 /**
+ * Compact 12-hour time for a month cell chip: "6am", "8:38pm".
+ *
+ * A chip is ~127px at its narrowest and has to fit a time, a name and a dot. Spelling
+ * the time out as "6:00 AM" costs roughly 18px more than "6am", and that comes straight
+ * out of the name — which is the value the cell is actually there to show.
+ *
+ * @param {Date} date
+ * @returns {string}
+ */
+const compactTime = (date) =>
+  (date.getMinutes() === 0 ? format(date, 'ha') : format(date, 'h:mma')).toLowerCase();
+
+/**
  * Shared scaffolding for every row: id, times and kind.
  * @param {Object} session
  * @param {string} source
@@ -206,8 +219,10 @@ const baseRow = (session, source) => {
     kind: getCalendarKind(session.type),
     start,
     end,
-    timeLabel: start ? format(start, 'HH:mm') : '',
-    endLabel: end ? format(end, 'HH:mm') : '',
+    /* 12-hour throughout, matching formatTime() in shared/utils/formatters.js. */
+    timeLabel: start ? format(start, 'h:mm a') : '',
+    endLabel: end ? format(end, 'h:mm a') : '',
+    timeCompact: start ? compactTime(start) : '',
     sessionId: session.sessionId || null,
     coachId: session.coachId ?? null,
     coachName: coachName(session.coach),

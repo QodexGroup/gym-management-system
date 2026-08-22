@@ -140,6 +140,40 @@ export const useSessionCalendar = ({ handlers }) => {
   );
   const ptBookings = useMemo(() => mapPtBookingsToSessions(ptBookingsData || []), [ptBookingsData]);
 
+  /**
+   * Coach-perspective source rows, with the PT double-count removed.
+   *
+   * Booking a PT session against a class schedule writes two records: a `pt_booking`
+   * (titled with the client) and a `class_schedule_session` for the same slot (titled
+   * with the package). They are one real appointment, so the calendar showed it twice.
+   * The booking wins because it names the client and carries the booking status; an
+   * unbooked PT slot has no matching booking and is kept as-is.
+   */
+  const coachSourceRows = useMemo(() => {
+    const slotKey = (scheduleId, when) => {
+      const date = new Date(when);
+      return Number.isNaN(date.getTime())
+        ? null
+        : `${scheduleId}@${format(date, 'yyyy-MM-dd HH:mm')}`;
+    };
+
+    const bookedSlots = new Set(
+      ptBookings
+        .map((booking) =>
+          booking.classScheduleId ? slotKey(booking.classScheduleId, booking.startTime) : null
+        )
+        .filter(Boolean)
+    );
+
+    const withoutDuplicates = classSessions.filter((session) => {
+      if (getCalendarKind(session.type) !== CALENDAR_KIND.PT) return true;
+      const key = slotKey(session.scheduleId, session.startTime);
+      return !key || !bookedSlots.has(key);
+    });
+
+    return [...withoutDuplicates, ...ptBookings];
+  }, [classSessions, ptBookings]);
+
   /* ------------------------------ filtering ------------------------------ */
   /**
    * Apply the kind, coach-scope, status and search filters shared by both
@@ -174,8 +208,8 @@ export const useSessionCalendar = ({ handlers }) => {
     if (isMemberPerspective) {
       return buildMemberRows(applyFilters([...memberBookings, ...ptBookings]), viewModelContext);
     }
-    return buildCoachRows(applyFilters([...classSessions, ...ptBookings]), viewModelContext);
-  }, [isMemberPerspective, memberBookings, ptBookings, classSessions, applyFilters, viewModelContext]);
+    return buildCoachRows(applyFilters(coachSourceRows), viewModelContext);
+  }, [isMemberPerspective, memberBookings, ptBookings, coachSourceRows, applyFilters, viewModelContext]);
 
   /* Grouped once — the month grid looks a day up instead of re-filtering per cell. */
   const rowsByDate = useMemo(() => groupRowsByDate(rows), [rows]);

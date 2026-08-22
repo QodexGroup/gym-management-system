@@ -109,6 +109,7 @@ const CalendarPage = () => {
      through a ref that the effect below keeps current — the handler only ever reads it
      in response to a click, never during render. */
   const rowsRef = useRef([]);
+  const isMemberPerspectiveRef = useRef(false);
 
   /**
    * Cancel a session: a standalone PT booking, a PT booking linked to a class schedule
@@ -129,30 +130,27 @@ const CalendarPage = () => {
 
     try {
       const rows = rowsRef.current;
-      const standalonePt = rows.find(
+
+      /* A PT booking row. Before the coach perspective de-duplicated schedule-linked
+         PT slots there were two rows for one appointment, and cancelling the schedule
+         row is what marked the booking COACH_CANCELLED. Now only the booking row
+         survives, so the perspective decides who cancelled: from Coach Schedule it is
+         the coach, from Member Bookings it is the member's own booking. */
+      const ptRow = rows.find(
         (row) => row.kind === CALENDAR_KIND.PT && !row.sessionId && row.raw?.id === sessionId
       );
-      if (standalonePt) {
-        await cancelPtBookingMutation.mutateAsync(sessionId);
+      if (ptRow) {
+        const coachInitiated =
+          !isMemberPerspectiveRef.current && Boolean(ptRow.raw?.classScheduleId);
+        if (coachInitiated) {
+          await coachCancelPtBookingMutation.mutateAsync(sessionId);
+        } else {
+          await cancelPtBookingMutation.mutateAsync(sessionId);
+        }
         return;
       }
 
-      /* A PT appointment booked against a class schedule session: cancel the booking
-         with the coach-initiated status rather than the schedule row. */
-      const classRow = rows.find((row) => row.sessionId === sessionId);
-      const linkedPt = classRow
-        ? rows.find(
-            (row) =>
-              row.kind === CALENDAR_KIND.PT &&
-              row.raw?.classScheduleId &&
-              row.raw.classScheduleId === classRow.raw?.scheduleId
-          )
-        : null;
-      if (linkedPt) {
-        await coachCancelPtBookingMutation.mutateAsync(linkedPt.raw.id);
-        return;
-      }
-
+      /* An unbooked PT slot or a group class session still cancels the schedule row. */
       await cancelClassSessionMutation.mutateAsync(sessionId);
     } catch (error) {
       if (import.meta.env.DEV) console.error('Failed to cancel session:', error);
@@ -179,6 +177,10 @@ const CalendarPage = () => {
   useEffect(() => {
     rowsRef.current = calendar.rows;
   }, [calendar.rows]);
+
+  useEffect(() => {
+    isMemberPerspectiveRef.current = calendar.isMemberPerspective;
+  }, [calendar.isMemberPerspective]);
 
   const handlePtSessionSubmit = useCallback(async (formData) => {
     try {

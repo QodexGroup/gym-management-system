@@ -37,7 +37,9 @@ const CalendarEventChip = ({ event, onClick = null }) => {
         onClick ? 'cursor-pointer' : ''
       }`}
     >
-      <span className="flex-none font-bold tabular-nums opacity-80">{event.timeLabel}</span>
+      <span className="flex-none font-bold tabular-nums opacity-80">
+        {event.timeCompact || event.timeLabel}
+      </span>
       <span className="flex-1 min-w-0 truncate font-medium">{event.title}</span>
       {dotTone && <span className={`flex-none w-1.5 h-1.5 rounded-full ${toneDot(dotTone)}`} />}
     </div>

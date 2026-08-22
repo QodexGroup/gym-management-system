@@ -136,6 +136,10 @@ export const mapPtBookingsToSessions = (ptBookingsData = []) => {
         customer,
         customerId: booking.customerId,
         packageName: packageLabel || null,
+        /* The schedule this booking was made against, when it came from one. The
+           calendar needs it to recognise that a PT booking and the class schedule
+           session generated for the same slot are one event, not two. */
+        classScheduleId: booking.classScheduleId ?? null,
         bookingStatus: booking.status,
         status: booking.status, // Also include as status for consistency
         duration: booking.duration || 60,
