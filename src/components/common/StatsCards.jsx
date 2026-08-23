@@ -47,6 +47,8 @@ const StatsCards = ({ stats = [], dark = true, size = 'md', iconPosition = 'righ
             size={stat.size || size}
             iconPosition={stat.iconPosition || iconPosition}
             iconColor={stat.iconColor || iconColor}
+            onClick={stat.onClick}
+            active={stat.active}
           />
         );
       })}
