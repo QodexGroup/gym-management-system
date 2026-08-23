@@ -30,7 +30,18 @@ import { APP_NAME } from '../../shared/constants/appConfig';
 import { DEFAULT_REPORT_DATE_FROM, DEFAULT_REPORT_DATE_TO, MAX_REPORT_ROWS, CHART_TOOLTIP_STYLE, CHART_CURSOR, CHART_PIE_ACTIVE } from '../../shared/constants/reportConstants';
 import { Alert, Toast } from '../../shared/utils/alert';
 
-const PAYMENT_METHOD_OPTIONS = ['all', 'cash', 'card', 'transfer'];
+const PAYMENT_METHOD_OPTIONS = ['all', 'cash', 'card', 'gcash', 'transfer'];
+
+// Normalizes a raw paymentMethod value into one of the filter keys above.
+// GCash must be matched before Cash, otherwise 'gcash'.includes('cash') mislabels it.
+const normalizePaymentMethod = (rawMethod) => {
+  const key = String(rawMethod || '').toLowerCase();
+  if (key.includes('gcash') || key.includes('g-cash')) return 'gcash';
+  if (key.includes('cash')) return 'cash';
+  if (key.includes('card')) return 'card';
+  if (key.includes('transfer')) return 'transfer';
+  return 'other';
+};
 
 const CollectionReportPage = () => {
   const printRef = useRef(null);
@@ -63,7 +74,7 @@ const CollectionReportPage = () => {
   const filteredTransactions = useMemo(() => {
     let list = recentTransactions;
     if (paymentMethod !== 'all') {
-      list = list.filter((t) => (t.paymentMethod || '').toLowerCase().includes(paymentMethod));
+      list = list.filter((t) => normalizePaymentMethod(t.paymentMethod) === paymentMethod);
     }
     return list;
   }, [recentTransactions, paymentMethod]);
@@ -73,11 +84,11 @@ const CollectionReportPage = () => {
   const paymentMethodData = useMemo(() => {
     const byMethod = {};
     filteredTransactions.forEach((t) => {
-      const key = (t.paymentMethod || 'other').toLowerCase();
-      const k = key.includes('cash') ? 'Cash' : key.includes('card') ? 'Card' : key.includes('transfer') ? 'Transfer' : 'Other';
+      const labels = { cash: 'Cash', card: 'Card', gcash: 'GCash', transfer: 'Transfer', other: 'Other' };
+      const k = labels[normalizePaymentMethod(t.paymentMethod)];
       byMethod[k] = (byMethod[k] || 0) + (parseFloat(t.amount) || 0);
     });
-    const colors = { Cash: '#22c55e', Card: '#0ea5e9', Transfer: '#8b5cf6', Other: '#64748b' };
+    const colors = { Cash: '#22c55e', Card: '#0ea5e9', GCash: '#0066ff', Transfer: '#8b5cf6', Other: '#64748b' };
     return Object.entries(byMethod)
       .filter(([, v]) => v > 0)
       .map(([name, value]) => ({ name, value, color: colors[name] || colors.Other }));
@@ -213,6 +224,7 @@ const CollectionReportPage = () => {
         <option value="all">All Payment Methods</option>
         <option value="card">Credit Card</option>
         <option value="cash">Cash</option>
+        <option value="gcash">GCash</option>
         <option value="transfer">Bank Transfer</option>
       </select>
     </div>
