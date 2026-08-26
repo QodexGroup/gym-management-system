@@ -195,10 +195,7 @@ const QrScannerKiosk = () => {
             />
             <div className="absolute inset-0 border-2 border-primary-400/70 rounded-2xl pointer-events-none" />
           </div>
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-dark-400">
-              Camera access requires HTTPS or localhost.
-            </div>
+          <div className="mt-4 flex items-center justify-end">
             <div className="text-sm text-dark-300">
               {processing ? (
                 <span className="flex items-center gap-2">
