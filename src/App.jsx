@@ -6,7 +6,7 @@ import { ThemeProvider } from './shared/context/ThemeContext';
 import AlertProvider from './components/AlertProvider';
 import ErrorBoundary from './components/ErrorBoundary';
 import { queryClient } from './shared/lib/queryClient';
-import { isKioskLocked } from './shared/constants/kiosk';
+import { getKioskLockedPath, isKioskLocked } from './shared/constants/kiosk';
 
 // Auth Pages
 import { Login, SignUp, AuthAction, ForgotPassword, ResetPassword } from './features/auth';
@@ -19,7 +19,7 @@ import { CustomerList, CustomerProfile } from './features/customers';
 
 // Check-In & Kiosk
 import { CheckIn } from './features/walkin';
-import { QrScannerKiosk } from './features/kiosk';
+import { KioskRegistration, QrScannerKiosk } from './features/kiosk';
 
 // PT & Class Management
 import { PtPackageList } from './features/personal-training';
@@ -120,8 +120,12 @@ const KioskLockGuard = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isKioskLocked() && location.pathname !== '/kiosk/qr-scanner') {
-      navigate('/kiosk/qr-scanner', { replace: true });
+    // The lock pins the device to the ONE kiosk it was engaged on. Allowing any
+    // kiosk route here would let someone hop from the registration form to the
+    // scanner (or back) on an unattended tablet.
+    const lockedPath = getKioskLockedPath();
+    if (isKioskLocked() && location.pathname !== lockedPath) {
+      navigate(lockedPath, { replace: true });
     }
   }, [location.pathname, navigate]);
 
@@ -200,6 +204,7 @@ function App() {
                 {/* Check-In System */}
                 <Route path="/check-in" element={<CheckIn />} />
                 <Route path="/kiosk/qr-scanner" element={<QrScannerKiosk />} />
+                <Route path="/kiosk/registration" element={<ProtectedRoute><KioskRegistration /></ProtectedRoute>} />
 
                 {/* Customer Management */}
                 <Route path="/members" element={<ProtectedRoute><CustomerList /></ProtectedRoute>} />

@@ -1,47 +1,30 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useRef, useState } from 'react';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import { Lock, QrCode, ShieldCheck, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
-import { useAuth } from '../../shared/context/AuthContext';
-import { initializeFirebaseServices } from '../../shared/services/firebaseService';
 import { walkinService } from '../../shared/services/walkinService';
 import { Toast } from '../../shared/utils/alert';
-import { isAdminRole, isCoachRole, isStaffRole } from '../../shared/constants/userRoles';
-import { isKioskLocked, setKioskLocked } from '../../shared/constants/kiosk';
-import { WALKIN_CUSTOMER_STATUS } from '../../shared/constants/walkinConstant';
+import { KIOSK_QR_SCANNER_PATH } from '../../shared/constants/kiosk';
+import { useKioskLock } from '../../shared/hooks/useKioskLock';
 import UnlockKioskForm from './UnlockKioskForm';
 
 const QrScannerKiosk = () => {
-  const navigate = useNavigate();
-  const { user, isAdmin, isStaff, isTrainer } = useAuth();
-  const canLock = isAdmin || isStaff || isTrainer;
-  const [isLocked, setIsLocked] = useState(() => isKioskLocked());
-  const [showUnlockModal, setShowUnlockModal] = useState(false);
-  const [unlocking, setUnlocking] = useState(false);
-  const [firebaseAuth, setFirebaseAuth] = useState(null);
+  const {
+    isLocked,
+    canLock,
+    showUnlockModal,
+    unlocking,
+    firebaseAuth,
+    lock,
+    requestUnlock,
+    cancelUnlock,
+    completeUnlock,
+  } = useKioskLock(KIOSK_QR_SCANNER_PATH);
+
   const [lastScan, setLastScan] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [lastResult, setLastResult] = useState(null);
   const lastScanRef = useRef({ value: '', at: 0 });
-
-  useEffect(() => {
-    const initAuth = async () => {
-      const { auth } = await initializeFirebaseServices();
-      setFirebaseAuth(auth || null);
-    };
-    initAuth();
-  }, []);
-
-  useEffect(() => {
-    const handleStorage = (event) => {
-      if (event.key === 'kiosk_locked') {
-        setIsLocked(isKioskLocked());
-      }
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, []);
 
   const handleScan = useCallback(async (detectedCodes) => {
     if (!detectedCodes || detectedCodes.length === 0) return;
@@ -127,35 +110,6 @@ const QrScannerKiosk = () => {
   const handleError = useCallback((error) => {
     if (import.meta.env.DEV) console.error('QR scanner error:', error);
   }, []);
-
-  const handleLock = () => {
-    if (!canLock || !user) return;
-    setKioskLocked(true, user);
-    setIsLocked(true);
-    Toast.info('Kiosk locked. Unlock required to exit.');
-  };
-
-  const handleUnlock = () => {
-    if (!canLock) return;
-    setShowUnlockModal(true);
-  };
-
-  const handleUnlockSuccess = async () => {
-    setUnlocking(true);
-
-    try {
-      setKioskLocked(false);
-      setIsLocked(false);
-      setShowUnlockModal(false);
-      Toast.success('Kiosk unlocked.');
-      navigate('/dashboard');
-    } catch (error) {
-      if (import.meta.env.DEV) console.error('Unlock error:', error);
-      Toast.error(error.message || 'Unlock failed. Please try again.');
-    } finally {
-      setUnlocking(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-dark-900 text-dark-50 flex flex-col">
@@ -283,7 +237,7 @@ const QrScannerKiosk = () => {
 
       <div className="px-6 pb-8">
         <button
-          onClick={isLocked ? handleUnlock : handleLock}
+          onClick={isLocked ? requestUnlock : lock}
           disabled={!isLocked && !canLock}
           className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-colors ${
             isLocked || canLock
@@ -312,7 +266,7 @@ const QrScannerKiosk = () => {
                 <p className="text-sm text-dark-400">Enter the password of the user who locked the kiosk.</p>
               </div>
               <button
-                onClick={() => setShowUnlockModal(false)}
+                onClick={cancelUnlock}
                 className="text-sm text-dark-400 hover:text-dark-200"
                 type="button"
                 disabled={unlocking}
@@ -323,8 +277,8 @@ const QrScannerKiosk = () => {
 
             <UnlockKioskForm
               firebaseAuth={firebaseAuth}
-              onSuccess={handleUnlockSuccess}
-              onCancel={() => setShowUnlockModal(false)}
+              onSuccess={completeUnlock}
+              onCancel={cancelUnlock}
               isUnlocking={unlocking}
             />
           </div>

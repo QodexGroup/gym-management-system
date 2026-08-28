@@ -101,6 +101,37 @@ export const useCreateCustomer = () => {
 };
 
 /**
+ * Create a member from the on-site kiosk.
+ *
+ * Mirrors useCreateCustomer but hits the kiosk endpoint, which rejects a phone
+ * number already on file. That rejection arrives as a 422 and surfaces through
+ * the existing error toast.
+ */
+export const useCreateKioskRegistration = () => {
+  const queryClient = useQueryClient();
+  const idempotencyKeyRef = useRef(null);
+
+  return useMutation({
+    mutationFn: async (customerData) => {
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+
+      return await customerService.createKioskRegistration(customerData, idempotencyKeyRef.current);
+    },
+    onSuccess: () => {
+      idempotencyKeyRef.current = null;
+      queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: customerKeys.allCustomers() });
+    },
+    onError: (error) => {
+      idempotencyKeyRef.current = null;
+      Toast.error(error.message || 'Failed to create customer');
+    },
+  });
+};
+
+/**
  * Hook to update a customer
  */
 export const useUpdateCustomer = () => {

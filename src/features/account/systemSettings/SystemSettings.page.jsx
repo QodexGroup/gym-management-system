@@ -3,11 +3,13 @@ import Layout from '../../../layout/Layout';
 import MembershipSettingsTab from './MembershipSettingsTab.page';
 import NotificationSettingsTab from './NotificationSettingsTab.page';
 import EmailNotificationSettingsTab from './EmailNotificationSettingsTab.page';
+import KioskRegistrationSettingsTab from './KioskRegistrationSettingsTab.page';
 
 const TABS = [
   { key: 'membership', label: 'Membership Settings' },
   { key: 'notifications', label: 'Notification Settings' },
   { key: 'email', label: 'Email Notifications' },
+  { key: 'kiosk', label: 'Kiosk Registration' },
 ];
 
 const SystemSettingsPage = () => {
@@ -37,6 +39,7 @@ const SystemSettingsPage = () => {
       {activeTab === 'membership' && <MembershipSettingsTab />}
       {activeTab === 'notifications' && <NotificationSettingsTab />}
       {activeTab === 'email' && <EmailNotificationSettingsTab />}
+      {activeTab === 'kiosk' && <KioskRegistrationSettingsTab />}
     </Layout>
   );
 };
