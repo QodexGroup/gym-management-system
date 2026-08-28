@@ -252,6 +252,8 @@ const CalendarPage = () => {
     if (calendar.lockedToOwnSchedule) {
       return { locked: true, lockedLabel: 'Your schedule only' };
     }
+    /* Coach Schedule only — member bookings are filtered by status, not by coach. */
+    if (calendar.isMemberPerspective) return null;
     return {
       locked: false,
       value: calendar.selectedCoachId,
@@ -264,7 +266,10 @@ const CalendarPage = () => {
         })),
       ],
     };
-  }, [calendar.lockedToOwnSchedule, calendar.selectedCoachId, calendar.setSelectedCoachId, calendar.coaches]);
+  }, [
+    calendar.lockedToOwnSchedule, calendar.isMemberPerspective,
+    calendar.selectedCoachId, calendar.setSelectedCoachId, calendar.coaches,
+  ]);
 
   const actionButtons = useMemo(() => {
     const buttons = [];

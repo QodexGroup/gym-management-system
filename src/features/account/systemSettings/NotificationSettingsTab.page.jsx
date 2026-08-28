@@ -1,32 +1,26 @@
 import { useState } from 'react';
-import { SectionCard } from '../../../components/common';
+import { Bell, Mail } from 'lucide-react';
+import { SectionCard, ToggleSwitch } from '../../../components/common';
 import { useAccountSystemSettings, useUpdateAccountSystemSettings } from '../../../shared/hooks/useAccountSystemSettings';
 import {
   ACCOUNT_SYSTEM_SETTING_DEFAULTS,
   NOTIFICATION_SETTING_KEYS,
+  EMAIL_NOTIFICATION_SETTING_KEYS,
 } from '../../../shared/constants/accountSystemSettings';
+
+const SETTING_KEYS = [...NOTIFICATION_SETTING_KEYS, ...EMAIL_NOTIFICATION_SETTING_KEYS];
 
 const pick = (obj, keys) => keys.reduce((out, key) => ({ ...out, [key]: obj[key] }), {});
 
-const Toggle = ({ label, hint, checked, onChange }) => (
-  <label className="flex items-start justify-between gap-4 py-3 cursor-pointer">
-    <span className="flex flex-col">
-      <span className="text-sm font-medium text-dark-100">{label}</span>
-      {hint && <span className="text-xs text-dark-400 mt-0.5">{hint}</span>}
-    </span>
-    <input
-      type="checkbox"
-      checked={!!checked}
-      onChange={(e) => onChange(e.target.checked)}
-      className="mt-1 w-5 h-5 shrink-0 rounded border-dark-600 bg-dark-700 text-primary-500 focus:ring-primary-500 cursor-pointer"
-    />
-  </label>
-);
-
 /**
- * In-app notification settings (moved here from the Notifications page).
- * Gates only the in-app alerts shown in the notification bell/page —
- * member emails are controlled separately in the Email Notifications tab.
+ * Notification settings — in-app alerts and member emails on one page.
+ *
+ * They were two tabs saving the same endpoint with the same form, which read as two
+ * different features. They are one subject with two audiences, so they are one tab with
+ * a card each: "In-app notifications" is what staff see inside the app, "Member emails"
+ * is what gets sent out. Both groups save together.
+ *
+ * @returns {JSX.Element}
  */
 const NotificationSettingsTab = () => {
   const { data, isLoading, isError, error } = useAccountSystemSettings();
@@ -34,11 +28,13 @@ const NotificationSettingsTab = () => {
   // Local edits overlay the server values; until the user touches a toggle,
   // the tab renders straight from the query data (no effect needed).
   const [edits, setEdits] = useState(null);
-  const form = edits ?? pick({ ...ACCOUNT_SYSTEM_SETTING_DEFAULTS, ...(data || {}) }, NOTIFICATION_SETTING_KEYS);
+  const form = edits ?? pick({ ...ACCOUNT_SYSTEM_SETTING_DEFAULTS, ...(data || {}) }, SETTING_KEYS);
 
   const set = (key) => (value) => setEdits((prev) => ({ ...(prev ?? form), [key]: value }));
 
   const handleSave = () => updateMutation.mutate({ ...form }, { onSuccess: () => setEdits(null) });
+
+  const emailsOff = !form.emailNotificationsEnabled;
 
   if (isLoading) {
     return (
@@ -55,25 +51,65 @@ const NotificationSettingsTab = () => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
-        <SectionCard title="In-app notifications">
+        <SectionCard
+          title="In-app notifications"
+          subtitle="Alerts your staff see in the notification bell."
+          icon={Bell}
+        >
           <div className="divide-y divide-dark-700">
-            <Toggle
+            <ToggleSwitch
               label="Membership expiry"
               hint="Alert when memberships are expiring soon."
               checked={form.notifyMembershipExpiry}
               onChange={set('notifyMembershipExpiry')}
             />
-            <Toggle
+            <ToggleSwitch
               label="Payment alerts"
               hint="Notify when a new payment is received."
               checked={form.notifyPaymentReceived}
               onChange={set('notifyPaymentReceived')}
             />
-            <Toggle
+            <ToggleSwitch
               label="New registrations"
               hint="Alert when a new member signs up."
               checked={form.notifyNewRegistration}
               onChange={set('notifyNewRegistration')}
+            />
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="Member emails"
+          subtitle="Emails sent out to your members and clients."
+          icon={Mail}
+        >
+          <div className="divide-y divide-dark-700">
+            <ToggleSwitch
+              label="Enable email notifications"
+              hint="Master switch for all emails sent to members/clients. When OFF, no member emails are sent regardless of the toggles below."
+              checked={form.emailNotificationsEnabled}
+              onChange={set('emailNotificationsEnabled')}
+            />
+            <ToggleSwitch
+              label="Membership expiring reminder"
+              hint="Email the member when their membership is about to expire."
+              checked={form.emailMembershipExpiring}
+              onChange={set('emailMembershipExpiring')}
+              disabled={emailsOff}
+            />
+            <ToggleSwitch
+              label="Payment confirmation"
+              hint="Email the member a confirmation/receipt when their payment is recorded."
+              checked={form.emailPaymentConfirmation}
+              onChange={set('emailPaymentConfirmation')}
+              disabled={emailsOff}
+            />
+            <ToggleSwitch
+              label="Welcome email on registration"
+              hint="Email a welcome message to newly registered members."
+              checked={form.emailCustomerRegistration}
+              onChange={set('emailCustomerRegistration')}
+              disabled={emailsOff}
             />
           </div>
         </SectionCard>

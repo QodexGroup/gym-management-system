@@ -90,8 +90,12 @@ export const useSessionCalendar = ({ handlers }) => {
 
   /* ------------------------------- scope -------------------------------- */
   const { data: coaches = [] } = useCoaches({ enabled: canViewAllCoaches });
-  /* Locked users are pinned to themselves whatever the picker would have said. */
-  const scopedCoachId = lockedToOwnSchedule ? user?.id ?? null : selectedCoachId || null;
+  /* Locked users are pinned to themselves whatever the picker would have said. The
+     picker itself is a Coach Schedule tool; in the member perspective it is hidden, so
+     a selection left over from the other tab must not silently narrow the bookings. */
+  const scopedCoachId = lockedToOwnSchedule
+    ? user?.id ?? null
+    : (isMemberPerspective ? null : selectedCoachId || null);
 
   /* ------------------------------- range -------------------------------- */
   const startDate = useMemo(
@@ -185,7 +189,8 @@ export const useSessionCalendar = ({ handlers }) => {
     (items) =>
       items
         .filter((item) => kindFilters[getCalendarKind(item.type)] !== false)
-        .filter((item) => !scopedCoachId || item.coachId === scopedCoachId)
+        /* String-compare: the picker yields a string, coachId comes back a number. */
+        .filter((item) => !scopedCoachId || String(item.coachId) === String(scopedCoachId))
         .filter((item) => {
           if (!isMemberPerspective) return true;
           const status = item.bookingStatus || item.status;
