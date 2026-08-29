@@ -1,8 +1,12 @@
 import { createActionColumn } from '../../../components/DataTable';
-import { Banknote, CreditCard, Smartphone, Trash2 } from 'lucide-react';
+import { Banknote, CreditCard, Smartphone, Landmark, Trash2 } from 'lucide-react';
 import { FilePreview } from '../../../components/common';
 import { formatCurrency, formatDate } from '../../../shared/utils/formatters';
-import { PAYMENT_METHOD } from '../../../shared/constants/paymentConstants';
+import {
+  PAYMENT_METHOD,
+  formatPaymentMethod,
+  normalizePaymentMethod,
+} from '../../../shared/constants/paymentConstants';
 
 /**
  * Build the action-menu items for a payment history row.
@@ -47,15 +51,23 @@ export const paymentHistoryTableColumns = (handleDeletePayment, { readOnly = fal
   {
     key: 'paymentMethod',
     label: 'Method & Ref #',
-    render: (row) => (
-      <div className="flex items-center gap-2">
-        {row.paymentMethod === PAYMENT_METHOD.CASH && <Banknote className="w-4 h-4" />}
-        {row.paymentMethod === PAYMENT_METHOD.CARD && <CreditCard className="w-4 h-4" />}
-        {row.paymentMethod === PAYMENT_METHOD.GCASH && <Smartphone className="w-4 h-4" />}
-        <span className="capitalize">{row.paymentMethod}</span>
-        {row.referenceNumber && <span className="text-xs text-dark-400">({row.referenceNumber})</span>}
-      </div>
-    ),
+    render: (row) => {
+      // Normalize first so legacy stored values ('bank_transfer', 'credit_card')
+      // still get the right icon and label, not a bare capitalized raw string.
+      const method = normalizePaymentMethod(row.paymentMethod);
+      return (
+        <div className="flex items-center gap-2">
+          {method === PAYMENT_METHOD.CASH && <Banknote className="w-4 h-4" />}
+          {method === PAYMENT_METHOD.CARD && <CreditCard className="w-4 h-4" />}
+          {method === PAYMENT_METHOD.GCASH && <Smartphone className="w-4 h-4" />}
+          {method === PAYMENT_METHOD.BANK_TRANSFER && <Landmark className="w-4 h-4" />}
+          <span className="capitalize">{formatPaymentMethod(row.paymentMethod)}</span>
+          {row.referenceNumber && (
+            <span className="text-xs text-dark-400">({row.referenceNumber})</span>
+          )}
+        </div>
+      );
+    },
   },
   {
     key: 'receipt',

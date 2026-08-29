@@ -3,7 +3,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Avatar } from '../../../components/common';
 import { formatCurrency, formatDate, normalizeDate } from '../../../shared/utils/formatters';
-import { Banknote, CreditCard, Smartphone } from 'lucide-react';
+import { Banknote, CreditCard, Smartphone, Landmark } from 'lucide-react';
 import { PAYMENT_METHOD, PAYMENT_METHOD_LABELS } from '../../../shared/constants/paymentConstants';
 import { useAccountSystemSettings } from '../../../shared/hooks/useAccountSystemSettings';
 import { ACCOUNT_SYSTEM_SETTING_DEFAULTS } from '../../../shared/constants/accountSystemSettings';
@@ -202,11 +202,12 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false })
       {/* Payment Method */}
       <div>
         <label className="label">Payment Method</label>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {[
             { value: PAYMENT_METHOD.CASH, icon: Banknote },
             { value: PAYMENT_METHOD.CARD, icon: CreditCard },
             { value: PAYMENT_METHOD.GCASH, icon: Smartphone },
+            { value: PAYMENT_METHOD.BANK_TRANSFER, icon: Landmark },
           ].map(({ value, icon: Icon }) => (
             <button
               key={value}
