@@ -193,7 +193,7 @@ const Appearance = () => {
 
           {/* COLOR MODE */}
           <SectionCard icon={Palette} title="Color mode" subtitle="Light, dark, or follow your device">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {MODE_OPTIONS.map((m) => {
                 const Icon = MODE_ICONS[m.value];
                 const active = draft.mode === m.value;
@@ -216,7 +216,7 @@ const Appearance = () => {
 
           {/* THEME */}
           <SectionCard icon={Paintbrush} title="Theme" subtitle="Sidebar color (secondary stays distinct)">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {THEME_OPTIONS.map((t) => {
                 const active = draft.theme === t.value;
                 return (

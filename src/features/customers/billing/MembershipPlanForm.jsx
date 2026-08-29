@@ -154,7 +154,7 @@ const MembershipPlanForm = ({ customerId, currentMembership, onSubmit, onCancel,
         </div>
       )}
 
-      <div className="flex gap-3 pt-4">
+      <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
         <button
           type="button"
           onClick={onCancel}

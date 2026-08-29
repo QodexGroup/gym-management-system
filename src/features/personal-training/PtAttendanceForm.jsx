@@ -188,7 +188,7 @@ const PtAttendanceForm = ({
             </div>
           </div>
         ) : (
-          <div className="space-y-2 max-h-96 overflow-y-auto">
+          <div className="max-h-64 space-y-2 overflow-y-auto overscroll-contain sm:max-h-96">
             {bookings.map((booking) => {
               const bookingStatusInfo = getStatusBadge(booking.status || booking.bookingStatus || BOOKING_STATUS.BOOKED);
               const BookingStatusIcon = bookingStatusInfo.icon;
@@ -283,7 +283,7 @@ const PtAttendanceForm = ({
         )}
       </div>
 
-      <div className="flex gap-3 pt-4">
+      <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
         <button
           type="button"
           onClick={onCancel}

@@ -299,7 +299,7 @@ const FilesTab = ({ member }) => {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-xs text-dark-500 mb-1">File Type</p>
                 <span className={`px-2 py-1 text-xs font-medium rounded-full uppercase ${getFileTypeBadge(selectedFile.fileType)}`}>
@@ -320,7 +320,7 @@ const FilesTab = ({ member }) => {
               </div>
             </div>
 
-            <div className="flex gap-3 pt-4">
+            <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
               <button onClick={() => setShowViewModal(false)} className="flex-1 btn-secondary">
                 Close
               </button>

@@ -48,7 +48,7 @@ const SessionRow = ({ event, isExpanded, onToggle, RosterSlot }) => {
         }`}
       >
         <span className={`w-0.5 self-stretch rounded-full flex-none ${tokens.rail}`} />
-        <div className="w-14 flex-none text-xs font-bold tabular-nums text-dark-200">
+        <div className="w-12 flex-none text-xs font-bold tabular-nums text-dark-200 sm:w-14">
           {event.timeLabel}
           {event.endLabel && <span className="block font-medium text-dark-400">{event.endLabel}</span>}
         </div>
@@ -174,7 +174,7 @@ const CalendarDayDrawer = ({
         </span>
       </div>
 
-      <div className="max-h-[60vh] overflow-y-auto px-2 pb-3 pt-1 sm:max-h-[19rem]">
+      <div className="max-h-[60dvh] overflow-y-auto overscroll-contain px-2 pb-3 pt-1 sm:max-h-[19rem]">
         <div className="grid items-start gap-x-5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,20rem),1fr))]">
           {groupRows
             ? groups.map(({ groupKey, rows }) => (

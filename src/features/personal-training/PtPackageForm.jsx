@@ -85,7 +85,7 @@ const PtPackageForm = ({ package: pkg, onSubmit, onCancel }) => {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="label">Category *</label>
           <select
@@ -116,7 +116,7 @@ const PtPackageForm = ({ package: pkg, onSubmit, onCancel }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="label">Duration per Session *</label>
           <select
@@ -159,7 +159,7 @@ const PtPackageForm = ({ package: pkg, onSubmit, onCancel }) => {
         />
       </div>
 
-      <div className="flex gap-3 pt-4">
+      <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
         <button
           type="button"
           onClick={onCancel}

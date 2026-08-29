@@ -306,7 +306,7 @@ const GroupClassBookingForm = ({
         {showSessionDropdown && filteredSessions.length > 0 && (
           <div
             ref={sessionDropdownRef}
-            className="absolute z-50 w-full mt-1 bg-dark-800 border border-dark-600 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+            className="absolute z-50 w-full mt-1 bg-dark-800 border border-dark-600 rounded-lg shadow-lg max-h-48 sm:max-h-60 overflow-y-auto overscroll-contain"
           >
             {filteredSessions.map((session) => {
               const availableSpots = getAvailableSpots(session);
@@ -404,7 +404,7 @@ const GroupClassBookingForm = ({
         />
       </div>
 
-      <div className="flex gap-3 pt-4">
+      <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
         <button
           type="button"
           onClick={onCancel}

@@ -85,7 +85,7 @@ const MyAccountProfileForm = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="label">First Name *</label>
           <input
@@ -136,7 +136,7 @@ const MyAccountProfileForm = ({
         {phoneError && <p className="text-danger-600 text-xs mt-1">{phoneError}</p>}
       </div>
 
-      <div className="flex gap-3 pt-4">
+      <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
         <button
           type="button"
           onClick={onCancel}

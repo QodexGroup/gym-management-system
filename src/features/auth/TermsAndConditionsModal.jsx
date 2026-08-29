@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronDown, FileText } from 'lucide-react';
 import { TERMS_INTRO, TERMS_SECTIONS } from './termsAndConditions.content';
 import LegalDocumentSections from './LegalDocumentSections';
+import { OVERLAY_LAYER_ATTR } from '../../shared/utils/overlayLayers';
+import { useBodyScrollLock } from '../../shared/hooks/useBodyScrollLock';
 
 const SCROLL_THRESHOLD = 24;
 
@@ -10,6 +12,8 @@ const TermsAndConditionsModal = ({ isOpen, onAccept, onDecline }) => {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [hasReadAll, setHasReadAll] = useState(false);
   const [activeSection, setActiveSection] = useState(0);
+
+  useBodyScrollLock(isOpen);
 
   const updateScrollState = useCallback(() => {
     const container = scrollRef.current;
@@ -52,23 +56,6 @@ const TermsAndConditionsModal = ({ isOpen, onAccept, onDecline }) => {
     return () => cancelAnimationFrame(frame);
   }, [isOpen, updateScrollState]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const originalOverflowY = document.body.style.overflowY;
-    const originalPaddingRight = document.body.style.paddingRight;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-    document.body.style.overflowY = 'hidden';
-    if (scrollbarWidth > 0) {
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-    }
-
-    return () => {
-      document.body.style.overflowY = originalOverflowY || 'unset';
-      document.body.style.paddingRight = originalPaddingRight || 'unset';
-    };
-  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -76,14 +63,15 @@ const TermsAndConditionsModal = ({ isOpen, onAccept, onDecline }) => {
     <div className="fixed inset-0 z-[60] overflow-hidden">
       <div className="fixed inset-0 bg-dark-900/70 backdrop-blur-sm" />
 
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex h-[100dvh] items-stretch justify-center p-0 sm:items-center sm:p-4">
         <div
-          className="relative bg-dark-800 rounded-2xl shadow-2xl border border-dark-700 max-w-2xl w-full max-h-[90vh] flex flex-col"
+          className="relative flex h-full min-h-0 w-full flex-col border-0 bg-dark-800 shadow-2xl sm:h-auto sm:max-h-[90dvh] sm:max-w-2xl sm:rounded-2xl sm:border sm:border-dark-700"
+          {...{ [OVERLAY_LAYER_ATTR]: 'terms' }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="terms-modal-title"
         >
-          <div className="px-6 pt-5 pb-4 border-b border-dark-700 flex-shrink-0">
+          <div className="flex-shrink-0 border-b border-dark-700 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-4 sm:px-6 sm:pt-5">
             <div className="flex items-start gap-3">
               <div className="p-2 rounded-lg bg-primary-500/15 text-primary-400">
                 <FileText className="w-5 h-5" />
@@ -130,7 +118,7 @@ const TermsAndConditionsModal = ({ isOpen, onAccept, onDecline }) => {
             <div
               ref={scrollRef}
               onScroll={updateScrollState}
-              className="h-full max-h-[52vh] overflow-y-auto px-6 py-4 scroll-smooth"
+              className="h-full overflow-y-auto overscroll-contain px-4 py-4 scroll-smooth sm:px-6"
             >
               <p className="text-sm text-dark-200 leading-relaxed mb-6">{TERMS_INTRO}</p>
 
@@ -152,17 +140,17 @@ const TermsAndConditionsModal = ({ isOpen, onAccept, onDecline }) => {
             )}
           </div>
 
-          <div className="px-6 py-4 border-t border-dark-700 flex-shrink-0 space-y-3">
+          <div className="flex-shrink-0 space-y-3 border-t border-dark-700 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-4">
             {!hasReadAll && (
               <p className="text-xs text-center text-dark-400">
                 The accept button unlocks after you reach the end of the document.
               </p>
             )}
-            <div className="flex gap-3">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row">
               <button
                 type="button"
                 onClick={onDecline}
-                className="w-1/3 bg-dark-700 text-dark-50 py-2.5 rounded-lg font-semibold hover:bg-dark-600 transition"
+                className="w-full rounded-lg bg-dark-700 py-2.5 font-semibold text-dark-50 transition hover:bg-dark-600 sm:w-auto sm:flex-1"
               >
                 Decline
               </button>
@@ -170,7 +158,7 @@ const TermsAndConditionsModal = ({ isOpen, onAccept, onDecline }) => {
                 type="button"
                 onClick={onAccept}
                 disabled={!hasReadAll}
-                className={`w-2/3 py-2.5 rounded-lg font-semibold transition ${
+                className={`w-full rounded-lg py-2.5 font-semibold transition sm:w-auto sm:flex-[2] ${
                   hasReadAll
                     ? 'bg-primary-500 text-white hover:bg-primary-600'
                     : 'bg-dark-700 text-dark-500 cursor-not-allowed'

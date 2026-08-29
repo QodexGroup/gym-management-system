@@ -135,7 +135,7 @@ const PtMembers = () => {
         <div className="space-y-6">
           <div className="bg-dark-800 rounded-lg p-6">
             <h4 className="text-md font-semibold text-dark-50 mb-4">Before/After Comparison</h4>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="text-center">
                 <div className="w-full h-48 bg-dark-700 rounded-lg flex items-center justify-center mb-2">
                   <ImageIcon className="w-12 h-12 text-dark-400" />

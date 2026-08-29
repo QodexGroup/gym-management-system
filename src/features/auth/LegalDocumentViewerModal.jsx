@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FileText, Shield, X } from 'lucide-react';
 import LegalDocumentSections from './LegalDocumentSections';
+import { OVERLAY_LAYER_ATTR } from '../../shared/utils/overlayLayers';
+import { useBodyScrollLock } from '../../shared/hooks/useBodyScrollLock';
 
 const SCROLL_THRESHOLD = 24;
 
@@ -64,23 +66,8 @@ const LegalDocumentViewerModal = ({
     return () => cancelAnimationFrame(frame);
   }, [isOpen, updateScrollState]);
 
-  useEffect(() => {
-    if (!isOpen) return;
 
-    const originalOverflowY = document.body.style.overflowY;
-    const originalPaddingRight = document.body.style.paddingRight;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-    document.body.style.overflowY = 'hidden';
-    if (scrollbarWidth > 0) {
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-    }
-
-    return () => {
-      document.body.style.overflowY = originalOverflowY || 'unset';
-      document.body.style.paddingRight = originalPaddingRight || 'unset';
-    };
-  }, [isOpen]);
+  useBodyScrollLock(isOpen);
 
   if (!isOpen) return null;
 
@@ -92,20 +79,21 @@ const LegalDocumentViewerModal = ({
         aria-hidden="true"
       />
 
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex h-[100dvh] items-stretch justify-center p-0 sm:items-center sm:p-4">
         <div
-          className="relative bg-dark-800 rounded-2xl shadow-2xl border border-dark-700 max-w-2xl w-full max-h-[90vh] flex flex-col"
+          className="relative flex h-full min-h-0 w-full flex-col border-0 bg-dark-800 shadow-2xl sm:h-auto sm:max-h-[90dvh] sm:max-w-2xl sm:rounded-2xl sm:border sm:border-dark-700"
+          {...{ [OVERLAY_LAYER_ATTR]: 'legal-viewer' }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="legal-viewer-title"
         >
-          <div className="px-6 pt-5 pb-4 border-b border-dark-700 flex-shrink-0">
+          <div className="flex-shrink-0 border-b border-dark-700 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-4 sm:px-6 sm:pt-5">
             <div className="flex items-start gap-3">
               <div className={`p-2 rounded-lg ${iconClass}`}>
                 <Icon className="w-5 h-5" />
               </div>
               <div className="flex-1 min-w-0 pr-2">
-                <h2 id="legal-viewer-title" className="text-lg font-semibold text-dark-50">
+                <h2 id="legal-viewer-title" className="truncate text-base font-semibold text-dark-50 sm:text-lg">
                   {title}
                 </h2>
                 <p className="text-xs text-dark-400 mt-1">{subtitle}</p>
@@ -117,7 +105,7 @@ const LegalDocumentViewerModal = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-2 text-dark-400 hover:text-dark-200 hover:bg-dark-700 rounded-lg transition-colors"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-dark-400 transition-colors hover:bg-dark-700 hover:text-dark-200 sm:h-10 sm:w-10"
                   aria-label="Close"
                 >
                   <X className="w-5 h-5" />
@@ -155,7 +143,7 @@ const LegalDocumentViewerModal = ({
           <div
             ref={scrollRef}
             onScroll={updateScrollState}
-            className="flex-1 min-h-0 max-h-[58vh] overflow-y-auto px-6 py-4 scroll-smooth"
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 scroll-smooth sm:px-6"
           >
             <p className="text-sm text-dark-200 leading-relaxed mb-6">{intro}</p>
             <LegalDocumentSections
@@ -166,7 +154,7 @@ const LegalDocumentViewerModal = ({
             />
           </div>
 
-          <div className="px-6 py-4 border-t border-dark-700 flex-shrink-0">
+          <div className="flex-shrink-0 border-t border-dark-700 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-4">
             <button
               type="button"
               onClick={onClose}

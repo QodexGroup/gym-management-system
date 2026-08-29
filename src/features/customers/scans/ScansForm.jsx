@@ -294,7 +294,7 @@ const ScansForm = ({ member, isOpen, selectedScan, onClose, onSuccess }) => {
         </div>
 
         {/* Buttons */}
-        <div className="flex gap-3 pt-4">
+        <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
           <button
             type="button"
             className="flex-1 btn-secondary"

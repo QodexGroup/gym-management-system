@@ -122,7 +122,7 @@ const MemberQRCard = ({ isOpen, onClose, member, customer }) => {
 
       {/* Loading state */}
       {isGenerating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 px-4">
           <div className="text-white text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
             <p className="text-lg">Generating card...</p>

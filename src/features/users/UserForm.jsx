@@ -113,7 +113,7 @@ const UserForm = ({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-dark-200 mb-2">
             First Name <span className="text-danger-500">*</span>
@@ -205,7 +205,7 @@ const UserForm = ({
             {Object.values(permissionsData).map((category) => (
               <div key={category.label} className="space-y-2">
                 <h4 className="text-sm font-semibold text-dark-100 mb-2">{category.label}</h4>
-                <div className="grid grid-cols-3 gap-2 pl-4">
+                <div className="grid grid-cols-1 gap-2 pl-4 sm:grid-cols-2 lg:grid-cols-3">
                   {category.permissions.map((perm) => (
                     <label
                       key={perm.key}
@@ -250,7 +250,7 @@ const UserForm = ({
           </p>
         </div>
       )}
-      <div className="flex gap-3 pt-4">
+      <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
         <button
           type="button"
           onClick={onClose}

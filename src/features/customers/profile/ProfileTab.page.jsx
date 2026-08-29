@@ -8,7 +8,7 @@ const ProfileTab = ({ member }) => {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Personal Information */}
       <SectionCard icon={User} title="Personal Information">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <InfoField label="Full Name" value={member.name} valueClassName="text-dark-50 font-medium" />
           <InfoField label="Gender" value={member.gender} />
           <InfoField label="Age" value={member.age ? `${member.age} years old` : null} />
@@ -21,7 +21,7 @@ const ProfileTab = ({ member }) => {
 
       {/* Health & Emergency */}
       <SectionCard icon={HeartPulse} title="Health & Emergency">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <InfoField label="Blood Type" value={member.bloodType} />
           <InfoField
             label="Allergies"
@@ -44,7 +44,7 @@ const ProfileTab = ({ member }) => {
 
       {/* Emergency Contact */}
       <SectionCard icon={Phone} title="Emergency Contact">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <InfoField label="Contact Name" value={member.emergencyContactName} valueClassName="text-dark-50 font-medium" />
           <InfoField label="Relationship" value={member.emergencyContactRelationship} />
           <InfoField label="Phone" value={member.emergencyContactPhone} />

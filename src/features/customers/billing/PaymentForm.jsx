@@ -202,7 +202,7 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false })
       {/* Payment Method */}
       <div>
         <label className="label">Payment Method</label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {[
             { value: PAYMENT_METHOD.CASH, icon: Banknote },
             { value: PAYMENT_METHOD.CARD, icon: CreditCard },
@@ -226,7 +226,7 @@ const PaymentForm = ({ bill, member, onSubmit, onCancel, isSubmitting = false })
         </div>
       </div>
 
-      <div className="flex gap-3 pt-4">
+      <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
         <button type="button" onClick={onCancel} className="flex-1 btn-secondary" disabled={isSubmitting || uploadingReceipt}>
           Cancel
         </button>
