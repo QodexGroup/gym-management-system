@@ -29,18 +29,19 @@ import { exportReportToPdf, exportReportToExcel } from '../../shared/utils/repor
 import { APP_NAME } from '../../shared/constants/appConfig';
 import { DEFAULT_REPORT_DATE_FROM, DEFAULT_REPORT_DATE_TO, MAX_REPORT_ROWS, CHART_TOOLTIP_STYLE, CHART_CURSOR, CHART_PIE_ACTIVE } from '../../shared/constants/reportConstants';
 import { Alert, Toast } from '../../shared/utils/alert';
+import {
+  PAYMENT_METHOD_FILTER_OPTIONS,
+  PAYMENT_METHOD_LABELS,
+  formatPaymentMethod,
+  normalizePaymentMethod,
+} from '../../shared/constants/paymentConstants';
 
-const PAYMENT_METHOD_OPTIONS = ['all', 'cash', 'card', 'gcash', 'transfer'];
-
-// Normalizes a raw paymentMethod value into one of the filter keys above.
-// GCash must be matched before Cash, otherwise 'gcash'.includes('cash') mislabels it.
-const normalizePaymentMethod = (rawMethod) => {
-  const key = String(rawMethod || '').toLowerCase();
-  if (key.includes('gcash') || key.includes('g-cash')) return 'gcash';
-  if (key.includes('cash')) return 'cash';
-  if (key.includes('card')) return 'card';
-  if (key.includes('transfer')) return 'transfer';
-  return 'other';
+const PAYMENT_METHOD_CHART_COLORS = {
+  Cash: '#22c55e',
+  Card: '#0ea5e9',
+  GCash: '#0066ff',
+  'Bank Transfer': '#8b5cf6',
+  Other: '#64748b',
 };
 
 const CollectionReportPage = () => {
@@ -84,14 +85,17 @@ const CollectionReportPage = () => {
   const paymentMethodData = useMemo(() => {
     const byMethod = {};
     filteredTransactions.forEach((t) => {
-      const labels = { cash: 'Cash', card: 'Card', gcash: 'GCash', transfer: 'Transfer', other: 'Other' };
-      const k = labels[normalizePaymentMethod(t.paymentMethod)];
+      const method = normalizePaymentMethod(t.paymentMethod);
+      const k = PAYMENT_METHOD_LABELS[method] || 'Other';
       byMethod[k] = (byMethod[k] || 0) + (parseFloat(t.amount) || 0);
     });
-    const colors = { Cash: '#22c55e', Card: '#0ea5e9', GCash: '#0066ff', Transfer: '#8b5cf6', Other: '#64748b' };
     return Object.entries(byMethod)
       .filter(([, v]) => v > 0)
-      .map(([name, value]) => ({ name, value, color: colors[name] || colors.Other }));
+      .map(([name, value]) => ({
+        name,
+        value,
+        color: PAYMENT_METHOD_CHART_COLORS[name] || PAYMENT_METHOD_CHART_COLORS.Other,
+      }));
   }, [filteredTransactions]);
   const membershipTypeData = membershipDistribution.map((item) => ({
     name: item.name,
@@ -131,7 +135,7 @@ const CollectionReportPage = () => {
       t.customerName || 'N/A',
       t.billType || 'N/A',
       formatCurrency(t.amount),
-      (t.paymentMethod && String(t.paymentMethod)) || 'N/A',
+      formatPaymentMethod(t.paymentMethod),
     ]);
     exportReportToPdf({
       title: 'Collection Report',
@@ -151,7 +155,7 @@ const CollectionReportPage = () => {
       t.customerName || 'N/A',
       t.billType || 'N/A',
       parseFloat(t.amount) || 0,
-      (t.paymentMethod && String(t.paymentMethod)) || 'N/A',
+      formatPaymentMethod(t.paymentMethod),
     ]);
     exportReportToExcel({
       sheetName: 'Collection',
@@ -221,11 +225,11 @@ const CollectionReportPage = () => {
         onChange={(e) => setPaymentMethod(e.target.value)}
         className="px-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 rounded-lg focus:border-primary-500 outline-none"
       >
-        <option value="all">All Payment Methods</option>
-        <option value="card">Credit Card</option>
-        <option value="cash">Cash</option>
-        <option value="gcash">GCash</option>
-        <option value="transfer">Bank Transfer</option>
+        {PAYMENT_METHOD_FILTER_OPTIONS.map(({ value, label }) => (
+          <option key={value} value={value}>
+            {label}
+          </option>
+        ))}
       </select>
     </div>
   );
@@ -242,7 +246,7 @@ const CollectionReportPage = () => {
     { key: 'customerName', label: 'Member', render: (row) => <span className="font-medium">{row.customerName || 'N/A'}</span> },
     { key: 'billType', label: 'Type', render: (row) => row.billType || 'N/A' },
     { key: 'amount', label: 'Amount', render: (row) => <span className="font-semibold text-dark-50">{formatCurrency(row.amount)}</span> },
-    { key: 'paymentMethod', label: 'Payment Method', render: (row) => row.paymentMethod ? String(row.paymentMethod) : 'N/A' },
+    { key: 'paymentMethod', label: 'Payment Method', render: (row) => formatPaymentMethod(row.paymentMethod) },
   ];
 
   return (
