@@ -134,7 +134,7 @@ const UploadStep = ({ onUploaded }) => {
  * @returns {JSX.Element}
  */
 const MappingRow = ({ field, headers, value, invalid, onChange }) => (
-  <div className="grid grid-cols-2 gap-4 items-center py-2">
+  <div className="grid grid-cols-1 items-start gap-2 py-2 sm:grid-cols-2 sm:items-center sm:gap-4">
     <div>
       <p className="text-sm font-medium text-dark-50">
         {field.label} {field.required && <span className="text-danger-500">*</span>}

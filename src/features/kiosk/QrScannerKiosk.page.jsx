@@ -258,16 +258,16 @@ const QrScannerKiosk = () => {
       </div>
 
       {showUnlockModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-dark-700 bg-dark-900 p-6 shadow-xl">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold text-dark-50">Unlock Kiosk</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain bg-black/70 px-3 py-6 sm:px-4">
+          <div className="my-auto w-full max-w-md rounded-2xl border border-dark-700 bg-dark-900 p-4 shadow-xl sm:p-6">
+            <div className="flex items-start justify-between gap-3 sm:gap-4">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-semibold text-dark-50 sm:text-xl">Unlock Kiosk</h2>
                 <p className="text-sm text-dark-400">Enter the password of the user who locked the kiosk.</p>
               </div>
               <button
                 onClick={cancelUnlock}
-                className="text-sm text-dark-400 hover:text-dark-200"
+                className="-mr-2 inline-flex min-h-11 flex-none items-center rounded-lg px-2 text-sm text-dark-400 hover:text-dark-200"
                 type="button"
                 disabled={unlocking}
               >

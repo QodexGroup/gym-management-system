@@ -175,7 +175,7 @@ const ClassAttendanceForm = ({
             <p className="text-sm text-dark-400">No bookings found for this session</p>
           </div>
         ) : (
-          <div className="space-y-2 max-h-96 overflow-y-auto">
+          <div className="max-h-64 space-y-2 overflow-y-auto overscroll-contain sm:max-h-96">
             {bookings.map((booking) => {
               const statusInfo = getStatusBadge(booking.status);
               const StatusIcon = statusInfo.icon;
@@ -263,7 +263,7 @@ const ClassAttendanceForm = ({
         )}
       </div>
 
-      <div className="flex gap-3 pt-4">
+      <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
         <button
           type="button"
           onClick={onCancel}

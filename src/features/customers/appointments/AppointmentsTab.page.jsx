@@ -145,7 +145,7 @@ const AppointmentsTab = ({ member, appointments }) => {
               ))}
             </select>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="label">Date</label>
               <input type="date" className="input" />
@@ -168,7 +168,7 @@ const AppointmentsTab = ({ member, appointments }) => {
             <label className="label">Notes (Optional)</label>
             <textarea className="input" rows={2} placeholder="Add notes..." />
           </div>
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
             <button type="button" onClick={() => setShowAppointmentModal(false)} className="flex-1 btn-secondary">
               Cancel
             </button>

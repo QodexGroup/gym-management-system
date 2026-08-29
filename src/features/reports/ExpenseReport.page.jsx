@@ -372,7 +372,7 @@ const ExpenseReportPage = () => {
                 <div className="flex items-center justify-center h-full text-dark-400">No data</div>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-2 mt-4">
+            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
               {expenseByCategory.map((item, index) => (
                 <div key={item.name} className="flex items-center gap-2 text-sm">
                   <span

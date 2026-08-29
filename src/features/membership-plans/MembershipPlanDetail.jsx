@@ -22,7 +22,7 @@ const MembershipPlanDetail = ({ isOpen, plan, onClose, onEdit }) => {
           {plan.popular && <Badge variant="primary" className="mt-2">Popular</Badge>}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <InfoCard icon={Users} label="Active Members" value={plan.activeMembers} />
           <InfoCard
             icon={PhilippinePeso}

@@ -70,21 +70,21 @@ const ProgressViewModal = ({
         {/* Basic Measurements */}
         <div>
           <h4 className="font-semibold text-dark-50 mb-3">Basic Measurements</h4>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-xl text-center">
-              <p className="text-2xl font-bold text-primary-300">{viewLog.weight || '--'}</p>
+              <p className="text-xl font-bold sm:text-2xl text-primary-300">{viewLog.weight || '--'}</p>
               <p className="text-xs text-dark-300">Weight (kg)</p>
             </div>
             <div className="p-3 bg-accent-500/10 border border-accent-500/20 rounded-xl text-center">
-              <p className="text-2xl font-bold text-accent-300">{viewLog.bodyFatPercentage || '--'}%</p>
+              <p className="text-xl font-bold sm:text-2xl text-accent-300">{viewLog.bodyFatPercentage || '--'}%</p>
               <p className="text-xs text-dark-300">Body Fat</p>
             </div>
             <div className="p-3 bg-success-500/10 border border-success-500/20 rounded-xl text-center">
-              <p className="text-2xl font-bold text-success-300">{viewLog.skeletalMuscleMass || '--'}</p>
+              <p className="text-xl font-bold sm:text-2xl text-success-300">{viewLog.skeletalMuscleMass || '--'}</p>
               <p className="text-xs text-dark-300">Muscle (kg)</p>
             </div>
             <div className="p-3 bg-warning-500/10 border border-warning-500/20 rounded-xl text-center">
-              <p className="text-2xl font-bold text-warning-300">{viewLog.bmi || '--'}</p>
+              <p className="text-xl font-bold sm:text-2xl text-warning-300">{viewLog.bmi || '--'}</p>
               <p className="text-xs text-dark-300">BMI</p>
             </div>
           </div>
@@ -93,7 +93,7 @@ const ProgressViewModal = ({
         {/* Body Composition */}
         <div>
           <h4 className="font-semibold text-dark-50 mb-3">Body Composition</h4>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
             <div className="p-3 bg-danger-500/10 border border-danger-500/20 rounded-xl">
               <p className="text-lg font-bold text-danger-300">{viewLog.visceralFatLevel || '--'}</p>
               <p className="text-xs text-dark-300">Visceral Fat Level</p>
@@ -112,7 +112,7 @@ const ProgressViewModal = ({
         {/* Body Measurements */}
         <div>
           <h4 className="font-semibold text-dark-50 mb-3">Body Measurements (cm)</h4>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
             <div className="p-2 bg-dark-700 rounded-lg text-center">
               <p className="font-bold text-dark-50">{viewLog.chest || '--'}</p>
               <p className="text-xs text-dark-200">Chest</p>
@@ -150,7 +150,7 @@ const ProgressViewModal = ({
         {hasPhotos && (
           <div>
             <h4 className="font-semibold text-dark-50 mb-2">Photos</h4>
-            <div className="grid grid-cols-4 gap-1">
+            <div className="grid grid-cols-3 gap-1 sm:grid-cols-4">
               {allFiles.map((file, index) => (
                 <PhotoThumbnail
                   key={file.id}
@@ -165,7 +165,7 @@ const ProgressViewModal = ({
           </div>
         )}
 
-        <div className="flex gap-3 pt-4">
+        <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
           <button
             onClick={onClose}
             className="flex-1 btn-secondary"

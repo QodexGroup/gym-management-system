@@ -262,7 +262,7 @@ const SignUp = () => {
                   disabled={loading}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-dark-200 mb-1">First Name</label>
                   <input
@@ -348,7 +348,7 @@ const SignUp = () => {
 
           {step === 2 && (
             <>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-dark-200 mb-1">Billing Name</label>
                   <input
@@ -374,7 +374,7 @@ const SignUp = () => {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-dark-200 mb-1">Billing Phone</label>
                   <input
@@ -419,7 +419,7 @@ const SignUp = () => {
                   disabled={loading}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-dark-200 mb-1">City</label>
                   <input
@@ -479,19 +479,19 @@ const SignUp = () => {
                 </label>
               </div>
 
-              <div className="flex items-center justify-between mt-4 gap-3">
+              <div className="mt-4 flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <button
                   type="button"
                   onClick={() => setStep(1)}
                   disabled={loading}
-                  className="w-1/3 bg-dark-700 text-dark-50 py-3 rounded-lg font-semibold hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  className="w-full sm:w-auto sm:flex-1 bg-dark-700 text-dark-50 py-3 rounded-lg font-semibold hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
                 >
                   Back
                 </button>
                 <button
                   type="submit"
                   disabled={loading || !firebaseAuth || !termsAccepted}
-                  className="w-2/3 bg-primary-500 text-white py-3 rounded-lg font-semibold hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  className="w-full sm:w-auto sm:flex-[2] bg-primary-500 text-white py-3 rounded-lg font-semibold hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
                 >
                   {loading ? 'Creating account...' : 'Create Account'}
                 </button>

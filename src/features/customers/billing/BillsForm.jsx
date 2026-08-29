@@ -141,7 +141,7 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
       )}
 
       {/* Bill Date & Type */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="label">Bill Date</label>
           <DatePicker
@@ -172,7 +172,7 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
       </div>
 
       {isEditMode && formData.billType === BILL_TYPE.MEMBERSHIP_SUBSCRIPTION && activeMembershipPlan && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="label">Membership Plan</label>
             <input type="text" className="input bg-dark-700 cursor-not-allowed" value={activeMembershipPlan.planName} disabled />
@@ -188,7 +188,7 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
       )}
 
       {formData.billType === BILL_TYPE.CUSTOM_AMOUNT && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="label">Custom Service</label>
             <input type="text" name="customService" value={formData.customService} onChange={handleChange} className="input" required />
@@ -204,7 +204,7 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
       )}
 
       {formData.billType === BILL_TYPE.REACTIVATION_FEE && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div></div>
           <div>
             <label className="label">Reactivation Fee Amount</label>
@@ -218,7 +218,7 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
       )}
 
       {/* Discount & Net Amount */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div></div>
         <div>
           <label className="label">Discount %</label>
@@ -258,7 +258,7 @@ const BillsForm = ({ customerId, currentMembership, onSubmit, onCancel, onCustom
       )}
 
       {/* Actions */}
-      <div className="flex gap-3 pt-4">
+      <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
         <button type="button" onClick={onCancel} className="flex-1 btn-secondary" disabled={isSubmitting}>Cancel</button>
         <button
           type="submit"

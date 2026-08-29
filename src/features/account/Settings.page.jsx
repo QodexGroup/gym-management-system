@@ -437,7 +437,7 @@ const Settings = () => {
               <span className="font-medium text-dark-50">Expenses</span>
             </label>
           </div>
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
             <button
               onClick={() => setShowExportModal(false)}
               className="flex-1 btn-secondary"

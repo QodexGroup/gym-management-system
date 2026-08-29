@@ -198,7 +198,7 @@ const SearchableClientInput = ({
           {!isSearching && displayCustomers.length > 0 && (
             <div
               ref={dropdownRef}
-              className="absolute z-50 w-full mt-1 bg-dark-800 border border-dark-600 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+              className="absolute z-50 w-full mt-1 bg-dark-800 border border-dark-600 rounded-lg shadow-lg max-h-48 sm:max-h-60 overflow-y-auto overscroll-contain"
             >
               {displayCustomers.map((customer) => {
                 const customerName = customer.name || 

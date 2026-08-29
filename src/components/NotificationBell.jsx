@@ -91,7 +91,7 @@ const NotificationBell = () => {
       {showDropdown && (
         <div
           ref={dropdownRef}
-          className="absolute top-full mt-1 right-4 w-[calc(100vw-5.5rem)] md:right-0 md:mt-2 md:w-96 max-h-[80vh] z-50 bg-dark-800 rounded-xl shadow-lg border border-dark-700 overflow-hidden flex flex-col"
+          className="absolute top-full mt-1 right-4 w-[calc(100vw-5.5rem)] md:right-0 md:mt-2 md:w-96 max-h-[80dvh] z-50 bg-dark-800 rounded-xl shadow-lg border border-dark-700 overflow-hidden flex flex-col"
         >
           {/* Header — pinned, never scrolls */}
           <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-dark-700">

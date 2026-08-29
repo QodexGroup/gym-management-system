@@ -115,8 +115,8 @@ const CustomerForm = ({
         {/* Personal Information */}
         <div className="border-b border-dark-200 pb-6">
           <h3 className="text-lg font-semibold text-dark-50 mb-4">Personal Information</h3>
-          <div className="grid grid-cols-6 gap-6">
-            <div className="col-span-5 grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-6">
+            <div className="grid grid-cols-1 gap-4 sm:col-span-5 sm:grid-cols-2">
               <div>
                 <label className="label">First Name <span className="text-danger-600">*</span></label>
                 <input
@@ -195,7 +195,7 @@ const CustomerForm = ({
         {/* Contact Information */}
         <div className="border-b border-dark-200 pb-6">
           <h3 className="text-lg font-semibold text-dark-50 mb-4">Contact Information</h3>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div>
               <label className="label">Phone Number <span className="text-danger-600">*</span></label>
               <input
@@ -252,7 +252,7 @@ const CustomerForm = ({
         {!selectedCustomer && (
           <div className="border-b border-dark-200 pb-6">
             <h3 className="text-lg font-semibold text-dark-50 mb-4">Membership Plan</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="label">Membership Plan</label>
                 <select
@@ -278,7 +278,7 @@ const CustomerForm = ({
 
           {/* Medical Information */}
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="label">Medical Notes</label>
                 <textarea
@@ -301,7 +301,7 @@ const CustomerForm = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <label className="label">Blood Type</label>
                 <select
@@ -352,7 +352,7 @@ const CustomerForm = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="label">Current Medications</label>
                 <textarea
@@ -363,7 +363,7 @@ const CustomerForm = ({
                   onChange={(e) => setFormData({ ...formData, currentMedications: e.target.value })}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="label">Insurance Provider</label>
                   <input
@@ -391,7 +391,7 @@ const CustomerForm = ({
           {/* Emergency Contact */}
           <div className="border-t border-dark-200 pt-4 mt-4">
             <h4 className="text-md font-semibold text-dark-50 mb-3">Emergency Contact</h4>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <label className="label">Emergency Contact Name</label>
                 <input
@@ -443,7 +443,7 @@ const CustomerForm = ({
         </div>
 
         {/* Form Buttons */}
-        <div className="flex gap-3 pt-4">
+        <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
           <button
             type="button"
             onClick={onClose}

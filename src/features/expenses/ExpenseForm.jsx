@@ -145,7 +145,7 @@ const ExpenseForm = ({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="label">Amount (₱)</label>
             <input
@@ -215,7 +215,7 @@ const ExpenseForm = ({
           {receiptFile && <p className="text-xs text-dark-400 mt-1">{receiptFile.name}</p>}
         </div>
 
-        <div className="flex gap-3 pt-4">
+        <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
           <button
             type="button"
             onClick={onClose}

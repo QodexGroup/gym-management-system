@@ -70,7 +70,7 @@ const BillView = ({ bill, currentMembership, onClose }) => {
       </div>
 
       {/* Amount summary */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-xl">
           <p className="text-xs text-dark-300 mb-1">Net Amount</p>
           <p className="text-lg font-bold text-primary-300">{formatCurrency(net)}</p>

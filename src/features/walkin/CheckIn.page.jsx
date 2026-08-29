@@ -260,7 +260,7 @@ const CheckIn = () => {
                 <p className="text-sm text-dark-400">Or scan their membership QR code</p>
               </div>
             ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
+              <div className="max-h-64 space-y-2 overflow-y-auto overscroll-contain sm:max-h-96">
                 {isSearching ? (
                   <p className="text-center text-dark-400 py-8">Searching...</p>
                 ) : displayCustomers.length === 0 ? (

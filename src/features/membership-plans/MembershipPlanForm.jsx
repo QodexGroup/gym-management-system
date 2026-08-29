@@ -82,7 +82,7 @@ const MembershipPlanForm = ({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="label">Price</label>
             <input
@@ -134,7 +134,7 @@ const MembershipPlanForm = ({
           />
         </div>
 
-        <div className="flex gap-3 pt-4">
+        <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
           <button type="button" onClick={onClose} disabled={isSubmitting} className="btn-secondary flex-1">
             Cancel
           </button>
