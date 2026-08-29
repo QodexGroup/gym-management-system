@@ -32,6 +32,9 @@ export const useCreateOrUpdateCustomerMembership = () => {
       await new Promise(resolve => setTimeout(resolve, 100));
       await queryClient.refetchQueries({ queryKey, type: 'all' });
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      // A membership change moves the client between status buckets, so the
+      // client-list stat cards have to be recounted too.
+      queryClient.invalidateQueries({ queryKey: [...customerKeys.all, 'stats'] });
       
       // Invalidate and refetch customer bills (membership changes create/void bills)
       queryClient.invalidateQueries({ queryKey: customerBillKeys.byCustomer(customerId) });

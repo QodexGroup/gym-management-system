@@ -2,6 +2,10 @@ import { Avatar, Badge } from '../../components/common';
 import { createActionColumn } from '../../components/DataTable';
 import { Phone, Mail, Calendar, Edit, Trash, ChevronRight } from 'lucide-react';
 import { formatDate, formatCurrency } from '../../shared/utils/formatters';
+import {
+  CUSTOMER_MEMBERSHIP_STATUS,
+  getCustomerMembershipDisplayStatus,
+} from '../../shared/constants/customerMembership';
 import { getFileUrl } from '../../shared/services/storageService';
 
 export const getCustomerActionMenuItems = ({
@@ -108,9 +112,16 @@ export const customerTableColumns = ({ canEdit, canDelete, onEdit, onDelete, onV
             <Calendar className="w-3 h-3" />
             Expires: {formatDate(c.currentMembership.membershipEndDate)}
           </p>
-          <Badge variant={c.currentMembership.status === 'active' ? 'success' : 'default'}>
-            {c.currentMembership.status}
-          </Badge>
+          {(() => {
+            const status = getCustomerMembershipDisplayStatus(c);
+            const badge = {
+              [CUSTOMER_MEMBERSHIP_STATUS.ACTIVE]: { variant: 'success', label: 'active' },
+              [CUSTOMER_MEMBERSHIP_STATUS.EXPIRING]: { variant: 'warning', label: 'expiring soon' },
+              [CUSTOMER_MEMBERSHIP_STATUS.EXPIRED]: { variant: 'danger', label: 'expired' },
+            }[status] || { variant: 'default', label: status || c.currentMembership.status };
+
+            return <Badge variant={badge.variant}>{badge.label}</Badge>;
+          })()}
         </div>
       ) : (
         '-'

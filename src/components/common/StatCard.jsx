@@ -16,8 +16,11 @@ const StatCard = (
     gradient = 'from-primary-500 to-primary-600',
     textBg = 'text-primary-100',
     iconBg = 'text-primary-200',
+    onClick, // when provided the card renders as a button (e.g. click-to-filter)
+    active = false, // highlights the card while its filter is applied
   }) => {
   const displayTitle = title ?? label;
+  const isInteractive = typeof onClick === 'function';
   const sizeClasses = {
     sm: 'p-4',
     md: 'p-6',
@@ -127,8 +130,31 @@ const StatCard = (
     );
   }
 
+  const ringClasses = {
+    primary: 'ring-primary-500 focus-visible:ring-primary-500',
+    success: 'ring-success-500 focus-visible:ring-success-500',
+    warning: 'ring-warning-500 focus-visible:ring-warning-500',
+    danger: 'ring-danger-500 focus-visible:ring-danger-500',
+    accent: 'ring-accent-500 focus-visible:ring-accent-500',
+  };
+
+  // Interactive cards keep the same visuals and only add affordances, so
+  // existing (non-clickable) usages render exactly as before.
+  const Wrapper = isInteractive ? 'button' : 'div';
+  const wrapperProps = isInteractive
+    ? { type: 'button', onClick, 'aria-pressed': active }
+    : {};
+  const interactiveClasses = isInteractive
+    ? `w-full text-left cursor-pointer transition-all hover:brightness-125 focus:outline-none focus-visible:ring-2 ${
+        ringClasses[color]
+      } ${active ? 'ring-2' : ''}`
+    : '';
+
   return (
-    <div className={`stat-card ${colorClasses[color]} ${sizeClasses[size]}`}>
+    <Wrapper
+      {...wrapperProps}
+      className={`stat-card ${colorClasses[color]} ${sizeClasses[size]} ${interactiveClasses}`}
+    >
       <div className={`flex items-start ${iconPosition === 'left' ? 'gap-3' : 'justify-between'}`}>
         {iconPosition === 'left' && iconElement}
         <div className="flex-1">
@@ -161,7 +187,7 @@ const StatCard = (
         </div>
         {iconPosition === 'right' && iconElement}
       </div>
-    </div>
+    </Wrapper>
   );
 };
 

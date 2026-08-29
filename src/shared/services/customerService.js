@@ -4,6 +4,53 @@ import { normalizePaginatedResponse } from '../models/apiResponseModel';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 /**
+ * Build the query string shared by the customer list and the stats endpoint,
+ * so both always describe the same population.
+ * @param {Object} options - Query options (pagelimit, sorts, filters, relations)
+ * @param {number|null} page - Page number, omitted for non-paginated endpoints
+ * @returns {URLSearchParams}
+ */
+const buildCustomerQueryParams = (options = {}, page = null) => {
+  const params = new URLSearchParams();
+
+  if (page) params.append('page', page);
+  if (options.pagelimit) params.append('pagelimit', options.pagelimit);
+  if (options.relations) params.append('relations', options.relations);
+
+  // Handle sorts - support both old string format and new array format
+  if (options.sorts && Array.isArray(options.sorts)) {
+    options.sorts.forEach((sort, index) => {
+      if (typeof sort === 'object' && sort.field && sort.direction) {
+        params.append(`sorts[${index}][field]`, sort.field);
+        params.append(`sorts[${index}][direction]`, sort.direction);
+      } else if (typeof sort === 'string') {
+        params.append(`sorts[${index}]`, sort);
+      }
+    });
+  } else if (options.sort) {
+    // Legacy string format support
+    params.append('sort', options.sort);
+  }
+
+  // Handle filters
+  if (options.filters) {
+    Object.entries(options.filters).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') return;
+
+      if (Array.isArray(value)) {
+        value.forEach((v, i) => {
+          params.append(`filters[${key}][${i}]`, v);
+        });
+      } else {
+        params.append(`filters[${key}]`, value);
+      }
+    });
+  }
+
+  return params;
+};
+
+/**
  * Customer Service
  * Handles all API calls for customers
  */
@@ -75,38 +122,7 @@ export const customerService = {
    */
   async getAll(page = 1, options = {}) {
     try {
-      const params = new URLSearchParams();
-      if (page) params.append('page', page);
-      if (options.pagelimit) params.append('pagelimit', options.pagelimit);
-      if (options.relations) params.append('relations', options.relations);
-      
-      // Handle sorts - support both old string format and new array format
-      if (options.sorts && Array.isArray(options.sorts)) {
-        options.sorts.forEach((sort, index) => {
-          if (typeof sort === 'object' && sort.field && sort.direction) {
-            params.append(`sorts[${index}][field]`, sort.field);
-            params.append(`sorts[${index}][direction]`, sort.direction);
-          } else if (typeof sort === 'string') {
-            params.append(`sorts[${index}]`, sort);
-          }
-        });
-      } else if (options.sort) {
-        // Legacy string format support
-        params.append('sort', options.sort);
-      }
-
-      // Handle filters
-      if (options.filters) {
-        Object.entries(options.filters).forEach(([key, value]) => {
-          if (Array.isArray(value)) {
-            value.forEach((v, i) => {
-              params.append(`filters[${key}][${i}]`, v);
-            });
-          } else {
-            params.append(`filters[${key}]`, value);
-          }
-        });
-      }
+      const params = buildCustomerQueryParams(options, page);
 
       const response = await authenticatedFetch(`${API_BASE_URL}/customers?${params.toString()}`, {
         method: 'GET',
@@ -125,6 +141,39 @@ export const customerService = {
       }
       throw error;
     }
+  },
+
+  /**
+   * Get account-wide client counts by membership status.
+   * Accepts the same filters as getAll (search, assignedPtCoachId) so the stat
+   * cards describe the same population as the list, regardless of which page
+   * of results is currently loaded.
+   * @param {Object} options - Query options (filters)
+   * @returns {Promise<{total: number, active: number, expiringSoon: number, expired: number}>}
+   */
+  async getStats(options = {}) {
+    const params = buildCustomerQueryParams(options);
+    const query = params.toString();
+
+    const response = await authenticatedFetch(
+      `${API_BASE_URL}/customers/stats${query ? `?${query}` : ''}`,
+      { method: 'GET' }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const stats = data.success ? data.data : null;
+
+    return {
+      total: stats?.total ?? 0,
+      active: stats?.active ?? 0,
+      expiringSoon: stats?.expiringSoon ?? 0,
+      expired: stats?.expired ?? 0,
+    };
   },
 
   /**

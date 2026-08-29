@@ -12,6 +12,7 @@ export const customerKeys = {
   lists: () => [...customerKeys.all, 'list'],
   list: (page) => [...customerKeys.lists(), page],
   allCustomers: () => [...customerKeys.all, 'all-customers'],
+  stats: (options) => [...customerKeys.all, 'stats', options],
   details: () => [...customerKeys.all, 'detail'],
   detail: (id) => [...customerKeys.details(), id],
 };
@@ -36,6 +37,27 @@ export const useCustomers = (page = 1, options = {}) => {
     // (e.g. a customer photo update on the profile page) invalidates the list,
     // this ensures returning to the list shows fresh data — including the new
     // avatar path — instead of a stale row pointing at an already-deleted photo.
+    refetchOnMount: true,
+  });
+};
+
+/**
+ * Hook to fetch account-wide client counts by membership status.
+ * The list is server-paginated, so these counts cannot be derived from the
+ * loaded rows - they come from the API and describe every client in the account
+ * that matches the current search / PT coach filters.
+ *
+ * @param {Object} options - Query options (filters)
+ * @param {boolean} enabled - Set false to skip the request (e.g. missing permission)
+ */
+export const useCustomerStats = (options = {}, enabled = true) => {
+  return useQuery({
+    queryKey: customerKeys.stats(options),
+    queryFn: async () => customerService.getStats(options),
+    enabled,
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
     refetchOnMount: true,
   });
 };
@@ -91,6 +113,7 @@ export const useCreateCustomer = () => {
       // Invalidate and refetch customers list
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
       queryClient.invalidateQueries({ queryKey: customerKeys.allCustomers() });
+      queryClient.invalidateQueries({ queryKey: [...customerKeys.all, 'stats'] });
       Toast.success('Customer created successfully');
     },
     onError: (error) => {
@@ -169,6 +192,7 @@ export const useUpdateCustomer = () => {
       // Also invalidate the list to keep it in sync
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
       queryClient.invalidateQueries({ queryKey: customerKeys.allCustomers() });
+      queryClient.invalidateQueries({ queryKey: [...customerKeys.all, 'stats'] });
       Toast.success('Customer updated successfully');
     },
     onError: (error) => {
@@ -192,6 +216,7 @@ export const useDeleteCustomer = () => {
       // Invalidate customers list
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
       queryClient.invalidateQueries({ queryKey: customerKeys.allCustomers() });
+      queryClient.invalidateQueries({ queryKey: [...customerKeys.all, 'stats'] });
     },
     onError: (error) => {
       Toast.error(error.message || 'Failed to delete customer');

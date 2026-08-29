@@ -4,23 +4,29 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../layout/Layout';
 import DataTable from '../../components/DataTable';
 import StatsCards from '../../components/common/StatsCards';
-import { Pagination } from '../../components/common';
-import { Search, UserPlus, Users, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { Pagination, SearchAndFilter } from '../../components/common';
+import { UserPlus } from 'lucide-react';
 
 import { Alert } from '../../shared/utils/alert';
 import { getInitialCustomerFormData, mapCustomerToFormData } from '../../shared/models/customerModel';
 import CustomerForm from './CustomerForm';
 
-import { useCustomers, useDeleteCustomer } from '../../shared/hooks/useCustomers';
-import { useCustomerSearch } from '../../shared/hooks/useCustomerSearch';
+import { useCustomers, useCustomerStats, useDeleteCustomer } from '../../shared/hooks/useCustomers';
 import { usePermissions } from '../../shared/hooks/usePermissions';
+import { useDebouncedValue } from '../../shared/hooks/useDebouncedValue';
 import { useAuth } from '../../shared/context/AuthContext';
 import { customerTableColumns } from './customerTable.config';
+import { customerStatsCards } from './customerStats.config';
 import { usePagination } from '../../shared/hooks/usePagination';
+import {
+  CUSTOMER_STATUS_ALL,
+  CUSTOMER_STATUS_FILTER_OPTIONS,
+  CUSTOMER_STATUS_FILTER_VALUES,
+} from '../../shared/constants/customerMembership';
 
 const CustomerList = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const assignedPtCoach = searchParams.get('assignedPtCoach');
   const assignedPtCoachIdParam = searchParams.get('assignedPtCoachId');
   const { fetchUserData } = useAuth();
@@ -36,6 +42,16 @@ const CustomerList = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [formData, setFormData] = useState(getInitialCustomerFormData());
 
+  // The list is server-paginated, so searching and status filtering both have to
+  // happen on the API - filtering the loaded page would silently hide matches
+  // that live on another page.
+  const debouncedSearch = useDebouncedValue(searchQuery.trim(), 300);
+
+  // Status filter lives in the URL so it survives a refresh, the back button,
+  // and returning from a client profile.
+  const statusParam = searchParams.get('status');
+  const statusFilter = CUSTOMER_STATUS_FILTER_VALUES.includes(statusParam) ? statusParam : CUSTOMER_STATUS_ALL;
+
   const assignedPtCoachIdNumeric = useMemo(() => {
     if (assignedPtCoachIdParam == null || assignedPtCoachIdParam === '') return null;
     const n = Number.parseInt(assignedPtCoachIdParam, 10);
@@ -43,75 +59,88 @@ const CustomerList = () => {
     return n;
   }, [assignedPtCoachIdParam]);
 
+  // Filters shared by the list and the stat cards, so both describe the same
+  // set of clients. The status filter itself is added for the list only.
+  const baseFilters = useMemo(() => {
+    const filters = {};
+    if (debouncedSearch) filters.search = debouncedSearch;
+    if (assignedPtCoach === 'self') {
+      filters.assignedPtCoachId = 'self';
+    } else if (assignedPtCoachIdNumeric != null) {
+      filters.assignedPtCoachId = String(assignedPtCoachIdNumeric);
+    }
+    return filters;
+  }, [debouncedSearch, assignedPtCoach, assignedPtCoachIdNumeric]);
+
   // Memoize customer query options to prevent unnecessary refetches
   const customerQueryOptions = useMemo(() => {
-    const opts = {
+    const filters = { ...baseFilters };
+    if (statusFilter !== CUSTOMER_STATUS_ALL) filters.membershipStatus = statusFilter;
+
+    return {
       pagelimit: pageSize,
       sorts: [{ field: 'first_name', direction: 'asc' }],
+      ...(Object.keys(filters).length > 0 ? { filters } : {}),
     };
-    if (assignedPtCoach === 'self') {
-      opts.filters = { assignedPtCoachId: 'self' };
-    } else if (assignedPtCoachIdNumeric != null) {
-      opts.filters = { assignedPtCoachId: String(assignedPtCoachIdNumeric) };
-    }
-    return opts;
-  }, [pageSize, assignedPtCoach, assignedPtCoachIdNumeric]);
+  }, [pageSize, baseFilters, statusFilter]);
+
+  // Counts deliberately ignore the status filter so every card stays visible
+  // (and clickable) while one of them is selected.
+  const statsQueryOptions = useMemo(
+    () => (Object.keys(baseFilters).length > 0 ? { filters: baseFilters } : {}),
+    [baseFilters]
+  );
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [assignedPtCoach, assignedPtCoachIdParam, setCurrentPage]);
+  }, [assignedPtCoach, assignedPtCoachIdParam, debouncedSearch, statusFilter, setCurrentPage]);
 
   // Fetch customers
   const { data, isLoading } = useCustomers(currentPage, customerQueryOptions);
+  const { data: statusCounts, isLoading: isLoadingStats, isError: isStatsError } = useCustomerStats(statsQueryOptions);
   const deleteCustomerMutation = useDeleteCustomer();
 
   // Ensure customers is always an array
   const customers = Array.isArray(data?.data) ? data.data : [];
   const pagination = data?.pagination;
 
-  // Filter customers using custom hook
-  const filteredCustomers = useCustomerSearch(customers, searchQuery);
+  const isFiltered = statusFilter !== CUSTOMER_STATUS_ALL || Boolean(debouncedSearch);
 
-  // Compute membership stats
-  const membershipStats = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  /* -------------------------------- filters -------------------------------- */
 
-    const fifteenDaysFromNow = new Date();
-    fifteenDaysFromNow.setDate(today.getDate() + 15);
-    fifteenDaysFromNow.setHours(23, 59, 59, 999);
+  const handleStatusChange = useCallback(
+    (nextStatus) => {
+      const params = new URLSearchParams(searchParams);
+      if (!nextStatus || nextStatus === CUSTOMER_STATUS_ALL) {
+        params.delete('status');
+      } else {
+        params.set('status', nextStatus);
+      }
+      setSearchParams(params, { replace: true });
+    },
+    [searchParams, setSearchParams]
+  );
 
-    let active = 0, expiringSoon = 0, expired = 0;
+  // Clicking the card that is already applied clears the filter.
+  const toggleStatus = useCallback(
+    (status) => handleStatusChange(statusFilter === status ? CUSTOMER_STATUS_ALL : status),
+    [handleStatusChange, statusFilter]
+  );
 
-    customers.forEach((c) => {
-      const m = c.currentMembership;
-      if (!m) return;
+  /* --------------------------------- stats --------------------------------- */
 
-      const end = new Date(m.membershipEndDate);
-      end.setHours(0, 0, 0, 0);
-
-      const isActive = m.status === 'active' && end >= today;
-      const isExpired = end < today || m.status === 'expired';
-      const isExpiringSoon = isActive && end <= fifteenDaysFromNow && end >= today;
-
-      if (isActive) { active++; if (isExpiringSoon) expiringSoon++; }
-      else if (isExpired) expired++;
-    });
-
-    return { active, expiringSoon, expired };
-  }, [customers]);
-
-  // Prepare stats array safely
-  const stats = useMemo(() => {
-    if (!data) return [];
-
-    return [
-      { title: 'Total Clients', value: pagination?.total || customers.length || 0, color: 'primary', icon: Users },
-      { title: 'Active', value: membershipStats?.active || 0, color: 'success', icon: CheckCircle },
-      { title: 'Expiring Soon', value: membershipStats?.expiringSoon || 0, color: 'warning', icon: AlertTriangle },
-      { title: 'Expired', value: membershipStats?.expired || 0, color: 'danger', icon: XCircle },
-    ];
-  }, [data, pagination, customers, membershipStats]);
+  const stats = useMemo(
+    () =>
+      customerStatsCards({
+        statusCounts,
+        isLoadingStats,
+        isStatsError,
+        statusFilter,
+        onSelectAll: () => handleStatusChange(CUSTOMER_STATUS_ALL),
+        onToggleStatus: toggleStatus,
+      }),
+    [statusCounts, isLoadingStats, isStatsError, statusFilter, handleStatusChange, toggleStatus]
+  );
 
   // Table columns
   const columns = useMemo(
@@ -173,50 +202,55 @@ const CustomerList = () => {
           </button>
         </div>
       )}
-      {/* Stats Cards */}
+      {/* Stats Cards - account-wide counts, also act as status filters */}
       <StatsCards stats={stats} />
 
       {/* Action bar */}
       <div className="card mb-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative sm:flex-1 sm:max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-400" />
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name, email, or phone..."
-              className="w-full pl-10 pr-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-50 placeholder-dark-400"
-            />
-          </div>
-
-          {hasPermission('members_list_add') && (
-            <div className="flex items-center justify-end gap-3">
-              <button
-                onClick={() => handleOpenModal()}
-                className="shrink-0 whitespace-nowrap btn-primary flex items-center gap-2"
-              >
-                <UserPlus className="w-4 h-4" />
-                Add Client
-              </button>
-            </div>
-          )}
-        </div>
+        <SearchAndFilter
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Search by name, email, or phone..."
+          filterValue={statusFilter}
+          onFilterChange={handleStatusChange}
+          filterOptions={CUSTOMER_STATUS_FILTER_OPTIONS}
+          filterLabel="All Statuses"
+          onAddClick={hasPermission('members_list_add') ? () => handleOpenModal() : undefined}
+          addButtonLabel="Add Client"
+          addButtonIcon={UserPlus}
+        />
       </div>
 
       {/* Customers Table */}
       <div className="card">
         <DataTable
           columns={columns}
-          data={filteredCustomers}
+          data={customers}
           loading={isLoading}
           onRowClick={(c) => handleViewCustomer(c.id)}
         />
       </div>
 
       {/* Empty state */}
-      {!isLoading && filteredCustomers.length === 0 && (
+      {!isLoading && customers.length === 0 && (
         <div className="text-center py-12 text-dark-400">
-          No customers found matching your criteria
+          {isFiltered ? (
+            <>
+              <p>No clients match these filters</p>
+              <button
+                type="button"
+                className="mt-2 text-primary-400 hover:text-primary-300 font-medium"
+                onClick={() => {
+                  setSearchQuery('');
+                  handleStatusChange(CUSTOMER_STATUS_ALL);
+                }}
+              >
+                Clear filters
+              </button>
+            </>
+          ) : (
+            'No customers found matching your criteria'
+          )}
         </div>
       )}
 
