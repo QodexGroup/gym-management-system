@@ -8,6 +8,12 @@ export const CUSTOMER_MEMBERSHIP_STATUS = {
 };
 
 /**
+ * Sentinel for "no status filter applied" on the client list. Not a stored
+ * membership status - it just means every status is included.
+ */
+export const CUSTOMER_STATUS_ALL = 'all';
+
+/**
  * How many days ahead a membership counts as "expiring soon".
  * Must match CustomerMembershipConstant::EXPIRING_SOON_DAYS on the API, which
  * is what the server-side filter and the stat cards are computed from.
