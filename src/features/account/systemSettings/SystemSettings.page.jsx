@@ -2,12 +2,14 @@ import { useState } from 'react';
 import Layout from '../../../layout/Layout';
 import MembershipSettingsTab from './MembershipSettingsTab.page';
 import NotificationSettingsTab from './NotificationSettingsTab.page';
-import EmailNotificationSettingsTab from './EmailNotificationSettingsTab.page';
+import KioskRegistrationSettingsTab from './KioskRegistrationSettingsTab.page';
 
+/* In-app alerts and member emails share one tab — same endpoint, same form, one
+   card each. See NotificationSettingsTab. */
 const TABS = [
   { key: 'membership', label: 'Membership Settings' },
-  { key: 'notifications', label: 'Notification Settings' },
-  { key: 'email', label: 'Email Notifications' },
+  { key: 'notifications', label: 'Notifications' },
+  { key: 'kiosk', label: 'Kiosk Registration' },
 ];
 
 const SystemSettingsPage = () => {
@@ -36,7 +38,7 @@ const SystemSettingsPage = () => {
 
       {activeTab === 'membership' && <MembershipSettingsTab />}
       {activeTab === 'notifications' && <NotificationSettingsTab />}
-      {activeTab === 'email' && <EmailNotificationSettingsTab />}
+      {activeTab === 'kiosk' && <KioskRegistrationSettingsTab />}
     </Layout>
   );
 };

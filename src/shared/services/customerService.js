@@ -202,6 +202,31 @@ export const customerService = {
    * @param {string} idempotencyKey - Optional idempotency key for deduplication
    * @returns {Promise<Object>}
    */
+  /**
+   * Create a member from the on-site kiosk.
+   *
+   * A separate endpoint from create(): the member fills the form in themselves,
+   * so the API rejects a phone number already on file and records the
+   * registration source as the kiosk. The staff "Add New Client" form keeps
+   * using create(), which has no duplicate check by design.
+   *
+   * @param {Object} customerData
+   * @param {string|null} idempotencyKey
+   * @returns {Promise<Object|null>}
+   */
+  async createKioskRegistration(customerData, idempotencyKey = null) {
+    const options = idempotencyKey ? { idempotencyKey } : {};
+    const response = await postWithIdempotency(`${API_BASE_URL}/customers/kiosk-registration`, customerData, options);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to create customer');
+    }
+
+    const data = await response.json();
+    return data.success ? data.data : null;
+  },
+
   async update(id, customerData, idempotencyKey = null) {
     const customerId = parseInt(id, 10);
     const options = idempotencyKey ? { idempotencyKey } : {};

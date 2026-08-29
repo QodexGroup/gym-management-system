@@ -87,6 +87,16 @@ export const ACCOUNT_SYSTEM_SETTING_DEFAULTS = {
   emailMembershipExpiring: true,
   emailPaymentConfirmation: true,
   emailCustomerRegistration: true,
+
+  // Public member self-registration (KioskRegistrationSettingConstant).
+  // Disabled by default: the account's public_code is permanent and cannot be
+  // rotated, so this switch is the only way to turn a shared link off.
+  kioskRegistrationEnabled: false,
+  kioskRegistrationRequireEmail: false,
+  kioskRegistrationRequireAddress: false,
+  kioskRegistrationRequireEmergencyContact: false,
+  kioskRegistrationWelcomeText: '',
+  kioskRegistrationSuccessText: '',
 };
 
 /**
@@ -108,3 +118,30 @@ export const EMAIL_NOTIFICATION_SETTING_KEYS = [
   'emailPaymentConfirmation',
   'emailCustomerRegistration',
 ];
+
+/**
+ * Keys belonging to the System Settings > Kiosk Registration tab.
+ * Used so that page saves only its own subset of the account settings.
+ */
+export const KIOSK_REGISTRATION_SETTING_KEYS = [
+  'kioskRegistrationEnabled',
+  'kioskRegistrationRequireEmail',
+  'kioskRegistrationRequireAddress',
+  'kioskRegistrationRequireEmergencyContact',
+  'kioskRegistrationWelcomeText',
+  'kioskRegistrationSuccessText',
+];
+
+/** Path prefix of the public registration page (see firebase.json rewrite). */
+export const PUBLIC_REGISTRATION_PATH_PREFIX = '/join';
+
+/**
+ * Build the full public registration URL for a gym.
+ *
+ * @param {string} publicCode The account's permanent ULID.
+ * @returns {string} Empty string when the account has no code yet.
+ */
+export const buildPublicRegistrationUrl = (publicCode) => {
+  if (!publicCode) return '';
+  return `${window.location.origin}${PUBLIC_REGISTRATION_PATH_PREFIX}/${publicCode}`;
+};

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/img/logo2.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Join the gym - member registration" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Member Registration</title>
+    <script>
+      // The admin app resolves theme from localStorage via ThemeContext. This is a
+      // separate entry with no ThemeContext and no signed-in user, so pin the
+      // palette here instead: the Tailwind colours are CSS variables and render
+      // as unstyled/transparent if these attributes are never set.
+      (function () {
+        var r = document.documentElement;
+        r.setAttribute('data-mode', 'light');
+        r.setAttribute('data-theme', 'ocean');
+        r.style.setProperty('--font-app', "'Inter', system-ui, sans-serif");
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/public/main.jsx"></script>
+  </body>
+</html>
