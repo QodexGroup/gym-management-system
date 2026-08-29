@@ -29,6 +29,20 @@ import { exportReportToPdf, exportReportToExcel } from '../../shared/utils/repor
 import { APP_NAME } from '../../shared/constants/appConfig';
 import { DEFAULT_REPORT_DATE_FROM, DEFAULT_REPORT_DATE_TO, MAX_REPORT_ROWS, CHART_TOOLTIP_STYLE, CHART_CURSOR, CHART_PIE_ACTIVE } from '../../shared/constants/reportConstants';
 import { Alert, Toast } from '../../shared/utils/alert';
+import {
+  PAYMENT_METHOD_FILTER_OPTIONS,
+  PAYMENT_METHOD_LABELS,
+  formatPaymentMethod,
+  normalizePaymentMethod,
+} from '../../shared/constants/paymentConstants';
+
+const PAYMENT_METHOD_CHART_COLORS = {
+  Cash: '#22c55e',
+  Card: '#0ea5e9',
+  GCash: '#0066ff',
+  'Bank Transfer': '#8b5cf6',
+  Other: '#64748b',
+};
 
 const MyCollectionPage = () => {
   const printRef = useRef(null);
@@ -56,20 +70,23 @@ const MyCollectionPage = () => {
 
   const filteredTransactions = useMemo(() => {
     if (paymentMethod === 'all') return transactions;
-    return transactions.filter((t) => (t.paymentMethod || '').toLowerCase().includes(paymentMethod));
+    return transactions.filter((t) => normalizePaymentMethod(t.paymentMethod) === paymentMethod);
   }, [transactions, paymentMethod]);
 
   const paymentMethodData = useMemo(() => {
     const byMethod = {};
     filteredTransactions.forEach((t) => {
-      const key = (t.paymentMethod || 'other').toLowerCase();
-      const k = key.includes('cash') ? 'Cash' : key.includes('card') ? 'Card' : key.includes('transfer') ? 'Transfer' : 'Other';
+      const method = normalizePaymentMethod(t.paymentMethod);
+      const k = PAYMENT_METHOD_LABELS[method] || 'Other';
       byMethod[k] = (byMethod[k] || 0) + (parseFloat(t.amount) || 0);
     });
-    const colors = { Cash: '#22c55e', Card: '#0ea5e9', Transfer: '#8b5cf6', Other: '#64748b' };
     return Object.entries(byMethod)
       .filter(([, v]) => v > 0)
-      .map(([name, value]) => ({ name, value, color: colors[name] || colors.Other }));
+      .map(([name, value]) => ({
+        name,
+        value,
+        color: PAYMENT_METHOD_CHART_COLORS[name] || PAYMENT_METHOD_CHART_COLORS.Other,
+      }));
   }, [filteredTransactions]);
 
   const topMembers = useMemo(() => {
@@ -112,7 +129,7 @@ const MyCollectionPage = () => {
     t.member || 'N/A',
     t.type || 'N/A',
     formatMoney(t.amount),
-    (t.paymentMethod && String(t.paymentMethod)) || 'N/A',
+    formatPaymentMethod(t.paymentMethod),
   ]);
 
   const doExportPdf = () => {
@@ -196,10 +213,11 @@ const MyCollectionPage = () => {
         onChange={(e) => setPaymentMethod(e.target.value)}
         className="px-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 rounded-lg focus:border-primary-500 outline-none"
       >
-        <option value="all">All Payment Methods</option>
-        <option value="card">Credit Card</option>
-        <option value="cash">Cash</option>
-        <option value="transfer">Bank Transfer</option>
+        {PAYMENT_METHOD_FILTER_OPTIONS.map(({ value, label }) => (
+          <option key={value} value={value}>
+            {label}
+          </option>
+        ))}
       </select>
     </div>
   );
@@ -216,7 +234,7 @@ const MyCollectionPage = () => {
     { key: 'member', label: 'Member', render: (row) => <span className="font-medium">{row.member || 'N/A'}</span> },
     { key: 'type', label: 'Type', render: (row) => row.type || 'N/A' },
     { key: 'amount', label: 'Amount', render: (row) => <span className="font-semibold text-dark-50">{formatCurrency(row.amount)}</span> },
-    { key: 'paymentMethod', label: 'Payment Method', render: (row) => row.paymentMethod ? String(row.paymentMethod) : 'N/A' },
+    { key: 'paymentMethod', label: 'Payment Method', render: (row) => formatPaymentMethod(row.paymentMethod) },
   ];
 
   return (
