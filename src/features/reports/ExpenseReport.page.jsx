@@ -4,13 +4,11 @@ import Layout from '../../layout/Layout';
 import { Badge, DateRangeExportBar, PrintArea, MessageCard, StatsCards } from '../../components/common';
 import DataTable from '../../components/DataTable';
 import {
-  Search,
   Download,
   Receipt,
   DollarSign,
   PieChart as PieChartIcon,
-  Calendar,
-  Filter,
+  Tag,
   Printer,
   Mail,
 } from 'lucide-react';
@@ -28,7 +26,7 @@ import {
   Tooltip,
 } from 'recharts';
 import { useExpenses, useExpenseCategories } from '../../shared/hooks/useExpenses';
-import { EXPENSE_STATUS, EXPENSE_STATUS_LABELS, EXPENSE_STATUS_VARIANTS } from '../../shared/constants/expenseConstants';
+import { EXPENSE_STATUS } from '../../shared/constants/expenseConstants';
 import { reportService } from '../../shared/services/reportService';
 import { exportReportToPdf, exportReportToExcel } from '../../shared/utils/reportPrintExport';
 import { APP_NAME } from '../../shared/constants/appConfig';
@@ -45,25 +43,21 @@ const ExpenseReportPage = () => {
   const [dateTo, setDateTo] = useState(DEFAULT_REPORT_DATE_TO);
   const [appliedFrom, setAppliedFrom] = useState(DEFAULT_REPORT_DATE_FROM);
   const [appliedTo, setAppliedTo] = useState(DEFAULT_REPORT_DATE_TO);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [appliedSearchQuery, setAppliedSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [appliedFilterCategory, setAppliedFilterCategory] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
 
   const expenseOptions = useMemo(() => {
-    const filters = { dateFrom: appliedFrom, dateTo: appliedTo };
-    if (appliedSearchQuery) filters.description = appliedSearchQuery;
+    // Expense Report covers posted receipts only — unposted entries stay in the Expense list.
+    const filters = { dateFrom: appliedFrom, dateTo: appliedTo, status: EXPENSE_STATUS.POSTED };
     if (appliedFilterCategory !== 'all') filters.category_id = appliedFilterCategory;
     return { page: 1, pagelimit: MAX_REPORT_ROWS, relations: 'category', filters };
-  }, [appliedFrom, appliedTo, appliedSearchQuery, appliedFilterCategory]);
+  }, [appliedFrom, appliedTo, appliedFilterCategory]);
 
   const handleApply = useCallback(() => {
     setAppliedFrom(dateFrom);
     setAppliedTo(dateTo);
-    setAppliedSearchQuery(searchQuery);
     setAppliedFilterCategory(filterCategory);
-  }, [dateFrom, dateTo, searchQuery, filterCategory]);
+  }, [dateFrom, dateTo, filterCategory]);
 
   const { data: expensesData, isLoading, isError, error } = useExpenses(expenseOptions);
   const { data: categoriesData } = useExpenseCategories({});
@@ -73,7 +67,7 @@ const ExpenseReportPage = () => {
   const categories = categoriesData?.data || [];
 
   const transformedExpenses = useMemo(() => {
-    let list = expenses.map((apiExpense) => {
+    return expenses.map((apiExpense) => {
       let categoryName = apiExpense.category?.name;
       if (!categoryName && apiExpense.categoryId && categories.length > 0) {
         const found = categories.find((c) => c.id === apiExpense.categoryId);
@@ -87,20 +81,12 @@ const ExpenseReportPage = () => {
         amount: parseFloat(apiExpense.amount),
         date: apiExpense.expenseDate,
         formattedDate: formatDate(apiExpense.expenseDate),
-        status: apiExpense.status,
       };
     });
-    if (filterStatus !== 'all') list = list.filter((e) => e.status === filterStatus);
-    return list;
-  }, [expenses, categories, filterStatus]);
+  }, [expenses, categories]);
 
   const totalExpenses = transformedExpenses.reduce((sum, e) => sum + e.amount, 0);
-  const paidExpenses = transformedExpenses
-    .filter((e) => e.status === EXPENSE_STATUS.POSTED)
-    .reduce((sum, e) => sum + e.amount, 0);
-  const pendingExpenses = transformedExpenses
-    .filter((e) => e.status === EXPENSE_STATUS.UNPOSTED)
-    .reduce((sum, e) => sum + e.amount, 0);
+  const averageExpense = transformedExpenses.length > 0 ? totalExpenses / transformedExpenses.length : 0;
 
   const expenseByCategory = useMemo(() => {
     const byCat = {};
@@ -109,6 +95,11 @@ const ExpenseReportPage = () => {
     });
     return Object.entries(byCat).map(([name, value]) => ({ name, value })).filter((d) => d.value > 0);
   }, [transformedExpenses]);
+
+  const topCategory = useMemo(() => {
+    if (expenseByCategory.length === 0) return null;
+    return expenseByCategory.reduce((top, item) => (item.value > top.value ? item : top));
+  }, [expenseByCategory]);
 
   const monthlyTrend = useMemo(() => {
     const byMonth = {};
@@ -141,9 +132,9 @@ const ExpenseReportPage = () => {
   const generatedAt = new Date().toLocaleString();
   const summaryRows = [
     ['Total Expenses', formatCurrency(totalExpenses)],
-    ['Posted', formatCurrency(paidExpenses)],
-    ['Unposted', formatCurrency(pendingExpenses)],
     ['Transactions', String(transformedExpenses.length)],
+    ['Average per Transaction', formatCurrency(averageExpense)],
+    ['Top Category', topCategory ? `${topCategory.name} (${formatCurrency(topCategory.value)})` : 'N/A'],
   ];
 
   const handlePrint = useReactToPrint({
@@ -152,13 +143,12 @@ const ExpenseReportPage = () => {
   });
 
   const doExportPdf = () => {
-    const headers = ['Date', 'Category', 'Description', 'Amount', 'Status'];
+    const headers = ['Date', 'Category', 'Description', 'Amount'];
     const rows = transformedExpenses.map((e) => [
       e.formattedDate,
       e.category,
       e.description,
       formatCurrency(e.amount),
-      EXPENSE_STATUS_LABELS[e.status] || e.status,
     ]);
     exportReportToPdf({
       title: 'Expense Report',
@@ -172,13 +162,12 @@ const ExpenseReportPage = () => {
   };
 
   const doExportExcel = () => {
-    const headers = ['Date', 'Category', 'Description', 'Amount', 'Status'];
+    const headers = ['Date', 'Category', 'Description', 'Amount'];
     const rows = transformedExpenses.map((e) => [
       e.formattedDate,
       e.category,
       e.description,
       e.amount,
-      EXPENSE_STATUS_LABELS[e.status] || e.status,
     ]);
     exportReportToExcel({
       sheetName: 'Expenses',
@@ -242,9 +231,9 @@ const ExpenseReportPage = () => {
 
   const expenseStats = [
     { label: 'Total Expenses', value: formatCurrency(totalExpenses), icon: DollarSign, gradient: 'from-primary-500 to-primary-600', textBg: 'text-primary-100', iconBg: 'text-primary-200' },
-    { label: 'Posted', value: formatCurrency(paidExpenses), icon: Receipt, gradient: 'from-success-500 to-success-600', textBg: 'text-success-100', iconBg: 'text-success-200' },
-    { label: 'Unposted', value: formatCurrency(pendingExpenses), icon: Calendar, gradient: 'from-warning-500 to-warning-600', textBg: 'text-warning-100', iconBg: 'text-warning-200' },
     { label: 'Transactions', value: transformedExpenses.length, icon: PieChartIcon, gradient: 'from-accent-500 to-accent-600', textBg: 'text-accent-100', iconBg: 'text-accent-200' },
+    { label: 'Average per Transaction', value: formatCurrency(averageExpense), icon: Receipt, gradient: 'from-success-500 to-success-600', textBg: 'text-success-100', iconBg: 'text-success-200' },
+    { label: 'Top Category', value: topCategory ? topCategory.name : 'N/A', icon: Tag, gradient: 'from-warning-500 to-warning-600', textBg: 'text-warning-100', iconBg: 'text-warning-200' },
   ];
 
   const expenseColumns = [
@@ -252,24 +241,10 @@ const ExpenseReportPage = () => {
     { key: 'category', label: 'Category', render: (row) => <Badge variant="default">{row.category}</Badge> },
     { key: 'description', label: 'Description', render: (row) => <span className="font-medium">{row.description}</span> },
     { key: 'amount', label: 'Amount', render: (row) => <span className="font-semibold text-dark-50">{formatCurrency(row.amount)}</span> },
-    { key: 'status', label: 'Status', render: (row) => <Badge variant={EXPENSE_STATUS_VARIANTS[row.status] || 'warning'}>{EXPENSE_STATUS_LABELS[row.status] || row.status}</Badge> },
   ];
 
   const expenseExtraFilters = (
     <>
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-semibold text-dark-400 uppercase tracking-wide">Search</label>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
-          <input
-            type="text"
-            placeholder="Search expenses..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 placeholder-dark-400 rounded-lg focus:border-primary-500 outline-none w-48"
-          />
-        </div>
-      </div>
       <div className="flex flex-col gap-1">
         <label className="text-xs font-semibold text-dark-400 uppercase tracking-wide">Category</label>
         <select
@@ -281,18 +256,6 @@ const ExpenseReportPage = () => {
           {categories.map((cat) => (
             <option key={cat.id} value={cat.id}>{cat.name}</option>
           ))}
-        </select>
-      </div>
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-semibold text-dark-400 uppercase tracking-wide">Status</label>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-4 py-2.5 bg-dark-700 border border-dark-600 text-dark-50 rounded-lg focus:border-primary-500 outline-none"
-        >
-          <option value="all">All Status</option>
-          <option value={EXPENSE_STATUS.POSTED}>{EXPENSE_STATUS_LABELS[EXPENSE_STATUS.POSTED]}</option>
-          <option value={EXPENSE_STATUS.UNPOSTED}>{EXPENSE_STATUS_LABELS[EXPENSE_STATUS.UNPOSTED]}</option>
         </select>
       </div>
     </>
