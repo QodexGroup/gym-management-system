@@ -114,11 +114,11 @@ const TermsAndConditionsModal = ({ isOpen, onAccept, onDecline }) => {
             </div>
           </div>
 
-          <div className="relative flex-1 min-h-0">
+          <div className="relative flex min-h-0 flex-1 flex-col">
             <div
               ref={scrollRef}
               onScroll={updateScrollState}
-              className="h-full overflow-y-auto overscroll-contain px-4 py-4 scroll-smooth sm:px-6"
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 scroll-smooth sm:px-6"
             >
               <p className="text-sm text-dark-200 leading-relaxed mb-6">{TERMS_INTRO}</p>
 
