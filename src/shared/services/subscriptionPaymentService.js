@@ -9,6 +9,43 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
  */
 export const subscriptionPaymentService = {
   /**
+   * Get the current account's own invoices, newest first.
+   *
+   * Distinct from getAccountRequests: that returns payment REQUESTS the owner
+   * has submitted, so an invoice with no receipt yet never appears in it.
+   *
+   * @param {{page?: number, pagelimit?: number}} params
+   * @returns {Promise<{data: object[], pagination: object|null}>}
+   */
+  async getAccountInvoices(params = {}) {
+    const searchParams = new URLSearchParams();
+
+    if (params.page) {
+      searchParams.set('page', params.page);
+    }
+    if (params.pagelimit) {
+      searchParams.set('pagelimit', params.pagelimit);
+    }
+
+    const url = `${API_BASE_URL}/accounts/invoices${
+      searchParams.toString() ? `?${searchParams.toString()}` : ''
+    }`;
+
+    const res = await authenticatedFetch(url);
+    const json = await res.json();
+
+    if (!res.ok) {
+      throw new Error(json.message || 'Failed to fetch invoices');
+    }
+
+    if (!json.success || !json.data) {
+      return { data: [], pagination: null };
+    }
+
+    return normalizePaginatedResponse(json);
+  },
+
+  /**
    * Get subscription requests for the current account (used for invoices/payments history).
    * Backend only supports pagination (no filters).
    */

@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import DataTable from '../../../components/DataTable';
 import { Pagination } from '../../../components/common';
-import { useSubscriptionRequests } from '../../../shared/hooks/useSubscriptionRequests';
+import { useAccountInvoices } from '../../../shared/hooks/useAccountInvoices';
 import { subscriptionInvoiceColumns } from '../subscriptionInvoiceTable.config.jsx';
 import { getFileUrl } from '../../../shared/services/storageService';
 import { Toast } from '../../../shared/utils/alert';
 import { formatCurrency, formatDate } from '../../../shared/utils/formatters';
 import {
-  getSubscriptionPaymentStatusBadgeClass,
-  getSubscriptionPaymentStatusLabel,
+  getSubscriptionInvoiceStatusBadgeClass,
+  getSubscriptionInvoiceStatusLabel,
 } from '../../../shared/constants/subscriptionConstants';
 import InvoicePaymentModal from '../InvoicePaymentModal';
 
@@ -42,32 +42,43 @@ const SubscriptionInvoicesTab = () => {
   const invoiceColumns = subscriptionInvoiceColumns({
     formatMoney: (value) => formatCurrency(value || 0),
     formatDate: (value) => formatDate(value),
-    formatStatusLabel: getSubscriptionPaymentStatusLabel,
-    getStatusBadgeClass: getSubscriptionPaymentStatusBadgeClass,
+    formatStatusLabel: getSubscriptionInvoiceStatusLabel,
+    getStatusBadgeClass: getSubscriptionInvoiceStatusBadgeClass,
     onOpenReceipt: openReceipt,
     onPayInvoice: handlePayInvoice,
   });
 
-  const { data: requestData, isLoading } = useSubscriptionRequests({
+  // Reads the invoices themselves. This previously read payment REQUESTS and
+  // filtered to invoice-linked ones, which meant a freshly issued invoice with
+  // no receipt yet never appeared — and since paying one needs an invoice id
+  // taken from this list, an unpaid invoice could never be paid.
+  const { data: invoiceData, isLoading, error } = useAccountInvoices({
     page: invoicePage,
     pagelimit: PAGE_SIZE,
   });
 
-  // Invoice tab should only show invoice-linked payment requests.
-  const invoiceRows = (requestData?.data || []).filter(
-    (row) => row.paymentTransaction?.includes('AccountInvoice')
-  );
-  const pagination = requestData?.pagination;
+  const invoiceRows = invoiceData?.data || [];
+  const pagination = invoiceData?.pagination;
 
   return (
     <div>
       <h3 className="text-lg font-semibold text-dark-50 mb-4">Invoices</h3>
 
+        {/* A failed request must not render as "No invoices yet." — that reads
+            as "you owe nothing", which is the opposite of what a billing screen
+            should say when it does not know. */}
+        {error ? (
+          <div className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3">
+            <p className="text-sm font-medium text-red-300">Could not load your invoices</p>
+            <p className="text-sm text-red-200/80">{error.message}</p>
+          </div>
+        ) : null}
+
         <DataTable
           columns={invoiceColumns}
           data={invoiceRows}
           loading={isLoading}
-          emptyMessage="No invoices yet."
+          emptyMessage={error ? 'Invoices could not be loaded.' : 'No invoices yet.'}
         />
         {pagination && pagination.lastPage > 1 && (
           <div className="flex items-center justify-between mt-4">
