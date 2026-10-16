@@ -22,6 +22,8 @@ jobs:
           VITE_CLOSE_BETA: 'true'
           VITE_API_BASE_URL: https://staging.api.gymhubph.com/api
           VITE_R2_PUBLIC_URL: https://pub-27483e01ea69463095e830b7bb1444c9.r2.dev
+          # Google Analytics 4 (GymhubPH Analytics web stream). Not a secret.
+          VITE_GA_MEASUREMENT_ID: G-9DV92YJBJV
         run: |
           echo "$FIREBASE_ADMIN_CREDENTIALS" > ./service-account-key.json
           export GOOGLE_APPLICATION_CREDENTIALS="./service-account-key.json"
