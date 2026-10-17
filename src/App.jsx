@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './shared/context/AuthContext';
 import { ThemeProvider } from './shared/context/ThemeContext';
 import AlertProvider from './components/AlertProvider';
 import ErrorBoundary from './components/ErrorBoundary';
+import AnalyticsTracker from './shared/components/AnalyticsTracker';
 import { queryClient } from './shared/lib/queryClient';
 import { getKioskLockedPath, isKioskLocked } from './shared/constants/kiosk';
 
@@ -186,6 +187,7 @@ function App() {
       <AuthProvider>
         <AlertProvider>
             <Router>
+              <AnalyticsTracker />
               <ErrorBoundary>
               <KioskLockGuard>
                 <AccountStateGuard>
