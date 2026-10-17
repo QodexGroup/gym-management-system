@@ -1,9 +1,43 @@
-/* Report print utilities */
+/* =============================================================================
+   PRINT — a document, not a screenshot of the app.
+   -----------------------------------------------------------------------------
+   Why this file exists as its own subsystem:
+
+   react-to-print (v3) clones .report-print-area into a bare <iframe> and copies
+   over the <style>/<link> nodes. It does NOT copy the attributes on <html>.
+   ThemeContext sets data-mode / data-theme / --font-app on document.documentElement
+   (see ThemeContext.jsx applyAppearance + the no-flash script in index.html), so
+   inside the print iframe none of them exist. Every --c-surface-* token then
+   resolves from the `:root` default in _theme.scss — which IS the dark scale
+   (`:root, [data-mode='dark']`). Result: bg-dark-800 on <thead>/.table-header
+   paints near-black on paper regardless of what the user sees on screen.
+
+   Two layers, in order:
+     1. Re-point the tokens on .report-print-area itself. This changes the INPUT
+        the compiled utilities read, so there is no specificity fight and no
+        !important anywhere.
+     2. Describe the report's structure explicitly, in literal colours.
+
+   Deliberately NOT used: print-color-adjust / -webkit-print-color-adjust.
+   Chrome's "Background graphics" checkbox is OFF by default, so any layout that
+   needs a fill to actually print is broken for most people. Every fill below is
+   decorative; the borders carry the structure, and the sheet reads correctly in
+   plain black on white — in any browser, on any printer.
+
+   Print styles live here and ONLY here. src/index.css is not imported by
+   anything (main.jsx / public/main.jsx import shared/styles/index.scss); its
+   @media print block is a dead duplicate and should be deleted with the file.
+   ============================================================================= */
+
 .report-print-only {
   display: none;
 }
 
 @media print {
+  @page {
+    margin: 12mm;
+  }
+
   .no-print {
     display: none !important;
   }
@@ -12,17 +46,112 @@
     display: block !important;
   }
 
+  /* --- 1. Neutralise the theme at the print-area boundary ------------------
+     The names read backwards on purpose: --c-surface-800 holds a LIGHT value
+     here. The scale is semantic, not literal — 800 means "card / header fill",
+     and on paper that fill is light. _theme.scss plays the same trick for
+     [data-mode='light']. Values are literals; no theme token is referenced. */
   .report-print-area {
-    box-shadow: none !important;
-    border: 1px solid #e2e8f0 !important;
-    background: white !important;
+    --c-surface-900: 255 255 255; /* page background            */
+    --c-surface-800: 241 245 249; /* th fill (decorative only)  */
+    --c-surface-700: 148 163 184; /* structural borders         */
+    --c-surface-600: 148 163 184;
+    --c-surface-500: 100 116 139;
+    --c-surface-400: 71 85 105;   /* muted / th label text      */
+    --c-surface-300: 100 116 139;
+    --c-surface-200: 30 41 59;    /* body cell text             */
+    --c-surface-100: 203 213 225; /* row dividers               */
+    --c-surface-50: 15 23 42;     /* strongest text             */
+
+    /* Accents must never reach paper — ocean / emerald / violet all collapse
+       to ink, so a printed report looks identical whatever theme is active. */
+    --c-primary-400: 30 41 59;
+    --c-primary-500: 30 41 59;
+    --c-primary-600: 15 23 42;
+    --c-secondary-400: 30 41 59;
+    --c-secondary-500: 30 41 59;
+    --c-secondary-600: 15 23 42;
+
+    /* --font-app is an inline style on <html>, so it is lost in the iframe and
+       `html { font-family: var(--font-app) }` resolves it at <html>, where a
+       redefinition down here would never reach. Declare font-family outright so
+       print does not depend on the user's font pick. Swap the stack for
+       `Georgia, 'Times New Roman', serif` if you want a serif document. */
+    font-family: 'Inter', system-ui, sans-serif;
   }
 
-  .report-print-area * {
-    color: #1e293b !important;
-  }
-
+  /* --- 2. The document ---------------------------------------------------- */
   body {
-    background: white !important;
+    background: #fff;
+  }
+
+  .report-print-area {
+    background: #fff;
+    color: #1e293b;
+    font-size: 10pt;
+    padding: 0;      /* page margins come from @page, not from p-6 */
+    border: 0;       /* the old 1px box round the sheet was app chrome */
+    box-shadow: none;
+  }
+
+  /* Logo. <img> survives "Background graphics" OFF; a CSS background would not.
+     The ink filter is the guarantee: this system is resold, so a client can swap
+     in their own logo and it may well be another light-on-dark mark. Forcing the
+     mark to solid ink means every deployment prints legibly without anyone having
+     to produce a print variant first. Drop this one line if a client's brand
+     colour must survive onto paper — and then check it on white. */
+  .report-print-logo {
+    display: block;
+    height: 52px;
+    width: auto;
+    margin: 0 auto 6pt;
+    filter: grayscale(1) brightness(0);
+  }
+
+  .report-print-area table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .report-print-area thead {
+    display: table-header-group; /* repeat the header on every page */
+  }
+
+  .report-print-area tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .report-print-area th {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-bottom: 1px solid #94a3b8;
+    padding: 6pt 8pt;
+    text-align: left;
+  }
+
+  .report-print-area td {
+    color: #1e293b;
+    border-bottom: 1px solid #cbd5e1;
+    padding: 5pt 8pt;
+  }
+
+  /* Screen affordances that mean nothing on paper. Sticky columns would pin
+     mid-sheet and the scroll wrapper would clip wide tables at the page edge. */
+  .report-print-area [class*='shadow'] {
+    box-shadow: none;
+  }
+
+  .report-print-area [class*='sticky'] {
+    position: static;
+  }
+
+  /* Attribute selector, not `.overflow-hidden` etc. Tailwind's @apply copies any
+     rule whose selector contains an applied utility into the applying component,
+     with the selector rewritten - so `.overflow-hidden` here silently re-emitted
+     itself as `.report-print-area .stat-card` inside _cards.scss's layer. Matching
+     on the attribute keeps the rule out of @apply's candidate set. */
+  .report-print-area [class*='overflow-'] {
+    overflow: visible;
   }
 }
