@@ -1,12 +1,13 @@
 import { Avatar, Badge } from '../../components/common';
 import { createActionColumn } from '../../components/DataTable';
-import { Phone, Mail, Calendar, Edit, Trash, ChevronRight } from 'lucide-react';
-import { formatDate, formatCurrency } from '../../shared/utils/formatters';
+import { Phone, Mail, Edit, Trash, ChevronRight } from 'lucide-react';
+import { formatCurrency } from '../../shared/utils/formatters';
 import {
   CUSTOMER_MEMBERSHIP_STATUS,
   getCustomerMembershipDisplayStatus,
 } from '../../shared/constants/customerMembership';
 import { getFileUrl } from '../../shared/services/storageService';
+import MembershipPeriod from './MembershipPeriod';
 
 export const getCustomerActionMenuItems = ({
   customer,
@@ -108,10 +109,10 @@ export const customerTableColumns = ({ canEdit, canDelete, onEdit, onDelete, onV
           <span className="text-sm font-medium text-dark-50">
             {c.currentMembership.membershipPlan.planName}
           </span>
-          <p className="text-xs text-dark-400 flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            Expires: {formatDate(c.currentMembership.membershipEndDate)}
-          </p>
+          <MembershipPeriod
+            startDate={c.currentMembership.membershipStartDate}
+            endDate={c.currentMembership.membershipEndDate}
+          />
           {(() => {
             const status = getCustomerMembershipDisplayStatus(c);
             const badge = {
@@ -124,7 +125,7 @@ export const customerTableColumns = ({ canEdit, canDelete, onEdit, onDelete, onV
           })()}
         </div>
       ) : (
-        '-'
+        <span className="text-xs text-dark-500">No membership</span>
       ),
   },
   {
